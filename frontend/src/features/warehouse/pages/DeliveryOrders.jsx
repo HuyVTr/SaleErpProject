@@ -1,13 +1,20 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import warehouseService, { formatCurrency, formatDate } from '../services/warehouseService';
+import warehouseService, { formatCurrency, formatDate, STATUS_LABELS } from '../services/warehouseService';
 
 const STATUS_CONFIG = {
-  all: { label: 'Tất cả', icon: 'list' },
-  pending: { label: 'Chờ giao', icon: 'schedule' },
-  shipping: { label: 'Đang giao', icon: 'local_shipping' },
-  delivered: { label: 'Đã giao', icon: 'check_circle' },
-  failed: { label: 'Thất bại', icon: 'cancel' },
+  all:       { label: 'Tất cả',    icon: 'list' },
+  CONFIRMED: { label: 'Chờ giao',  icon: 'schedule' },
+  SHIPPING:  { label: 'Đang giao', icon: 'local_shipping' },
+  DELIVERED: { label: 'Đã giao',   icon: 'check_circle' },
+};
+
+const STATUS_BADGE = {
+  CONFIRMED: { class: 'pending',   label: 'Chờ giao' },
+  SHIPPING:  { class: 'shipping',  label: 'Đang giao' },
+  DELIVERED: { class: 'delivered', label: 'Đã giao' },
+  CANCELLED: { class: 'failed',    label: 'Đã hủy' },
+  FAILED:    { class: 'failed',    label: 'G.thất bại' },
 };
 
 const DeliveryOrders = () => {
@@ -36,36 +43,38 @@ const DeliveryOrders = () => {
   const filteredOrders = useMemo(() => {
     const search = searchTerm.trim().toLowerCase();
     return allOrders.filter((order) => {
-      const matchesSearch = !search || order.id.toLowerCase().includes(search) || order.customerName.toLowerCase().includes(search);
-      const matchesStatus = activeFilter === 'all' || order.deliveryStatus === activeFilter;
+      const matchesSearch = !search ||
+        order.displayID.toLowerCase().includes(search) ||
+        order.customerName.toLowerCase().includes(search);
+      const matchesStatus = activeFilter === 'all' || order.orderStatus === activeFilter;
       return matchesSearch && matchesStatus;
     });
   }, [allOrders, activeFilter, searchTerm]);
 
   const statusCounts = useMemo(() => {
     const search = searchTerm.trim().toLowerCase();
-    const baseOrders = !search
+    const base = !search
       ? allOrders
-      : allOrders.filter((order) => order.id.toLowerCase().includes(search) || order.customerName.toLowerCase().includes(search));
-
+      : allOrders.filter(o =>
+          o.displayID.toLowerCase().includes(search) ||
+          o.customerName.toLowerCase().includes(search)
+        );
     return {
-      all: baseOrders.length,
-      pending: baseOrders.filter(o => o.deliveryStatus === 'pending').length,
-      shipping: baseOrders.filter(o => o.deliveryStatus === 'shipping').length,
-      delivered: baseOrders.filter(o => o.deliveryStatus === 'delivered').length,
-      failed: baseOrders.filter(o => o.deliveryStatus === 'failed').length,
+      all:       base.length,
+      CONFIRMED: base.filter(o => o.orderStatus === 'CONFIRMED').length,
+      SHIPPING:  base.filter(o => o.orderStatus === 'SHIPPING').length,
+      DELIVERED: base.filter(o => o.orderStatus === 'DELIVERED').length,
     };
   }, [allOrders, searchTerm]);
 
   const getStatusBadge = (status) => {
-    const map = {
-      pending: { class: 'pending', label: 'Chờ giao' },
-      shipping: { class: 'shipping', label: 'Đang giao' },
-      delivered: { class: 'delivered', label: 'Đã giao' },
-      failed: { class: 'failed', label: 'Thất bại' },
-    };
-    const s = map[status] || map.pending;
-    return <span className={`wh-badge ${s.class}`}><span className="wh-badge-dot" />{s.label}</span>;
+    const s = STATUS_BADGE[status] || { class: 'pending', label: status };
+    return (
+      <span className={`wh-badge ${s.class}`}>
+        <span className="wh-badge-dot" />
+        {s.label}
+      </span>
+    );
   };
 
   return (
@@ -77,9 +86,13 @@ const DeliveryOrders = () => {
             Lệnh giao hàng
           </h1>
           <p className="text-sm sm:text-base text-slate-600 font-medium mt-1">
-            Quản lý và theo dõi tiến trình giao hàng cho đơn hàng đã xác nhận
+            Quản lý và theo dõi tiến trình giao hàng cho các đơn hàng đã xác nhận
           </p>
         </div>
+        <button onClick={fetchAllOrders} className="wh-btn-secondary text-sm">
+          <span className="material-symbols-outlined text-base">refresh</span>
+          Làm mới
+        </button>
       </div>
 
       {/* Filters & Search */}
@@ -92,7 +105,7 @@ const DeliveryOrders = () => {
               className={`wh-filter-tab ${activeFilter === key ? 'active' : ''}`}
             >
               {config.label}
-              {key === 'all' ? '' : ` (${statusCounts[key] || 0})`}
+              {` (${statusCounts[key] ?? 0})`}
             </button>
           ))}
         </div>
@@ -129,36 +142,53 @@ const DeliveryOrders = () => {
                 <tr>
                   <th className="sticky top-0 bg-[#F8FAFC] z-10">Mã đơn</th>
                   <th className="sticky top-0 bg-[#F8FAFC] z-10">Khách hàng</th>
-                  <th className="sticky top-0 bg-[#F8FAFC] z-10">Địa chỉ giao</th>
                   <th className="sticky top-0 bg-[#F8FAFC] z-10">Ngày đặt</th>
                   <th className="sticky top-0 bg-[#F8FAFC] z-10">Tổng tiền</th>
+                  <th className="sticky top-0 bg-[#F8FAFC] z-10">Số SP</th>
                   <th className="sticky top-0 bg-[#F8FAFC] z-10">Trạng thái</th>
                   <th className="sticky top-0 bg-[#F8FAFC] z-10">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredOrders.map((order) => (
-                  <tr key={order.id} className="cursor-pointer" onClick={() => navigate(`/warehouse/delivery/${order.id}`)}>
+                  <tr
+                    key={order.orderID}
+                    className="cursor-pointer"
+                    onClick={() => navigate(`/warehouse/delivery/${order.orderID}`)}
+                  >
                     <td>
                       <span className="text-xs font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full tracking-wider">
-                        {order.id}
+                        {order.displayID}
                       </span>
                     </td>
                     <td>
                       <div>
                         <p className="font-semibold text-gray-900">{order.customerName}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">{order.customerPhone}</p>
+                        {order.orderDate && (
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            {formatDate(order.orderDate)}
+                          </p>
+                        )}
                       </div>
                     </td>
-                    <td>
-                      <p className="text-sm text-gray-600 max-w-[200px] truncate">{order.deliveryAddress}</p>
+                    <td className="text-gray-500 whitespace-nowrap">
+                      {formatDate(order.orderDate || order.date)}
                     </td>
-                    <td className="text-gray-500 whitespace-nowrap">{formatDate(order.orderDate)}</td>
-                    <td className="font-bold whitespace-nowrap">{formatCurrency(order.totalAmount)}</td>
-                    <td>{getStatusBadge(order.deliveryStatus)}</td>
+                    <td className="font-bold whitespace-nowrap">
+                      {formatCurrency(order.totalAmount)}
+                    </td>
+                    <td className="text-center">
+                      <span className="text-sm font-bold text-gray-700">
+                        {order.items?.length || 0} SP
+                      </span>
+                    </td>
+                    <td>{getStatusBadge(order.orderStatus)}</td>
                     <td>
                       <button
-                        onClick={(e) => { e.stopPropagation(); navigate(`/warehouse/delivery/${order.id}`); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/warehouse/delivery/${order.orderID}`);
+                        }}
                         className="wh-btn-secondary text-xs px-3 py-1.5"
                       >
                         <span className="material-symbols-outlined text-sm">visibility</span>

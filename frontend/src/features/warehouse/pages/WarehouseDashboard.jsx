@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import warehouseService, { formatCurrency } from '../services/warehouseService';
 
-const COLORS = { pending: '#60A5FA', shipping: '#3B82F6', delivered: '#1D4ED8', failed: '#1E40AF' };
-const STATUS_LABELS = { pending: 'Chờ giao', shipping: 'Đang giao', delivered: 'Đã giao', failed: 'Thất bại' };
+const COLORS = { CONFIRMED: '#F59E0B', SHIPPING: '#3B82F6', DELIVERED: '#10B981' };
+const STATUS_LABELS = { CONFIRMED: 'Chờ giao', SHIPPING: 'Đang giao', DELIVERED: 'Đã giao' };
 
 const WarehouseDashboard = () => {
   const navigate = useNavigate();
@@ -35,21 +35,26 @@ const WarehouseDashboard = () => {
   }
 
   const orderPieData = stats?.orderStats
-    ? Object.entries(stats.orderStats).map(([key, value]) => ({ name: STATUS_LABELS[key], value, key }))
+    ? Object.entries(stats.orderStats)
+        .filter(([key]) => key in COLORS)
+        .map(([key, value]) => ({ name: STATUS_LABELS[key], value, key }))
     : [];
 
   const topStockData = stats?.products
-    ? [...stats.products].sort((a, b) => b.stockQuantity - a.stockQuantity).slice(0, 6).map(p => ({
-      name: p.name.length > 20 ? p.name.substring(0, 20) + '…' : p.name,
-      stock: p.stockQuantity,
-      value: p.stockQuantity * p.unitPrice,
-    }))
+    ? [...stats.products].sort((a, b) => b.stockQuantity - a.stockQuantity).slice(0, 6).map(p => {
+        const pName = p.name || 'Sản phẩm';
+        return {
+          name: pName.length > 20 ? pName.substring(0, 20) + '…' : pName,
+          stock: p.stockQuantity,
+          value: p.stockQuantity * p.unitPrice,
+        };
+      })
     : [];
 
   const statCards = [
     { label: 'Tổng sản phẩm', value: stats?.totalProducts || 0, icon: 'inventory_2', color: 'bg-emerald-50 text-emerald-600', iconBg: 'bg-emerald-100' },
     { label: 'Giá trị tồn kho', value: formatCurrency(stats?.totalStockValue || 0), icon: 'payments', color: 'bg-blue-50 text-blue-600', iconBg: 'bg-blue-100' },
-    { label: 'Đang giao hàng', value: stats?.orderStats?.shipping || 0, icon: 'local_shipping', color: 'bg-indigo-50 text-indigo-600', iconBg: 'bg-indigo-100' },
+    { label: 'Đang giao hàng', value: stats?.orderStats?.SHIPPING || 0, icon: 'local_shipping', color: 'bg-indigo-50 text-indigo-600', iconBg: 'bg-indigo-100' },
     { label: 'Cảnh báo tồn kho', value: (stats?.lowStockProducts?.length || 0) + (stats?.outOfStockProducts?.length || 0), icon: 'warning', color: 'bg-amber-50 text-amber-600', iconBg: 'bg-amber-100' },
   ];
 

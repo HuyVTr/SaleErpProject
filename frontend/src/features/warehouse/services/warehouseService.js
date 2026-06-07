@@ -1,45 +1,20 @@
-import { ordersApi, productsApi, reportsApi } from '../../../services/api';
+/**
+ * warehouseService.js
+ * 
+ * Kết nối với dữ liệu chung của hệ thống thông qua salesService.
+ * 
+ * MAPPING TRẠNG THÁI (đồng bộ với Sales):
+ *   Sales rawStatus  → Warehouse Delivery
+ *   'CONFIRMED'      → Kho tiếp nhận, chuẩn bị hàng
+ *   'SHIPPING'       → Đang giao hàng
+ *   'DELIVERED'      → Giao thành công
+ *   'CANCELLED'      → Đã hủy
+ *
+ * LƯU Ý: Không có trạng thái 'failed' trong Sales.
+ * Khi giao thất bại, lưu lý do vào note và rollback về 'CONFIRMED'.
+ */
 
-// ============================================================
-// MOCK DATA - Fallback khi chưa có Backend
-// ============================================================
-
-const MOCK_DELIVERY_ORDERS = [
-  { id: 'DH-001', customerName: 'Công ty TNHH ABC', customerPhone: '0901234567', orderDate: '2026-04-28', totalAmount: 45000000, items: [{ productName: 'Sản phẩm A', quantity: 100, unitPrice: 200000, total: 20000000 }, { productName: 'Sản phẩm B', quantity: 50, unitPrice: 500000, total: 25000000 }], deliveryStatus: 'pending', deliveryAddress: '123 Nguyễn Huệ, Q1, TP.HCM', notes: '', statusHistory: [{ status: 'confirmed', date: '2026-04-28 09:00', note: 'Đơn hàng được xác nhận bởi Sales' }] },
-  { id: 'DH-002', customerName: 'Cửa hàng XYZ', customerPhone: '0912345678', orderDate: '2026-04-27', totalAmount: 32000000, items: [{ productName: 'Sản phẩm C', quantity: 200, unitPrice: 160000, total: 32000000 }], deliveryStatus: 'shipping', deliveryAddress: '456 Lê Lợi, Q3, TP.HCM', notes: 'Giao trong giờ hành chính', statusHistory: [{ status: 'confirmed', date: '2026-04-27 10:00', note: 'Đơn hàng xác nhận' }, { status: 'shipping', date: '2026-04-28 08:30', note: 'Đã chuyển cho đơn vị vận chuyển' }] },
-  { id: 'DH-003', customerName: 'Siêu thị Mega', customerPhone: '0923456789', orderDate: '2026-04-25', totalAmount: 78500000, items: [{ productName: 'Sản phẩm A', quantity: 200, unitPrice: 200000, total: 40000000 }, { productName: 'Sản phẩm D', quantity: 110, unitPrice: 350000, total: 38500000 }], deliveryStatus: 'delivered', deliveryAddress: '789 Trần Hưng Đạo, Q5, TP.HCM', notes: '', statusHistory: [{ status: 'confirmed', date: '2026-04-25 14:00', note: 'Xác nhận đơn' }, { status: 'shipping', date: '2026-04-26 09:00', note: 'Bắt đầu giao hàng' }, { status: 'delivered', date: '2026-04-27 11:30', note: 'Giao thành công - KH đã ký nhận' }] },
-  { id: 'DH-004', customerName: 'Đại lý Phương Nam', customerPhone: '0934567890', orderDate: '2026-04-26', totalAmount: 15200000, items: [{ productName: 'Sản phẩm E', quantity: 80, unitPrice: 190000, total: 15200000 }], deliveryStatus: 'failed', deliveryAddress: '321 CMT8, Q10, TP.HCM', notes: '', statusHistory: [{ status: 'confirmed', date: '2026-04-26 11:00', note: 'Xác nhận' }, { status: 'shipping', date: '2026-04-27 08:00', note: 'Đang giao' }, { status: 'failed', date: '2026-04-27 15:00', note: 'Khách hàng không có mặt tại địa chỉ nhận hàng' }] },
-  { id: 'DH-005', customerName: 'Công ty Hoàng Gia', customerPhone: '0945678901', orderDate: '2026-04-29', totalAmount: 62000000, items: [{ productName: 'Sản phẩm B', quantity: 80, unitPrice: 500000, total: 40000000 }, { productName: 'Sản phẩm F', quantity: 100, unitPrice: 220000, total: 22000000 }], deliveryStatus: 'pending', deliveryAddress: '654 Hai Bà Trưng, Q1, TP.HCM', notes: 'Ưu tiên giao sớm', statusHistory: [{ status: 'confirmed', date: '2026-04-29 08:00', note: 'Đơn hàng từ báo giá QT-012' }] },
-  { id: 'DH-006', customerName: 'Shop Thành Đạt', customerPhone: '0956789012', orderDate: '2026-04-30', totalAmount: 28700000, items: [{ productName: 'Sản phẩm G', quantity: 70, unitPrice: 410000, total: 28700000 }], deliveryStatus: 'shipping', deliveryAddress: '987 Điện Biên Phủ, Bình Thạnh, TP.HCM', notes: '', statusHistory: [{ status: 'confirmed', date: '2026-04-30 13:00', note: 'Xác nhận đơn hàng' }, { status: 'shipping', date: '2026-05-01 07:00', note: 'Xuất kho, bắt đầu giao' }] },
-  { id: 'DH-007', customerName: 'Nhà phân phối Minh Anh', customerPhone: '0967890123', orderDate: '2026-05-01', totalAmount: 95000000, items: [{ productName: 'Sản phẩm A', quantity: 300, unitPrice: 200000, total: 60000000 }, { productName: 'Sản phẩm C', quantity: 200, unitPrice: 160000, total: 32000000 }, { productName: 'Sản phẩm E', quantity: 15, unitPrice: 200000, total: 3000000 }], deliveryStatus: 'delivered', deliveryAddress: '159 Võ Văn Tần, Q3, TP.HCM', notes: '', statusHistory: [{ status: 'confirmed', date: '2026-05-01 09:30', note: 'Xác nhận' }, { status: 'shipping', date: '2026-05-02 08:00', note: 'Giao hàng' }, { status: 'delivered', date: '2026-05-03 10:00', note: 'Giao thành công' }] },
-  { id: 'DH-008', customerName: 'Công ty Tân Tiến', customerPhone: '0978901234', orderDate: '2026-05-02', totalAmount: 41500000, items: [{ productName: 'Sản phẩm D', quantity: 50, unitPrice: 350000, total: 17500000 }, { productName: 'Sản phẩm F', quantity: 100, unitPrice: 220000, total: 22000000 }, { productName: 'Sản phẩm G', quantity: 5, unitPrice: 400000, total: 2000000 }], deliveryStatus: 'pending', deliveryAddress: '753 Lý Tự Trọng, Q1, TP.HCM', notes: 'Liên hệ trước khi giao', statusHistory: [{ status: 'confirmed', date: '2026-05-02 16:00', note: 'Đơn hàng mới từ Sales' }] },
-];
-
-const MOCK_PRODUCTS = [
-  { id: 1, name: 'Sản phẩm A - Bột giặt cao cấp', category: 'Chăm sóc gia đình', sku: 'SP-A001', unitPrice: 200000, stockQuantity: 450, minStock: 50, unit: 'Thùng' },
-  { id: 2, name: 'Sản phẩm B - Nước rửa chén', category: 'Chăm sóc gia đình', sku: 'SP-B002', unitPrice: 500000, stockQuantity: 8, minStock: 20, unit: 'Thùng' },
-  { id: 3, name: 'Sản phẩm C - Dầu gội đầu', category: 'Chăm sóc cá nhân', sku: 'SP-C003', unitPrice: 160000, stockQuantity: 320, minStock: 30, unit: 'Thùng' },
-  { id: 4, name: 'Sản phẩm D - Kem đánh răng', category: 'Chăm sóc cá nhân', sku: 'SP-D004', unitPrice: 350000, stockQuantity: 15, minStock: 25, unit: 'Thùng' },
-  { id: 5, name: 'Sản phẩm E - Nước lau sàn', category: 'Chăm sóc gia đình', sku: 'SP-E005', unitPrice: 190000, stockQuantity: 180, minStock: 40, unit: 'Thùng' },
-  { id: 6, name: 'Sản phẩm F - Sữa tắm dưỡng ẩm', category: 'Chăm sóc cá nhân', sku: 'SP-F006', unitPrice: 220000, stockQuantity: 5, minStock: 15, unit: 'Thùng' },
-  { id: 7, name: 'Sản phẩm G - Nước xả vải', category: 'Chăm sóc gia đình', sku: 'SP-G007', unitPrice: 410000, stockQuantity: 95, minStock: 20, unit: 'Thùng' },
-  { id: 8, name: 'Sản phẩm H - Xịt phòng', category: 'Tiện ích gia đình', sku: 'SP-H008', unitPrice: 85000, stockQuantity: 0, minStock: 30, unit: 'Hộp' },
-  { id: 9, name: 'Sản phẩm I - Giấy vệ sinh', category: 'Tiện ích gia đình', sku: 'SP-I009', unitPrice: 120000, stockQuantity: 600, minStock: 100, unit: 'Bịch' },
-  { id: 10, name: 'Sản phẩm K - Nước tẩy đa năng', category: 'Chăm sóc gia đình', sku: 'SP-K010', unitPrice: 175000, stockQuantity: 22, minStock: 25, unit: 'Thùng' },
-];
-
-const MOCK_CATEGORIES = [
-  { id: 1, name: 'Chăm sóc gia đình' },
-  { id: 2, name: 'Chăm sóc cá nhân' },
-  { id: 3, name: 'Tiện ích gia đình' },
-];
-
-const MOCK_IMPORT_HISTORY = [
-  { id: 'NK-001', date: '2026-05-04', supplier: 'NCC Việt Tiến', items: [{ productName: 'Sản phẩm A', quantity: 200 }], totalValue: 40000000, status: 'completed', createdBy: 'Nhân viên Kho 1' },
-  { id: 'NK-002', date: '2026-05-03', supplier: 'NCC Đại Phát', items: [{ productName: 'Sản phẩm C', quantity: 150 }], totalValue: 24000000, status: 'completed', createdBy: 'Nhân viên Kho 2' },
-  { id: 'NK-003', date: '2026-05-02', supplier: 'NCC Hoàng Long', items: [{ productName: 'Sản phẩm E', quantity: 100 }, { productName: 'Sản phẩm G', quantity: 50 }], totalValue: 39500000, status: 'completed', createdBy: 'Nhân viên Kho 1' },
-  { id: 'NK-004', date: '2026-05-01', supplier: 'NCC Việt Tiến', items: [{ productName: 'Sản phẩm B', quantity: 30 }], totalValue: 15000000, status: 'completed', createdBy: 'Nhân viên Kho 1' },
-];
+import dbData from '../../../../db.json';
 
 // ============================================================
 // FORMAT HELPERS
@@ -52,156 +27,461 @@ export const formatCurrency = (value) => {
 export const formatDate = (dateStr) => {
   if (!dateStr) return '';
   const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
   return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
 // ============================================================
-// SERVICE FUNCTIONS - Try API first, fallback to Mock
+// LOCAL STORAGE HELPERS (dùng chung với Sales)
 // ============================================================
+const getLocalOrders = () => {
+  try {
+    const raw = localStorage.getItem('added_orders');
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+};
 
+const saveLocalOrders = (orders) => {
+  localStorage.setItem('added_orders', JSON.stringify(orders));
+};
+
+const getLocalProducts = () => {
+  try {
+    const raw = localStorage.getItem('added_products');
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+};
+
+const saveLocalProducts = (products) => {
+  localStorage.setItem('added_products', JSON.stringify(products));
+};
+
+const getLocalCustomers = () => {
+  try {
+    const raw = localStorage.getItem('added_customers');
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+};
+
+const getLocalImportHistory = () => {
+  try {
+    const raw = localStorage.getItem('wh_import_history');
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+};
+
+const saveLocalImportHistory = (history) => {
+  localStorage.setItem('wh_import_history', JSON.stringify(history));
+};
+
+// ============================================================
+// DELIVERY NOTE HELPERS (lưu ghi chú giao hàng riêng)
+// ============================================================
+const getDeliveryNotes = () => {
+  try {
+    const raw = localStorage.getItem('wh_delivery_notes');
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+};
+
+const saveDeliveryNote = (orderID, note) => {
+  const notes = getDeliveryNotes();
+  notes[String(orderID)] = note;
+  localStorage.setItem('wh_delivery_notes', JSON.stringify(notes));
+};
+
+const getDeliveryStatusHistory = () => {
+  try {
+    const raw = localStorage.getItem('wh_delivery_status_history');
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+};
+
+const saveDeliveryStatusHistory = (orderID, history) => {
+  const all = getDeliveryStatusHistory();
+  all[String(orderID)] = history;
+  localStorage.setItem('wh_delivery_status_history', JSON.stringify(all));
+};
+
+// ============================================================
+// DATA HELPERS
+// ============================================================
+const getAllProducts = () => {
+  const local = getLocalProducts();
+  const apiData = dbData.products || [];
+  const deletedIds = new Set(
+    JSON.parse(localStorage.getItem('deleted_product_ids') || '[]').map(Number)
+  );
+  const productMap = new Map();
+  apiData.forEach(p => {
+    if (!deletedIds.has(Number(p.productID))) productMap.set(Number(p.productID), p);
+  });
+  local.forEach(p => productMap.set(Number(p.productID), p));
+  return Array.from(productMap.values());
+};
+
+const getAllCustomers = () => {
+  const local = getLocalCustomers();
+  const apiData = dbData.customers || [];
+  const deletedIds = new Set(
+    JSON.parse(localStorage.getItem('deleted_customer_ids') || '[]').map(Number)
+  );
+  const map = new Map();
+  apiData.forEach(c => {
+    if (!deletedIds.has(Number(c.customerID))) map.set(Number(c.customerID), c);
+  });
+  local.forEach(c => map.set(Number(c.customerID), c));
+  return Array.from(map.values());
+};
+
+const getCustomerName = (customerID) => {
+  const customers = getAllCustomers();
+  const c = customers.find(c => Number(c.customerID) === Number(customerID));
+  if (!c) return 'Khách hàng';
+  return c.companyName || `${c.lastName || ''} ${c.firstName || ''}`.trim() || 'Khách hàng';
+};
+
+const formatOrderID = (id) => {
+  if (!id) return 'N/A';
+  if (isNaN(id)) return String(id);
+  return `ORD-${String(id).padStart(3, '0')}`;
+};
+
+// Lấy items của đơn hàng
+const getOrderItems = (order) => {
+  const allOrderItems = [
+    ...JSON.parse(localStorage.getItem('added_order_items') || '[]'),
+    ...(dbData.orderItems || [])
+  ];
+  const allProducts = getAllProducts();
+  const productMap = {};
+  allProducts.forEach(p => { productMap[p.productID] = p; });
+
+  if (order.items && Array.isArray(order.items) && order.items.length > 0) {
+    return order.items.map(item => {
+      const product = productMap[item.productID];
+      return {
+        productID: item.productID,
+        productName: item.productName || item.name || 'Sản phẩm',
+        quantity: Number(item.quantity) || 1,
+        unitPrice: Number(item.unitPrice || item.price) || 0,
+        total: (Number(item.quantity) || 1) * (Number(item.unitPrice || item.price) || 0),
+        stockQuantity: product ? (product.stockQuantity || 0) : 0,
+        sku: product ? (product.productCode || product.sku || '') : '',
+      };
+    });
+  }
+
+  const itemsFromDB = allOrderItems.filter(item => Number(item.orderID) === Number(order.orderID));
+  return itemsFromDB.map(item => {
+    const product = productMap[item.productID];
+    return {
+      productID: item.productID,
+      productName: product ? product.productName : `Sản phẩm ID ${item.productID}`,
+      quantity: Number(item.quantity) || 1,
+      unitPrice: Number(item.unitPrice || item.price || (product ? product.salePrice : 0)) || 0,
+      total: (Number(item.quantity) || 1) * (Number(item.unitPrice || item.price || (product ? product.salePrice : 0)) || 0),
+      stockQuantity: product ? (product.stockQuantity || 0) : 0,
+      sku: product ? (product.productCode || product.sku || '') : '',
+    };
+  });
+};
+
+// ============================================================
+// STATUS HELPERS
+// ============================================================
+export const STATUS_LABELS = {
+  CONFIRMED: 'Chờ giao',
+  SHIPPING: 'Đang giao',
+  DELIVERED: 'Đã giao',
+  CANCELLED: 'Đã hủy',
+};
+
+export const DELIVERY_STATUSES = ['CONFIRMED', 'SHIPPING', 'DELIVERED'];
+
+// ============================================================
+// WAREHOUSE SERVICE
+// ============================================================
 const warehouseService = {
-  // --- DELIVERY ORDERS (3.1) ---
+
+  // ─── DELIVERY ORDERS (3.1) ──────────────────────────────────
+  /**
+   * Lấy danh sách đơn hàng cần giao (trạng thái CONFIRMED, SHIPPING, DELIVERED).
+   * Dữ liệu được lấy từ localStorage 'added_orders' và db.json (chung với Sales).
+   */
   getDeliveryOrders: async (filters = {}) => {
-    try {
-      const res = await ordersApi.getAll({ status: 'confirmed', ...filters });
-      return res.data;
-    } catch {
-      let data = [...MOCK_DELIVERY_ORDERS];
-      if (filters.deliveryStatus && filters.deliveryStatus !== 'all') {
-        data = data.filter(o => o.deliveryStatus === filters.deliveryStatus);
-      }
-      if (filters.search) {
-        const s = filters.search.toLowerCase();
-        data = data.filter(o => o.id.toLowerCase().includes(s) || o.customerName.toLowerCase().includes(s));
-      }
-      return data;
+    const localOrders = getLocalOrders();
+    const apiOrders = dbData.orders || [];
+    const localIds = new Set(localOrders.map(o => Number(o.orderID)));
+    let allOrders = [...localOrders, ...apiOrders.filter(o => !localIds.has(Number(o.orderID)))];
+
+    // Chỉ lấy đơn hàng kho cần xử lý (bỏ qua PENDING và CANCELLED)
+    allOrders = allOrders.filter(o =>
+      ['CONFIRMED', 'SHIPPING', 'DELIVERED'].includes(o.orderStatus)
+    );
+
+    const deliveryNotes = getDeliveryNotes();
+
+    // Map dữ liệu + ghép thông tin khách hàng
+    let result = allOrders.map(order => ({
+      ...order,
+      displayID: formatOrderID(order.orderID),
+      customerName: getCustomerName(order.customerID),
+      totalAmount: Number(order.totalAmount) * 1.1,
+      deliveryNote: deliveryNotes[String(order.orderID)] || '',
+      items: getOrderItems(order),
+    }));
+
+    // Lọc theo trạng thái
+    if (filters.status && filters.status !== 'all') {
+      result = result.filter(o => o.orderStatus === filters.status);
     }
+
+    // Lọc theo tìm kiếm
+    if (filters.search) {
+      const s = filters.search.toLowerCase();
+      result = result.filter(o =>
+        o.displayID.toLowerCase().includes(s) ||
+        o.customerName.toLowerCase().includes(s)
+      );
+    }
+
+    // Sắp xếp mới nhất lên đầu
+    result.sort((a, b) => new Date(b.orderDate || b.date || 0) - new Date(a.orderDate || a.date || 0));
+
+    return result;
   },
 
-  // --- ORDER DETAIL (3.2) ---
-  getOrderDetail: async (id) => {
-    try {
-      const res = await ordersApi.getById(id);
-      return res.data;
-    } catch {
-      return MOCK_DELIVERY_ORDERS.find(o => o.id === id) || null;
-    }
+  // ─── ORDER DETAIL (3.2) ─────────────────────────────────────
+  getOrderDetail: async (orderID) => {
+    const localOrders = getLocalOrders();
+    const apiOrders = dbData.orders || [];
+    const allOrders = [...localOrders, ...apiOrders];
+
+    const order = allOrders.find(o => String(o.orderID) === String(orderID) || formatOrderID(o.orderID) === String(orderID));
+    if (!order) return null;
+
+    const deliveryNotes = getDeliveryNotes();
+    const statusHistory = getDeliveryStatusHistory();
+
+    return {
+      ...order,
+      displayID: formatOrderID(order.orderID),
+      customerName: getCustomerName(order.customerID),
+      totalAmount: Number(order.totalAmount) * 1.1,
+      deliveryNote: deliveryNotes[String(order.orderID)] || '',
+      statusHistory: statusHistory[String(order.orderID)] || [
+        {
+          status: order.orderStatus,
+          date: new Date(order.orderDate || Date.now()).toLocaleString('vi-VN'),
+          note: 'Đơn hàng được xác nhận bởi bộ phận Kinh doanh',
+        }
+      ],
+      items: getOrderItems(order),
+    };
   },
 
-  // --- UPDATE DELIVERY STATUS (3.2) ---
-  updateDeliveryStatus: async (id, status, note = '') => {
-    try {
-      const res = await ordersApi.updateStatus(id, { status, note });
-      return res.data;
-    } catch {
-      const order = MOCK_DELIVERY_ORDERS.find(o => o.id === id);
-      if (order) {
-        order.deliveryStatus = status;
-        order.statusHistory.push({ status, date: new Date().toISOString().replace('T', ' ').substring(0, 16), note: note || `Cập nhật trạng thái: ${status}` });
+  // ─── UPDATE DELIVERY STATUS (3.2) ───────────────────────────
+  /**
+   * Cập nhật trạng thái giao hàng - Gọi vào localStorage chung với Sales.
+   * Khi giao thất bại (deliveryFailed=true): lưu ghi chú và giữ nguyên trạng thái SHIPPING
+   * hoặc rollback về CONFIRMED tùy quyết định nghiệp vụ.
+   */
+  updateDeliveryStatus: async (orderID, newStatus, note = '', deliveryFailed = false) => {
+    const localOrders = getLocalOrders();
+    let found = false;
+
+    const updatedLocal = localOrders.map(o => {
+      if (Number(o.orderID) === Number(orderID)) {
+        found = true;
+        return { ...o, orderStatus: newStatus };
       }
-      return order;
+      return o;
+    });
+
+    if (found) {
+      saveLocalOrders(updatedLocal);
+    } else {
+      // Đơn hàng từ db.json gốc, cần tạo bản override trong localStorage
+      const originalOrder = (dbData.orders || []).find(o => Number(o.orderID) === Number(orderID));
+      if (originalOrder) {
+        saveLocalOrders([{ ...originalOrder, orderStatus: newStatus }, ...localOrders]);
+      }
     }
+
+    // Lưu note giao hàng riêng
+    if (note) {
+      saveDeliveryNote(orderID, note);
+    }
+
+    // Cập nhật lịch sử trạng thái
+    const allHistory = getDeliveryStatusHistory();
+    const currentHistory = allHistory[String(orderID)] || [];
+    const newHistoryEntry = {
+      status: deliveryFailed ? 'FAILED' : newStatus,
+      date: new Date().toLocaleString('vi-VN'),
+      note: note || STATUS_LABELS[newStatus] || newStatus,
+    };
+    saveDeliveryStatusHistory(orderID, [...currentHistory, newHistoryEntry]);
+
+    return { success: true };
   },
 
-  // --- INVENTORY (3.3 + 3.4) ---
+  // Xử lý giao hàng thất bại (giữ SHIPPING, ghi chú lý do)
+  markDeliveryFailed: async (orderID, reason) => {
+    await warehouseService.updateDeliveryStatus(orderID, 'CONFIRMED', reason, true);
+
+    // Ghi vào lịch sử riêng với trạng thái FAILED
+    const allHistory = getDeliveryStatusHistory();
+    const currentHistory = allHistory[String(orderID)] || [];
+    const lastEntry = currentHistory[currentHistory.length - 1];
+    // Đã được xử lý trong updateDeliveryStatus, chỉ cần ghi đè entry cuối
+    if (lastEntry) {
+      lastEntry.status = 'FAILED';
+      lastEntry.note = `Giao thất bại: ${reason}`;
+    }
+    saveDeliveryStatusHistory(orderID, currentHistory);
+    return { success: true };
+  },
+
+  // ─── INVENTORY / PRODUCTS (3.3 + 3.4) ──────────────────────
   getInventory: async (filters = {}) => {
-    try {
-      const res = await productsApi.getAllProducts(filters);
-      return res.data;
-    } catch {
-      let data = [...MOCK_PRODUCTS];
-      if (filters.category) {
-        data = data.filter(p => p.category === filters.category);
-      }
-      if (filters.search) {
-        const s = filters.search.toLowerCase();
-        data = data.filter(p => p.name.toLowerCase().includes(s) || p.sku.toLowerCase().includes(s));
-      }
-      if (filters.stockStatus === 'low') {
-        data = data.filter(p => p.stockQuantity > 0 && p.stockQuantity <= p.minStock);
-      } else if (filters.stockStatus === 'out') {
-        data = data.filter(p => p.stockQuantity === 0);
-      }
-      return data;
+    let data = getAllProducts();
+
+    if (filters.category) {
+      data = data.filter(p => (p.categoryID === filters.category || p.category === filters.category));
     }
+    if (filters.search) {
+      const s = filters.search.toLowerCase();
+      data = data.filter(p =>
+        (p.productName || '').toLowerCase().includes(s) ||
+        (p.productCode || p.sku || '').toLowerCase().includes(s)
+      );
+    }
+    if (filters.stockStatus === 'low') {
+      data = data.filter(p => p.stockQuantity > 0 && p.stockQuantity <= (p.minStock || 10));
+    } else if (filters.stockStatus === 'out') {
+      data = data.filter(p => p.stockQuantity === 0 || !p.stockQuantity);
+    } else if (filters.stockStatus === 'ok') {
+      data = data.filter(p => p.stockQuantity > (p.minStock || 10));
+    }
+
+    return data.map(p => ({
+      ...p,
+      id: p.productID,
+      name: p.productName || 'Sản phẩm',
+      sku: p.productCode || p.sku || `SP-${p.productID}`,
+      category: p.categoryName || p.category || 'Chưa phân loại',
+      unitPrice: Number(p.salePrice || p.unitPrice) || 0,
+      stockQuantity: Number(p.stockQuantity) || 0,
+      minStock: Number(p.minStock) || 10,
+      unit: p.unit || 'Cái',
+    }));
   },
 
   getCategories: async () => {
-    try {
-      const res = await productsApi.getAllCategories();
-      return res.data;
-    } catch {
-      return MOCK_CATEGORIES;
-    }
+    return dbData.categories || [];
   },
 
-  updateStock: async (id, additionalQty) => {
-    try {
-      const product = await productsApi.getProductById(id);
-      const newQty = (product.data.stockQuantity || 0) + additionalQty;
-      const res = await productsApi.updateProduct(id, { stockQuantity: newQty });
-      return res.data;
-    } catch {
-      const product = MOCK_PRODUCTS.find(p => p.id === id);
-      if (product) { product.stockQuantity += additionalQty; }
-      return product;
+  // Cập nhật tồn kho sản phẩm (dùng chung localStorage với Admin)
+  updateStock: async (productID, additionalQty) => {
+    const localProducts = getLocalProducts();
+    let found = false;
+
+    const updatedLocal = localProducts.map(p => {
+      if (Number(p.productID) === Number(productID)) {
+        found = true;
+        return { ...p, stockQuantity: (Number(p.stockQuantity) || 0) + additionalQty };
+      }
+      return p;
+    });
+
+    if (found) {
+      saveLocalProducts(updatedLocal);
+    } else {
+      const originalProduct = (dbData.products || []).find(p => Number(p.productID) === Number(productID));
+      if (originalProduct) {
+        const newProduct = {
+          ...originalProduct,
+          stockQuantity: (Number(originalProduct.stockQuantity) || 0) + additionalQty,
+        };
+        saveLocalProducts([newProduct, ...localProducts]);
+      }
     }
+
+    return { success: true };
   },
 
-  // --- IMPORT HISTORY (3.3) ---
+  // ─── IMPORT HISTORY (3.3) ───────────────────────────────────
   getImportHistory: async () => {
-    return MOCK_IMPORT_HISTORY;
+    return getLocalImportHistory();
   },
 
   createImportReceipt: async (receipt) => {
+    const history = getLocalImportHistory();
     const newReceipt = {
-      id: `NK-${String(MOCK_IMPORT_HISTORY.length + 1).padStart(3, '0')}`,
+      id: `NK-${String(history.length + 1).padStart(3, '0')}`,
       date: new Date().toISOString().substring(0, 10),
       ...receipt,
       status: 'completed',
       createdBy: 'Nhân viên Kho',
     };
-    MOCK_IMPORT_HISTORY.unshift(newReceipt);
-    // Update stock for each item
+
+    saveLocalImportHistory([newReceipt, ...history]);
+
+    // Cộng dồn tồn kho
     for (const item of receipt.items) {
-      const product = MOCK_PRODUCTS.find(p => p.name === item.productName || p.id === item.productId);
-      if (product) { product.stockQuantity += item.quantity; }
+      if (item.productId || item.productID) {
+        await warehouseService.updateStock(item.productId || item.productID, Number(item.quantity) || 0);
+      }
     }
+
     return newReceipt;
   },
 
-  // --- DASHBOARD STATS (3.4 + 3.5) ---
+  // ─── DASHBOARD STATS (3.4 + 3.5) ───────────────────────────
   getDashboardStats: async () => {
-    try {
-      const [productsRes, ordersRes] = await Promise.all([
-        productsApi.getAllProducts(),
-        ordersApi.getAll(),
-      ]);
-      return { products: productsRes.data, orders: ordersRes.data };
-    } catch {
-      const products = MOCK_PRODUCTS;
-      const orders = MOCK_DELIVERY_ORDERS;
-      const totalProducts = products.length;
-      const totalStockValue = products.reduce((s, p) => s + p.stockQuantity * p.unitPrice, 0);
-      const lowStockProducts = products.filter(p => p.stockQuantity > 0 && p.stockQuantity <= p.minStock);
-      const outOfStockProducts = products.filter(p => p.stockQuantity === 0);
-      const orderStats = {
-        pending: orders.filter(o => o.deliveryStatus === 'pending').length,
-        shipping: orders.filter(o => o.deliveryStatus === 'shipping').length,
-        delivered: orders.filter(o => o.deliveryStatus === 'delivered').length,
-        failed: orders.filter(o => o.deliveryStatus === 'failed').length,
-      };
-      return { totalProducts, totalStockValue, lowStockProducts, outOfStockProducts, orderStats, products, orders };
-    }
-  },
+    const localOrders = getLocalOrders();
+    const apiOrders = dbData.orders || [];
+    const localIds = new Set(localOrders.map(o => Number(o.orderID)));
+    const allOrders = [...localOrders, ...apiOrders.filter(o => !localIds.has(Number(o.orderID)))];
 
-  getTopProducts: async () => {
-    try {
-      const res = await reportsApi.getTopProducts();
-      return res.data;
-    } catch {
-      return MOCK_PRODUCTS.sort((a, b) => b.stockQuantity - a.stockQuantity).slice(0, 5);
-    }
+    const products = getAllProducts().map(p => ({
+      ...p,
+      id: p.productID,
+      name: p.productName || 'Sản phẩm',
+      sku: p.productCode || p.sku || `SP-${p.productID}`,
+      category: p.categoryName || p.category || 'Chưa phân loại',
+      unitPrice: Number(p.salePrice || p.unitPrice) || 0,
+      stockQuantity: Number(p.stockQuantity) || 0,
+      minStock: Number(p.minStock) || 10,
+      unit: p.unit || 'Cái',
+    }));
+
+    const deliveryOrders = allOrders.filter(o =>
+      ['CONFIRMED', 'SHIPPING', 'DELIVERED'].includes(o.orderStatus)
+    );
+
+    const totalProducts = products.length;
+    const totalStockValue = products.reduce((s, p) => s + p.stockQuantity * p.unitPrice, 0);
+    const lowStockProducts = products.filter(p => p.stockQuantity > 0 && p.stockQuantity <= p.minStock);
+    const outOfStockProducts = products.filter(p => p.stockQuantity === 0);
+
+    const orderStats = {
+      CONFIRMED: deliveryOrders.filter(o => o.orderStatus === 'CONFIRMED').length,
+      SHIPPING: deliveryOrders.filter(o => o.orderStatus === 'SHIPPING').length,
+      DELIVERED: deliveryOrders.filter(o => o.orderStatus === 'DELIVERED').length,
+    };
+
+    return {
+      totalProducts,
+      totalStockValue,
+      lowStockProducts,
+      outOfStockProducts,
+      orderStats,
+      products,
+      orders: deliveryOrders,
+    };
   },
 };
 
