@@ -1,0 +1,10 @@
+{
+  "/api/reports/revenue": "/revenue_report",
+  "/api/reports/weekly": "/revenue_weekly",
+  "/api/reports/monthly": "/revenue_monthly",
+  "/api/reports/yearly": "/revenue_yearly",
+  "/api/invoices": "/invoices",
+  "/api/debts": "/debt_report",
+  "/api/details/*": "/details/$1",
+  "/api/details": "/details"
+}

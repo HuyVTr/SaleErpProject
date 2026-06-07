@@ -1,0 +1,1764 @@
+/* Warehouse Pro Max Design System */
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  /* Spacing System (8px Grid) */
+  --space-xs: 0.25rem;
+  /* 4px */
+  --space-sm: 0.5rem;
+  /* 8px */
+  --space-md: 0.75rem;
+  /* 12px */
+  --space-base: 1rem;
+  /* 16px */
+  --space-lg: 1.5rem;
+  /* 24px */
+  --space-xl: 2rem;
+  /* 32px */
+  --space-xxl: 3rem;
+  /* 48px */
+
+  /* Core Palette */
+  --wh-primary: #00288E;
+  --wh-primary-dim: #001D66;
+  --wh-accent: #3B82F6;
+  --wh-surface: #F8FAFC;
+  --wh-surface-card: #FFFFFF;
+  --wh-surface-border: #F1F5F9;
+
+  /* Text Colors */
+  --wh-text-main: #0F172A;
+  --wh-text-muted: #475569;
+  --wh-text-light: #94A3B8;
+
+  /* Semantic */
+  --wh-success: #10B981;
+  --wh-warning: #F59E0B;
+  --wh-error: #EF4444;
+
+  /* Shadows - Converted to rem */
+  --wh-shadow-sm: 0 0.0625rem 0.1875rem 0 rgb(0 0 0 / 0.1), 0 0.0625rem 0.125rem -0.0625rem rgb(0 0 0 / 0.1);
+  --wh-shadow-md: 0 0.25rem 0.375rem -0.0625rem rgb(0 0 0 / 0.1), 0 0.125rem 0.25rem -0.125rem rgb(0 0 0 / 0.1);
+  --wh-shadow-float: 0 1.25rem 1.5625rem -0.3125rem rgb(0 0 0 / 0.1), 0 0.5rem 0.625rem -0.375rem rgb(0 0 0 / 0.1);
+  --wh-shadow-elevated: 0 0.625rem 0.9375rem -0.1875rem rgb(0 0 0 / 0.08), 0 0.25rem 0.375rem -0.25rem rgb(0 0 0 / 0.08);
+}
+
+.warehouse-module-wrapper {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-feature-settings: "cv02", "cv03", "cv04", "tnum";
+  /* Kích hoạt Tabular Numbers cho kế toán */
+  color: var(--wh-text-main);
+  background-color: var(--wh-surface);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  touch-action: manipulation;
+  overscroll-behavior-y: none;
+}
+
+.wh-sidebar-bg {
+  background-color: #00288E !important;
+}
+
+/* Sidebar Styles */
+.wh-sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.wh-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 18rem;
+  background: linear-gradient(135deg, #00288E 0%, #001D66 100%);
+  z-index: 110;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.wh-sidebar.open {
+  transform: translateX(0);
+}
+
+@media (min-width: 1280px) {
+  .wh-sidebar {
+    position: sticky;
+    transform: translateX(0);
+    z-index: 20;
+  }
+}
+
+.wh-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+  font-weight: 600;
+  position: relative;
+  overflow: hidden;
+}
+
+.wh-nav-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  transform: translateX(4px);
+}
+
+.wh-nav-item.active {
+  background: white;
+  color: #00288E;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.wh-nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #3B82F6;
+  border-radius: 0 2px 2px 0;
+}
+
+.wh-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.wh-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.wh-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.wh-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.wh-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Typography Scale */
+.text-display-lg {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+.text-display-md {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+.text-display-sm {
+  font-size: 2.0rem;
+  line-height: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.wh-summary-value {
+  /* Responsive scaling: shrinks as screen gets smaller, cap at 2rem */
+  font-size: clamp(1.1rem, 2.8vw, 2rem);
+  line-height: 1.2;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+  /* We want to show as much as possible, or scale down */
+  display: block;
+  width: 100%;
+}
+
+/* Extra optimization for very large amounts on large desktops */
+@media (min-width: 1536px) {
+  .wh-summary-value {
+    font-size: 2rem;
+  }
+}
+
+/* Shrink even more for small tablets where cards are side-by-side but screen is narrow */
+@media (min-width: 640px) and (max-width: 1024px) {
+  .wh-summary-value {
+    font-size: clamp(1rem, 2.2vw, 1.5rem);
+  }
+}
+
+.text-heading-sm {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 700;
+}
+
+.text-body-base {
+  font-size: 1.0625rem;
+  line-height: 1.6rem;
+}
+
+/* ~17px for extra clarity */
+.text-body-sm {
+  font-size: 0.9375rem;
+  line-height: 1.4rem;
+}
+
+/* ~15px */
+.text-label-xs {
+  font-size: 0.8125rem;
+  line-height: 1.1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05rem;
+}
+
+/* ~13px */
+
+/* Component Base Styles */
+.wh-card {
+  background: var(--wh-surface-card);
+  border: 0.0625rem solid #cbd5e1;
+  /* Slate-300 */
+  border-radius: 1.5rem;
+  box-shadow: var(--wh-shadow-elevated);
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.wh-card:hover {
+  box-shadow: var(--wh-shadow-float);
+  transform: translateY(-0.5rem);
+  border-color: var(--wh-accent);
+}
+
+.wh-table-container {
+  overflow: hidden;
+  border-radius: 0.75rem;
+  border: 0.0625rem solid var(--wh-surface-border);
+  background: white;
+}
+
+/* Professional Scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 0.375rem;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--wh-surface-border);
+  border-radius: 0.625rem;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(0.625rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-up {
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+.animate-zoom-in {
+  animation: zoomIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes bounce-subtle {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 2s ease-in-out infinite;
+}
+
+/* Button & Interactivity */
+.wh-btn-primary {
+  background: var(--wh-primary);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 700;
+  transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.wh-btn-primary:hover {
+  background: var(--wh-accent);
+  box-shadow: 0 0.25rem 0.75rem rgba(37, 99, 235, 0.2);
+}
+
+.wh-btn-secondary {
+  background: transparent;
+  color: var(--wh-primary);
+  border: 1px solid rgba(0, 40, 142, 0.18);
+  border-radius: 999px;
+  padding: 0.75rem 1.25rem;
+  font-weight: 700;
+  transition: background-color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.wh-btn-secondary:hover {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+.wh-input,
+.wh-select {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid var(--wh-surface-border);
+  background: white;
+  color: var(--wh-text-main);
+  font-size: 0.95rem;
+  line-height: 1.5rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.wh-input:focus,
+.wh-select:focus {
+  outline: none;
+  border-color: var(--wh-primary);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+}
+
+.wh-filter-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.wh-filter-tab {
+  border: none;
+  background: rgba(148, 163, 184, 0.08);
+  color: var(--wh-text-muted);
+  padding: 0.75rem 1rem;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.wh-filter-tab:hover {
+  background: rgba(59, 130, 246, 0.14);
+  color: var(--wh-primary);
+}
+
+.wh-filter-tab.active {
+  background: var(--wh-primary);
+  color: white;
+  box-shadow: 0 10px 30px rgba(2, 85, 204, 0.12);
+}
+
+.wh-stat-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(248,250,252,0.96));
+  border: 1px solid var(--wh-surface-border);
+  border-radius: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  min-height: 11rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: var(--wh-shadow-sm);
+}
+
+.wh-stat-card p:first-child {
+  color: var(--wh-text-muted);
+}
+
+.wh-table {
+  width: 100%;
+  min-width: 780px;
+  border-collapse: collapse;
+}
+
+.wh-table th,
+.wh-table td {
+  padding: 0.95rem 1rem;
+  border-bottom: 1px solid #E2E8F0;
+  vertical-align: middle;
+}
+
+.wh-table th {
+  text-align: left;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #64748B;
+  background: #F8FAFC;
+  border-bottom: 1px solid #CBD5E1;
+}
+
+.wh-table tbody tr {
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  cursor: default;
+}
+
+.wh-table tbody tr:hover {
+  background: rgba(59, 130, 246, 0.06);
+}
+
+.wh-table tbody tr td:first-child {
+  padding-left: 1.25rem;
+}
+
+.wh-table tbody tr td:last-child {
+  white-space: nowrap;
+}
+
+.wh-table tfoot tr {
+  border-top: 2px solid #CBD5E1;
+  background: #F8FAFC;
+}
+
+.wh-table tfoot td {
+  font-weight: 700;
+  color: var(--wh-text-main);
+}
+
+.wh-table .font-extrabold {
+  letter-spacing: -0.01em;
+}
+
+.wh-label {
+  display: inline-block;
+  margin-bottom: 0.55rem;
+  color: var(--wh-text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.wh-skeleton {
+  width: 100%;
+  min-height: 3rem;
+  background: linear-gradient(90deg, rgba(226,232,240,0.9) 0%, rgba(241,245,249,1) 50%, rgba(226,232,240,0.9) 100%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-loading {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.wh-badge-dot {
+  display: inline-flex;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  margin-right: 0.45rem;
+  flex-shrink: 0;
+}
+
+.wh-badge.in-stock {
+  color: #065F46;
+  background: rgba(16, 185, 129, 0.12);
+}
+
+.wh-badge.low-stock {
+  color: #B45309;
+  background: rgba(245, 158, 11, 0.14);
+}
+
+.wh-badge.out-of-stock {
+  color: #991B1B;
+  background: rgba(239, 68, 68, 0.14);
+}
+
+.wh-badge.in-stock .wh-badge-dot {
+  background: #10B981;
+}
+
+.wh-badge.low-stock .wh-badge-dot {
+  background: #F59E0B;
+}
+
+.wh-badge.out-of-stock .wh-badge-dot {
+  background: #EF4444;
+}
+
+.wh-badge.pending {
+  color: #0F172A;
+  background: rgba(148, 163, 184, 0.18);
+}
+
+.wh-badge.shipping {
+  color: #1D4ED8;
+  background: rgba(59, 130, 246, 0.18);
+}
+
+.wh-badge.delivered {
+  color: #065F46;
+  background: rgba(16, 185, 129, 0.16);
+}
+
+.wh-badge.failed {
+  color: #B91C1C;
+  background: rgba(239, 68, 68, 0.14);
+}
+
+.wh-badge.pending .wh-badge-dot {
+  background: #64748B;
+}
+
+.wh-badge.shipping .wh-badge-dot {
+  background: #2563EB;
+}
+
+.wh-badge.delivered .wh-badge-dot {
+  background: #10B981;
+}
+
+.wh-badge.failed .wh-badge-dot {
+  background: #EF4444;
+}
+
+.wh-animate-scale-in {
+  animation: zoomIn 0.3s ease-out forwards;
+}
+
+/* Utility Classes */
+.rounded-2\.5xl {
+  border-radius: 1.25rem;
+}
+
+.rounded-2xl {
+  border-radius: 1rem;
+}
+
+/* Responsive System */
+@media (max-width: 1024px) {
+  :root {
+    --space-xl: 1.5rem;
+    --space-xxl: 2rem;
+  }
+
+  .text-display-lg {
+    font-size: 1.75rem;
+    line-height: 2rem;
+  }
+
+  .text-display-md {
+    font-size: 1.5rem;
+    line-height: 1.75rem;
+  }
+
+  .text-display-sm {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+}
+
+/* scaling for Large Desktop screens to prevent vertical overflow (1441px - 1610px) */
+@media (min-width: 1441px) and (max-width: 1610px) {
+
+  #warehouse-dashboard-content,
+  .warehouse-debt-container {
+    zoom: 0.92;
+  }
+}
+
+
+/* Auto-scaling for Small Desktop / Laptop screens (Prevent Table & Card Breakage) */
+@media (min-width: 1025px) and (max-width: 1440px) {
+
+  .wh-responsive-table,
+  .wh-summary-grid {
+    zoom: 0.85;
+    /* Proportional scaling for the whole block */
+  }
+
+  .wh-summary-value {
+    font-size: clamp(0.9rem, 1.8vw, 1.5rem) !important;
+    /* Back to same floor as Debt */
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: calc(100% - 50px) !important;
+  }
+
+  .wh-card.group {
+    padding: 1rem !important;
+    /* Slightly more breathable than 0.75rem */
+  }
+
+  .wh-summary-grid .wh-card h2 {
+    font-size: 1.1rem !important;
+    /* Larger than 0.85rem, closer to Debt style */
+  }
+
+  .wh-responsive-table th,
+  .wh-responsive-table td {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* Force ID badges to stay on one line no matter what */
+  .wh-responsive-table td[data-label="Chứng từ"] span,
+  .wh-responsive-table td[data-label="Mã hóa đơn"] span {
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    min-width: max-content !important;
+    /* Better cross-browser support than fit-content */
+    letter-spacing: -0.02em;
+  }
+}
+
+/* iPad & Tablet Optimization (641px - 1024px) */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .wh-responsive-table {
+    zoom: 0.8;
+    /* More aggressive shrink for tablet */
+  }
+
+  .wh-responsive-table th,
+  .wh-responsive-table td {
+    padding-left: 0.4rem !important;
+    padding-right: 0.4rem !important;
+    font-size: 0.75rem !important;
+    white-space: nowrap !important;
+  }
+
+  .wh-responsive-table th {
+    font-size: 7px !important;
+    padding: 0.6rem 0.35rem !important;
+  }
+
+  .wh-responsive-table td[data-label="Khách hàng"],
+  .wh-responsive-table td[data-label="Khách hàng / Mã hóa đơn"],
+  .wh-responsive-table td[data-label="Đối tác"] {
+    min-width: 130px !important;
+    /* Slightly smaller min-width */
+    white-space: normal !important;
+    font-size: 0.75rem !important;
+    /* Allow name to be slightly larger but shrinkable */
+  }
+
+  .wh-responsive-table td[data-label="Trạng thái"],
+  .wh-responsive-table td[data-label="Tự động"] {
+    display: table-cell !important;
+    min-width: 55px !important;
+    padding-right: 0.25rem !important;
+  }
+
+  .wh-responsive-table td[data-label="SỐ TIỀN CÒN NỢ"],
+  .wh-responsive-table td[data-label="Giá trị"] {
+    min-width: 100px !important;
+  }
+
+  .wh-responsive-table td[data-label="Quá hạn"] {
+    min-width: 110px !important;
+  }
+
+  .wh-responsive-table td[data-label="Chứng từ"] {
+    min-width: 90px !important;
+    /* Guaranteed space for INV-XXX */
+  }
+
+  .wh-responsive-table td[data-label="Lần nhắc cuối"] {
+    min-width: 90px !important;
+  }
+
+  .wh-responsive-table td[data-label="Thao tác"] {
+    min-width: 75px !important;
+  }
+
+  .wh-responsive-table td[data-label="Thao tác"] button {
+    padding: 0.3rem 0.75rem !important;
+    font-size: 10px !important;
+    height: 32px !important;
+  }
+
+  /* iPad Layout refinements for Payment Stats and Tabs */
+  .wh-payment-header {
+    flex-wrap: wrap;
+    gap: var(--space-md);
+  }
+}
+
+/* Card view only for very narrow screens (Portrait mobile) */
+@media (max-width: 640px) {
+
+  /* Smart Card Layout for Mobile */
+  .wh-responsive-table {
+    background: transparent !important;
+    border: none !important;
+  }
+}
+
+/* --- Premium Selection Effect (Universal) --- */
+.wh-selected-row {
+  background: rgba(0, 40, 142, 0.08) !important;
+  box-shadow: 0 10px 30px -5px rgba(0, 40, 142, 0.15) !important;
+  transform: none !important;
+  z-index: 10;
+  position: relative;
+  transition: all 0.3s ease !important;
+}
+
+/* Accent for Desktop (First Cell) */
+.wh-selected-row td:first-child {
+  border-left: 4px solid var(--wh-primary) !important;
+}
+
+.wh-selected-row td {
+  color: var(--wh-text-main) !important;
+}
+
+.wh-selected-row td[data-label="Mã hóa đơn"] p:first-child,
+.wh-selected-row td[data-label="Phiếu thu"] p:first-child,
+.wh-selected-row td[data-label="Chứng từ"] span:first-child,
+.wh-selected-row td[data-label="Khách hàng / Mã hóa đơn"] p:first-child {
+  background: transparent !important;
+  border-color: transparent !important;
+  color: var(--wh-primary) !important;
+}
+
+/* Mobile Card View specific selection */
+@media (max-width: 640px) {
+  .wh-responsive-table tbody tr.wh-selected-row {
+    background: #ffffff !important;
+    /* Use inset shadow to keep the highlight INSIDE the card boundaries */
+    box-shadow: inset 0 0 0 2px var(--wh-primary), 0 15px 30px -10px rgba(0, 40, 142, 0.2) !important;
+    transform: none !important;
+    border-color: transparent !important;
+  }
+
+  .wh-selected-row td:first-child {
+    border-left: none !important;
+  }
+}
+
+/* Remove bouncy active effect as requested */
+.wh-responsive-table tbody tr:active {
+  transform: none !important;
+}
+
+/* Ensure inner elements don't cover the selection highlight */
+.wh-selected-row td {
+  background: transparent !important;
+  /* Add slight horizontal margin to prevent internal borders from sticking out */
+  margin-left: 2px !important;
+  margin-right: 2px !important;
+}
+
+.wh-selected-row .material-symbols-outlined {
+  color: var(--wh-primary) !important;
+}
+
+/* Portrait mobile refinements */
+@media (max-width: 640px) {
+
+  .wh-responsive-table thead {
+    display: none;
+  }
+
+  .wh-responsive-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0.5rem 0;
+  }
+
+  /* Specialized Product List Card UI - Pro Max Editio  /* ==========================================================
+     CARD 1: MAIN INVOICE LIST (DASHBOARD) - PRO MAX 2.0
+     ========================================================== */
+  .wh-responsive-table tbody tr {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    flex-direction: row !important;
+    background: #ffffff;
+    border: 1px solid #f1f5f9 !important;
+    border-radius: 2rem !important;
+    padding: 0 !important;
+    margin-bottom: 1.5rem !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.02), 0 4px 6px -4px rgba(0, 0, 0, 0.02) !important;
+    position: relative;
+    overflow: visible !important;
+    /* Quan trọng: Cho phép dropdown hiển thị ra ngoài */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .wh-responsive-table tbody tr:active {
+    transform: scale(0.98);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  .wh-responsive-table tbody td {
+    display: block !important;
+    width: 100%;
+    padding: 0 !important;
+    border: none !important;
+    text-align: left !important;
+  }
+
+  /* Upper Section: ID Header — Badge Style (matches Debt card) */
+  .wh-responsive-table tbody td[data-label="Mã hóa đơn"],
+  .wh-responsive-table tbody td[data-label="Phiếu thu"],
+  .wh-responsive-table tbody td[data-label="Chứng từ"],
+  .wh-responsive-table tbody td[data-label="Quá hạn"] {
+    order: 1 !important;
+    padding: 1.25rem 1.75rem 0.75rem !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px;
+    flex-wrap: nowrap;
+    border-bottom: 1px dashed #f1f5f9 !important;
+    /* Line 1 separator */
+    background: #ffffff;
+  }
+
+  .wh-responsive-table tbody td[data-label="Quá hạn"] {
+    position: absolute !important;
+    top: 0;
+    right: 0;
+    width: auto !important;
+    border-bottom: none !important;
+    background: transparent !important;
+    z-index: 10;
+  }
+
+  .wh-responsive-table tbody td[data-label="Quá hạn"]::before {
+    display: none !important;
+    /* Hide label in Row 1 to save space */
+  }
+
+  .wh-responsive-table tbody td[data-label="Quá hạn"]>div {
+    flex-direction: row !important;
+    gap: 8px !important;
+    align-items: center !important;
+  }
+
+  .wh-responsive-table tbody td[data-label="Quá hạn"] span.text-sm {
+    font-size: 11px !important;
+    font-weight: 900 !important;
+  }
+
+  /* Label tiền tố — "Mã hóa đơn:" / "Mã phiếu thu:" */
+  .wh-responsive-table tbody td[data-label="Mã hóa đơn"]::before {
+    display: block !important;
+    content: "Mã hóa đơn:";
+    font-size: 11px !important;
+    font-weight: 700;
+    color: #2b3437;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .wh-responsive-table tbody td[data-label="Phiếu thu"]::before {
+    display: block !important;
+    content: "Mã phiếu thu:";
+    font-size: 11px !important;
+    font-weight: 700;
+    color: #2b3437;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .wh-responsive-table tbody td[data-label="Chứng từ"]::before {
+    display: block !important;
+    content: "Chứng từ:";
+    font-size: 11px !important;
+    font-weight: 700;
+    color: #2b3437;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* Xóa ::before cũ trên p/span con để không bị trùng */
+  .wh-responsive-table tbody td[data-label="Mã hóa đơn"] p:first-child::before,
+  .wh-responsive-table tbody td[data-label="Phiếu thu"] span:first-child::before {
+    content: "" !important;
+    display: none !important;
+  }
+
+  .wh-responsive-table tbody td[data-label="Chứng từ"] span:first-child::before {
+    display: none !important;
+  }
+
+  /* Badge pill style cho mã ID — giống Debt card */
+  .wh-responsive-table tbody td[data-label="Mã hóa đơn"] p:first-child,
+  .wh-responsive-table tbody td[data-label="Phiếu thu"] span:first-child,
+  .wh-responsive-table tbody td[data-label="Chứng từ"] span:first-child {
+    font-size: 10px !important;
+    font-weight: 900 !important;
+    color: var(--wh-primary) !important;
+    background: #eff6ff;
+    border: 1px solid #dbeafe;
+    border-radius: 9999px !important;
+    padding: 3px 12px !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase !important;
+    white-space: nowrap;
+    line-height: 1.6;
+  }
+
+  /* Ẩn thông tin phụ (mã đơn hàng, người xác nhận) trên header row mobile */
+  .wh-responsive-table tbody td[data-label="Mã hóa đơn"] p:last-child,
+  .wh-responsive-table tbody td[data-label="Phiếu thu"] span:last-child {
+    display: none !important;
+  }
+
+  .wh-responsive-table tbody td[data-label="Trạng thái"],
+  .wh-responsive-table tbody td[data-label="Phương thức"] {
+    order: 1 !important;
+    /* Back to top row */
+    position: absolute !important;
+    top: 1.25rem;
+    right: 1.75rem;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    width: auto !important;
+    margin: 0 !important;
+    z-index: 5;
+  }
+
+  .wh-responsive-table tbody td[data-label="Trạng thái"]::before,
+  .wh-responsive-table tbody td[data-label="Phương thức"]::before {
+    display: none !important;
+    /* Hide labels for absolute positioning to save space */
+  }
+
+  .wh-responsive-table tbody td[data-label="Trạng thái"]::before {
+    content: "TRẠNG THÁI:";
+  }
+
+  .wh-responsive-table tbody td[data-label="Phương thức"]::before {
+    content: "PHƯƠNG THỨC:";
+  }
+
+  .wh-responsive-table tbody td[data-label="Mô tả"]::before,
+  .wh-responsive-table tbody td[data-label="Tên sản phẩm"]::before {
+    content: "SẢN PHẨM / DỊCH VỤ:";
+  }
+
+  .wh-responsive-table tbody td[data-label="Số lượng"]::before {
+    content: "SỐ LƯỢNG:";
+  }
+
+  .wh-responsive-table tbody td[data-label="Đơn giá"]::before {
+    content: "ĐƠN GIÁ:";
+  }
+
+  .wh-responsive-table tbody td[data-label="Thành tiền"]::before {
+    content: "THÀNH TIỀN:";
+  }
+
+  .wh-responsive-table tbody td[data-label="Xóa"]::before {
+    content: "THAO TÁC:";
+  }
+
+  /* Hide redundant date/time rows as they are now inside customer rows */
+  .wh-responsive-table tbody td[data-label="Ngày thu"],
+  .wh-responsive-table tbody td[data-label="Ngày lập"] {
+    display: none !important;
+  }
+
+  /* Middle Section: Customer */
+  .wh-responsive-table tbody td[data-label="Khách hàng"],
+  .wh-responsive-table tbody td[data-label="Khách hàng / Mã hóa đơn"],
+  .wh-responsive-table tbody td[data-label="Đối tác"] {
+    order: 2;
+    padding: 1.25rem 1.5rem !important;
+    /* Slightly reduced horizontal padding from 1.75rem */
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px;
+    background: #ffffff;
+    border-bottom: 1px dashed #f1f5f9 !important;
+    /* New line separator before Price footer */
+  }
+
+  .wh-responsive-table tbody td[data-label="Đối tác"]::before {
+    display: block !important;
+    content: "ĐỐI TÁC";
+    font-size: 9px;
+    font-weight: 900;
+    color: #2b3437;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+  }
+
+  /* Reset redundant internal labels */
+  .wh-responsive-table tbody td[data-label="Đối tác"] div>div>span:first-child::before {
+    display: none !important;
+  }
+
+  /* Target only the name span, not sub-info spans */
+  .wh-responsive-table tbody td[data-label="Đối tác"] .text-body-base {
+    font-size: 1.1rem !important;
+    font-weight: 900 !important;
+    color: #2b3437 !important;
+    display: block !important;
+  }
+
+  .wh-responsive-table tbody td[data-label="Đối tác"] .text-\[10px\] {
+    font-size: 11px !important;
+    color: #2b3437 !important;
+  }
+
+  /* Row 3: Information & Reminders Group (Horizontal Row) */
+  .wh-responsive-table tbody td[data-label="Lần nhắc cuối"] {
+    order: 3 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    padding: 0.75rem 0 0.75rem 1.75rem !important;
+    background: #ffffff;
+    border: none !important;
+    width: 75% !important;
+    min-height: 0 !important;
+    /* Safe flex reset for Firefox */
+    border-top: 1px dashed #f1f5f9 !important;
+    border-bottom: 1px dashed #f1f5f9 !important;
+  }
+
+  .wh-responsive-table tbody td[data-label="Lần nhắc cuối"]::before {
+    content: "Lần nhắc cuối:" !important;
+    display: block !important;
+    font-size: 10px;
+    font-weight: 800;
+    color: #2b3437;
+    margin-right: 8px;
+    margin-bottom: 0 !important;
+    letter-spacing: 0;
+  }
+
+  .wh-responsive-table tbody td[data-label="Tự động"] {
+    order: 3 !important;
+    position: static !important;
+    width: 25% !important;
+    padding: 0.75rem 1.75rem 0.75rem 0 !important;
+    background: #ffffff !important;
+    z-index: 10;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 8px;
+    border-top: 1px dashed #f1f5f9 !important;
+    border-bottom: 1px dashed #f1f5f9 !important;
+  }
+
+  .wh-responsive-table tbody td[data-label="Tự động"]::before {
+    content: "AUTO" !important;
+    font-size: 8px;
+    font-weight: 900;
+    color: #2b3437;
+    margin-bottom: 0 !important;
+  }
+
+  /* Lower Section: Price Footer */
+  .wh-responsive-table tbody td[data-label="SỐ TIỀN CÒN NỢ"],
+  .wh-responsive-table tbody td[data-label="Giá trị"],
+  .wh-responsive-table tbody td[data-label="Số tiền"] {
+    order: 5 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    padding: 1.25rem 0 1.25rem 1.75rem !important;
+    background: #f8fafc;
+    border-top: 1px dashed #f1f5f9 !important;
+    margin-top: 0;
+    width: 60% !important;
+    border-radius: 0 0 0 2rem;
+  }
+
+  .wh-responsive-table tbody td[data-label="SỐ TIỀN CÒN NỢ"]::before,
+  .wh-responsive-table tbody td[data-label="Giá trị"]::before,
+  .wh-responsive-table tbody td[data-label="Số tiền"]::before {
+    display: block !important;
+    content: attr(data-label);
+    font-size: 10px;
+    font-weight: 800;
+    color: #2b3437;
+    text-transform: uppercase;
+    letter-spacing: -0.05em;
+    margin-bottom: 2px;
+  }
+
+  .wh-responsive-table tbody td[data-label="SỐ TIỀN CÒN NỢ"],
+  .wh-responsive-table tbody td[data-label="Giá trị"],
+  .wh-responsive-table tbody td[data-label="Số tiền"] {
+    font-size: 1.0625rem !important;
+    font-weight: 900 !important;
+    color: var(--wh-primary) !important;
+    letter-spacing: -0.04em;
+  }
+
+  .wh-responsive-table tbody td[data-label="SỐ TIỀN CÒN NỢ"] span,
+  .wh-responsive-table tbody td[data-label="Giá trị"] span,
+  .wh-responsive-table tbody td[data-label="Số tiền"] span {
+    font-size: 1.0625rem !important;
+    font-weight: 900 !important;
+    color: var(--wh-primary) !important;
+    display: flex !important;
+    align-items: baseline !important;
+    gap: 4px !important;
+    white-space: nowrap !important;
+  }
+
+  .wh-responsive-table tbody td[data-label="SỐ TIỀN CÒN NỢ"] small,
+  .wh-responsive-table tbody td[data-label="Giá trị"] small,
+  .wh-responsive-table tbody td[data-label="Số tiền"] small {
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    opacity: 0.8 !important;
+    margin-left: 2px !important;
+    display: inline-block !important;
+  }
+
+  /* Override riêng cho đơn vị tiền tệ VND ở sales-invoices — không bị đè bởi rule span chung */
+  .wh-responsive-table tbody td[data-label="Giá trị"] span.inv-vnd-unit,
+  .wh-responsive-table tbody td[data-label="Giá trị"] .inv-vnd-unit {
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    color: var(--wh-primary) !important;
+    display: inline !important;
+    opacity: 0.65;
+    letter-spacing: 0;
+  }
+
+  /* Row 4: Pricing & Action Footer */
+  .wh-responsive-table tbody td[data-label="SỐ TIỀN CÒN NỢ"] {
+    order: 4 !important;
+    width: 60% !important;
+    /* Take most of the space */
+    padding: 1rem 0 1rem 1.75rem !important;
+    background: #f8fafc;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+    border-radius: 0 0 0 2rem;
+  }
+
+  .wh-responsive-table tbody td[data-label="Thao tác"] {
+    order: 5 !important;
+    width: 40% !important;
+    /* Take the rest */
+    padding: 1rem 1.75rem 1rem 0 !important;
+    background: #f8fafc;
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    border-radius: 0 0 2rem 0;
+    border-top: 1px dashed #f1f5f9 !important;
+  }
+
+  .wh-responsive-table tbody td[data-label="SỐ TIỀN CÒN NỢ"]::before {
+    margin-bottom: 0 !important;
+  }
+
+  .wh-responsive-table tbody td[data-label="Thao tác"] button {
+    height: 42px !important;
+    padding: 0 1.5rem !important;
+    border-radius: 0.75rem !important;
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 40, 142, 0.2) !important;
+  }
+
+  .wh-responsive-table tbody td::before {
+    display: none;
+  }
+
+  /* ==========================================================
+     CARD 2: PRODUCT DETAIL ITEM (MODAL) - PRO MAX
+     ========================================================== */
+  .wh-table-detail tbody tr {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    background: #ffffff;
+    border: 2px solid #e2e8f0 !important;
+    border-radius: 1.75rem !important;
+    margin-bottom: 1.5rem !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.04), 0 8px 10px -6px rgba(0, 0, 0, 0.04) !important;
+  }
+
+  .wh-table-detail tbody td {
+    display: block !important;
+    padding: 1.25rem !important;
+    border: none !important;
+  }
+
+  .wh-table-detail tbody td[data-label="Mô tả"],
+  .wh-table-detail tbody td[data-label="Danh mục"],
+  .wh-table-detail tbody td[data-label="Sản phẩm"],
+  .wh-table-detail tbody td[data-label="Đơn giá"] {
+    grid-column: span 2 !important;
+  }
+
+  .wh-table-detail tbody td[data-label="Danh mục"] {
+    order: 1 !important;
+    padding: 1rem 1.25rem 0.5rem 1.25rem !important;
+    border-bottom: none !important;
+  }
+
+  .wh-table-detail tbody td[data-label="Sản phẩm"] {
+    order: 2 !important;
+    padding: 0.5rem 1.25rem 1rem 1.25rem !important;
+    border-bottom: 1px dashed #f1f5f9 !important;
+    border-right: none !important;
+  }
+
+  .wh-table-detail tbody td[data-label="Đơn giá"] {
+    order: 3 !important;
+    padding: 1rem 1.25rem !important;
+    border-bottom: 1px dashed #f1f5f9 !important;
+  }
+
+  .wh-table-detail tbody td[data-label="Danh mục"]::before {
+    display: block !important;
+    content: "DANH MỤC";
+    font-size: 10px;
+    font-weight: 900;
+    color: #2b3437;
+    letter-spacing: 0.1em;
+  }
+
+  .wh-table-detail tbody td[data-label="Sản phẩm"]::before {
+    display: block !important;
+    content: "SẢN PHẨM";
+    font-size: 10px;
+    font-weight: 900;
+    color: #2b3437;
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+
+  /* Specific Card Labels for Payment History Table */
+  .wh-responsive-table td[data-label="Lần nhắc cuối"],
+  .wh-responsive-table td[data-label="Tự động"] {
+    order: 3;
+    padding: 0.625rem 1.75rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    background: #fdfdfd;
+    border-bottom: 1px dashed #f1f5f9;
+  }
+
+  .wh-responsive-table td[data-label="Lần nhắc cuối"]::before {
+    content: "Nhắc nợ: ";
+    font-size: 10px;
+    font-weight: 800;
+    color: #2b3437;
+    text-transform: uppercase;
+  }
+
+  .wh-responsive-table td[data-label="Lần nhắc cuối"] {
+    padding-right: 1.75rem !important;
+  }
+
+  /* Make reminder text elegant on one line */
+  .wh-responsive-table td[data-label="Lần nhắc cuối"] div {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  .wh-responsive-table td[data-label="Lần nhắc cuối"] span.text-body-sm {
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    color: #2b3437 !important;
+  }
+
+  .wh-responsive-table td[data-label="Lần nhắc cuối"] span.text-\[10px\] {
+    font-size: 9px !important;
+    padding: 2px 8px !important;
+    background: #f1f5f9 !important;
+    border-radius: 4px !important;
+    color: #2b3437 !important;
+  }
+
+  /* Tab Container Mobile - Make it scrollable instead of squished */
+  .wh-tabs-scroll {
+    overflow-x: auto !important;
+    display: flex !important;
+    gap: 1.5rem !important;
+    padding-bottom: 0.5rem !important;
+
+    @supports (scrollbar-width: none) {
+      scrollbar-width: none;
+    }
+  }
+
+  .wh-tabs-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .wh-tabs-scroll>button {
+    flex-shrink: 0 !important;
+  }
+
+  .wh-table-detail tbody td[data-label="Mô tả"] {
+    font-size: 1rem !important;
+    font-weight: 900 !important;
+    color: #2b3437;
+    line-height: 1.4 !important;
+  }
+
+  /* Stats Duo (Shared Row) */
+  .wh-table-detail tbody td[data-label="Số lượng"] {
+    grid-column: span 1 !important;
+    background: #fdfdfd;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px;
+    padding: 1rem 1.25rem !important;
+    border-right: 1px dashed #f1f5f9 !important;
+    border-bottom: none !important; /* Removed to merge visually with Thao Tác */
+    order: 4 !important;
+  }
+
+  .wh-table-detail tbody td[data-label="Số lượng"]::before,
+  .wh-table-detail tbody td[data-label="Đơn giá"]::before {
+    display: block !important;
+    content: attr(data-label);
+    font-size: 10px;
+    font-weight: 800;
+    color: #2b3437;
+    text-transform: uppercase;
+    white-space: nowrap !important;
+  }
+
+  .wh-table-detail tbody td[data-label="Số lượng"],
+  .wh-table-detail tbody td[data-label="Đơn giá"] {
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    color: #2b3437;
+  }
+
+  /* Total Highlight (Full Width) */
+  .wh-table-detail tbody td[data-label="Thành tiền"] {
+    grid-column: span 2;
+    order: 5 !important;
+    background: rgba(79, 70, 229, 0.04);
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 1rem 1.25rem !important;
+    border-top: 1px solid rgba(79, 70, 229, 0.08) !important;
+  }
+
+  .wh-table-detail tbody td[data-label="Thành tiền"]::before {
+    display: block !important;
+    content: "TỔNG GIÁ TRỊ";
+    font-size: 10px;
+    font-weight: 900;
+    color: var(--wh-primary);
+    letter-spacing: 0.05em;
+  }
+
+  .wh-table-detail tbody td[data-label="Thành tiền"] {
+    font-size: 1.1rem !important;
+    font-weight: 900 !important;
+    color: var(--wh-primary);
+    letter-spacing: -0.04em;
+  }
+
+  /* Delete button repositioning for Mobile - Same row as Quantity */
+  .wh-table-detail tbody td[data-label="Thao tác"] {
+    grid-column: span 1 !important;
+    order: 4 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    background: #fdfdfd !important;
+    padding: 1rem 1.25rem !important;
+    border-top: none !important;
+    border-bottom: none !important;
+    position: relative !important;
+    width: auto !important;
+    top: auto !important;
+    right: auto !important;
+  }
+
+  .wh-table-detail tbody td[data-label="Thao tác"]::before {
+    display: block !important;
+    content: "THAO TÁC";
+    font-size: 10px;
+    font-weight: 800;
+    color: #2b3437;
+    text-transform: uppercase;
+    white-space: nowrap !important;
+    letter-spacing: 0 !important;
+    text-align: center !important;
+    width: 100% !important;
+    margin-bottom: 8px !important;
+  }
+
+  /* High-fidelity Selection State for Mobile Cards */
+  .wh-responsive-table tbody tr.bg-wh-primary {
+    background: var(--wh-primary) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 20px 40px rgba(0, 40, 142, 0.3) !important;
+    transform: none !important;
+    /* Fixed: Disabled scale to prevent mobile horizontal overflow */
+    z-index: 10;
+  }
+
+  /* Make sure labels and text are visible on dark background */
+  .wh-responsive-table tbody tr.bg-wh-primary td[data-label]::before,
+  .wh-responsive-table tbody tr.bg-wh-primary td[data-label] p::before,
+  .wh-responsive-table tbody tr.bg-wh-primary td[data-label] span::before {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+
+  .wh-responsive-table tbody tr.bg-wh-primary td[data-label] p,
+  .wh-responsive-table tbody tr.bg-wh-primary td[data-label] span {
+    color: #ffffff !important;
+  }
+
+  .wh-responsive-table tbody tr.bg-wh-primary td[data-label="Giá trị"],
+  .wh-responsive-table tbody tr.bg-wh-primary td[data-label="Số tiền"] {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+  }
+
+  /* Prevent the parent container from showing focus/hover borders when interacting with cards on mobile */
+  .wh-card:has(.wh-responsive-table tr:active),
+  .wh-card:has(.wh-responsive-table tr.bg-wh-primary) {
+    border-color: #cbd5e1 !important;
+    /* Keep original slate-300 color */
+    transform: none !important;
+    box-shadow: var(--wh-shadow-elevated) !important;
+  }
+
+  /* Full screen modals for mobile */
+  .wh-modal-content {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    border-radius: 0 !important;
+    overscroll-behavior: contain;
+  }
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (max-width: 639px) {
+
+  /* Chỉ áp dụng cho điện thoại */
+  .wh-inner-scroll-mobile {
+    max-height: 620px !important;
+    /* Giới hạn hiển thị khoảng 3 card Pro Max */
+    overflow-y: auto !important;
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    padding-bottom: 0.5rem;
+
+    @supports (scrollbar-width: none) {
+      scrollbar-width: none;
+    }
+  }
+
+  .wh-inner-scroll-mobile::-webkit-scrollbar {
+    display: none;
+    /* Chụp cảnh báo cho Chrome/Safari */
+  }
+}
+
+@media (min-width: 640px) {
+
+  /* iPad và Desktop */
+  .wh-inner-scroll-mobile {
+    max-height: 245px !important;
+    /* Giới hạn hiển thị khoảng 3 dòng table */
+    overflow-y: auto !important;
+
+    @supports (scrollbar-width: thin) {
+      scrollbar-width: thin;
+    }
+  }
+
+  .wh-inner-scroll-mobile::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .wh-inner-scroll-mobile::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+  }
+}
+
+/* Ghim cố định thanh tiêu đề bảng (thead) bên ngoài vùng cuộn */
+.wh-responsive-table thead {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 20 !important;
+  background-color: #f8fafc !important;
+  /* Match background của header */
+}
+
+/* Full screen modals for mobile */
+@media (max-width: 639px) {
+
+  /* Chỉ áp dụng cho điện thoại (dưới mốc sm của Tailwind) */
+  .wh-modal-overlay {
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    z-index: 9999 !important;
+    overscroll-behavior: contain !important;
+  }
+
+  .wh-modal-content {
+    width: 100vw !important;
+    max-width: none !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    max-height: 100vh !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .wh-modal-scroll-area {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+    padding-bottom: 160px !important;
+    overscroll-behavior: contain !important;
+  }
+
+  /* Ẩn thanh cuộn để UI trông sạch sẽ hơn như app native */
+  .wh-modal-overlay::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Sticky Navigation Taskbar cho Detail Modal */
+  .wh-modal-mobile-taskbar {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 100 !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    backdrop-filter: blur(20px) !important;
+    padding: 1rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom, 16px)) !important;
+    box-shadow: 0 -15px 35px rgba(0, 0, 0, 0.08) !important;
+    border-top: 1px solid #f1f5f9 !important;
+    display: flex !important;
+    gap: 12px !important;
+    border-radius: 2rem 2rem 0 0 !important;
+    animation: slide-up-taskbar 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes slide-up-taskbar {
+    from {
+      transform: translateY(100%);
+    }
+
+    to {
+      transform: translateY(0);
+    }
+  }
+}
+
+/* ==========================================================
+   IPAD & TABLET OPTIMIZATIONS (641px - 1024px)
+   ========================================================== */
+@media (min-width: 641px) and (max-width: 1024px) {
+
+  /* Giảm padding cực bộ để table không bị tràn chiều ngang */
+  .wh-responsive-table th {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    letter-spacing: 0.05em !important;
+    font-size: 9px !important;
+  }
+
+  .wh-responsive-table td {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+
+  /* Thu nhỏ nhẹ badge và số tiền để nhường chỗ cho cột Thao tác */
+  .wh-responsive-table td[data-label="Trạng thái"] span {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    font-size: 8px !important;
+  }
+
+  /* ĐẢM BẢO TÊN KHÁCH HÀNG KHÔNG XUỐNG DÒNG TRÊN IPAD */
+  .wh-responsive-table td[data-label="Khách hàng"] p,
+  .wh-responsive-table td[data-label="Đối tác"] div>div>span:first-child,
+  .wh-responsive-table td[data-label="Khách hàng / Hóa đơn"] span {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+    max-width: 180px !important;
+    display: block !important;
+  }
+
+  /* ĐẢM BẢO CỘT TIỀN KHÔNG XUỐNG DÒNG, CHỨA ĐƯỢC 15 SỐ */
+  .wh-responsive-table td[data-label="Giá trị"],
+  .wh-responsive-table td[data-label="Số tiền"] {
+    min-width: 140px !important;
+    white-space: nowrap !important;
+  }
+
+  .wh-responsive-table td p.text-sm {
+    font-size: 10px !important;
+  }
+
+  /* Ensure the container doesn't force overflow */
+  .wh-card {
+    padding: 1rem !important;
+  }
+
+  /* Compact avatars on iPad */
+  .wh-responsive-table .w-12.h-12 {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+    font-size: 0.875rem !important;
+  }
+
+  .wh-responsive-table .flex.items-center.gap-4 {
+    gap: 0.5rem !important;
+  }
+
+  /* Đảm bảo khung ngoài luôn có thể cuộn ngang nếu vẫn bị hẹp */
+  .wh-tabs-scroll {
+    overflow-x: auto !important;
+  }
+
+  /* Fix cho container scroll nếu table quá rộng */
+  .flex-1.overflow-auto {
+    overflow-x: auto !important;
+  }
+
+  /* KHÔNG PHÓNG TO CARD KHI SELECT TRÊN IPAD */
+  .wh-responsive-table tbody tr,
+  .wh-responsive-table tbody tr.bg-wh-primary,
+  .wh-responsive-table tbody tr:hover {
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
+/* UTILITIES */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.flex-nowrap {
+  flex-wrap: nowrap !important;
+}
