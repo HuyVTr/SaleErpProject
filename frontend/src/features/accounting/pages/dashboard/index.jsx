@@ -195,17 +195,16 @@ const AccountingDashboard = () => {
   return (
     <div className="flex-1 flex flex-col gap-4 sm:gap-6 lg:gap-3 overflow-y-auto xl:overflow-visible no-scrollbar pb-6" id="accounting-dashboard-content">
       {/* Header Section */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-3 px-2 lg:px-1 shrink-0">
-        <div className="space-y-2">
-          <h1 className="text-acc-text-main leading-tight font-black text-3xl sm:text-4xl lg:text-[2rem] uppercase tracking-tight">TRUNG TÂM TÀI CHÍNH</h1>
+      <div className="flex flex-col gap-2 sm:gap-3 px-2 lg:px-1 shrink-0">
+        <h1 className="text-acc-text-main leading-tight font-black text-3xl sm:text-4xl lg:text-[2rem] uppercase tracking-tight">TRUNG TÂM TÀI CHÍNH</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
           <p className="text-sm sm:text-base text-acc-text-muted font-medium leading-relaxed">
             Phân tích dữ liệu{" "}
             <span className="inline-flex items-center align-middle mx-1 px-2.5 py-0.5 rounded-lg bg-blue-50 text-acc-primary font-bold whitespace-nowrap animate-fade-in" key={`${timeframe}-${selectedDay}-${filterWeek}-${filterYear}`}>
               {getTimeframeText()}
             </span>
           </p>
-        </div>
-        <div className="grid grid-cols-2 gap-3 w-full lg:flex lg:flex-row lg:w-auto items-stretch">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto relative z-50">
           <button 
             onClick={() => {
               setTimeframe('all');
@@ -214,15 +213,15 @@ const AccountingDashboard = () => {
               setFilterDate(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
             }}
             aria-label="Làm mới toàn bộ dữ liệu thống kê"
-            className="px-5 h-10 lg:h-auto py-0 lg:py-2.5 flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 active:scale-95 transition-all text-[11px] font-black uppercase tracking-widest shadow-sm w-full lg:w-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acc-primary focus-visible:ring-offset-2"
+            className="px-5 h-10 sm:h-auto py-0 sm:py-2.5 flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 active:scale-95 transition-all text-[11px] font-black uppercase tracking-widest shadow-sm w-full sm:w-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acc-primary focus-visible:ring-offset-2"
           >
             <span className="material-symbols-outlined text-lg">refresh</span>
             Làm mới
           </button>
           <button 
-            onClick={handleExport} 
-            disabled={isExporting} 
-            className="acc-btn-primary px-5 h-10 lg:h-auto py-0 lg:py-2.5 flex items-center justify-center gap-3 shadow-xl shadow-blue-800/10 active:scale-95 transition-[transform,opacity,background-color,box-shadow] duration-300 text-[11px] lg:text-label-xs disabled:opacity-50 w-full lg:w-auto rounded-xl lg:rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acc-primary focus-visible:ring-offset-2"
+            onClick={handleExport}
+            disabled={isExporting}
+            className="acc-btn-primary px-5 h-10 sm:h-auto py-0 sm:py-2.5 flex items-center justify-center gap-3 shadow-xl shadow-blue-800/10 active:scale-95 transition-[transform,opacity,background-color,box-shadow] duration-300 text-[11px] sm:text-label-xs disabled:opacity-50 w-full sm:w-auto rounded-xl sm:rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acc-primary focus-visible:ring-offset-2"
             aria-label="Xuất báo cáo tài chính sang PDF"
           >
             <span className={`material-symbols-outlined text-lg ${isExporting ? 'animate-spin' : ''}`} aria-hidden="true">
@@ -230,6 +229,7 @@ const AccountingDashboard = () => {
             </span>
             {isExporting ? 'Đang chuẩn bị…' : `XUẤT BÁO CÁO`}
           </button>
+          </div>
         </div>
       </div>
 

@@ -390,17 +390,16 @@ const SalesDashboard = () => {
   return (
     <div className="font-inter flex flex-col w-full h-full bg-slate-50 animate-fade-in gap-3 sm:gap-4 md:gap-5">
       {/* Header - Cố định */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-3 sm:gap-4 px-1 sm:px-2 md:px-0 shrink-0">
-        <div className="space-y-1 sm:space-y-2">
-          <h1 className="text-2xl sm:text-3xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">Bảng điều khiển Kinh doanh</h1>
-          <p className="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed">
-            Phân tích dữ liệu{" "}
+      <div className="flex flex-col gap-2 sm:gap-3 px-1 sm:px-2 md:px-0 shrink-0">
+        <h1 className="text-2xl sm:text-3xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">Bảng điều khiển Kinh doanh</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <p className="text-sm sm:text-base text-slate-500 font-medium leading-relaxed">
+            Tổng quan{" "}
             <span className="inline-flex items-center align-middle mx-1 px-2.5 py-0.5 rounded-lg bg-blue-50 text-[#00288E] font-bold whitespace-nowrap animate-fade-in" key={getTimeframeText()}>
               {getTimeframeText()}
             </span>
           </p>
-        </div>
-        <div className="flex flex-col sm:flex-row lg:items-center gap-2 sm:gap-3 relative z-30">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 relative z-30">
           {/* 1. Bộ lọc Thời gian Dropdown */}
           <div className="relative font-inter w-full sm:w-auto" ref={timeDropdownRef}>
             <button 
@@ -424,19 +423,29 @@ const SalesDashboard = () => {
             </button>
 
             {isOpenTimeDropdown && (
-              <div className="absolute right-0 top-full mt-2 w-[340px] bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 flex flex-col animate-fade-in origin-top-right">
-                <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50 rounded-t-2xl flex justify-between items-center">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[#00288E] opacity-80">CHỌN THỜI GIAN</span>
+              <div className="absolute right-0 top-full mt-2 w-[380px] bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 flex flex-col animate-fade-in origin-top-right">
+                <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 rounded-t-2xl flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[#00288E] text-[18px] font-bold">tune</span>
+                    <span className="text-[13px] font-black uppercase tracking-widest text-[#00288E]">CHỌN THỜI GIAN</span>
+                  </div>
+                  <button 
+                    onClick={() => setIsOpenTimeDropdown(false)}
+                    className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-slate-200/50 transition-colors text-slate-400 hover:text-slate-600"
+                    aria-label="Đóng"
+                  >
+                    <span className="material-symbols-outlined text-[16px] font-bold">close</span>
+                  </button>
                 </div>
 
-                <div className="p-4 space-y-4">
+                <div className="p-5 space-y-5">
                   {/* Chế độ lọc */}
                   <div className="flex bg-slate-100 border border-slate-200 shadow-inner p-1 rounded-xl">
                     {['daily', 'weekly', 'monthly', 'yearly'].map((tf) => (
                       <button 
                         key={tf} 
                         onClick={() => setTimeframe(tf)}
-                        className={`flex-1 py-1.5 transition-all text-center rounded-lg whitespace-nowrap text-[9px] font-black uppercase tracking-wider ${timeframe === tf ? 'bg-white text-[#00288E] shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                        className={`flex-1 py-2 transition-all text-center rounded-lg whitespace-nowrap text-[11px] font-black uppercase tracking-wider ${timeframe === tf ? 'bg-white text-[#00288E] shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
                       >
                         {tf === 'daily' ? 'Ngày' : tf === 'weekly' ? 'Tuần' : tf === 'monthly' ? 'Tháng' : 'Năm'}
                       </button>
@@ -444,8 +453,8 @@ const SalesDashboard = () => {
                   </div>
 
                   {/* Chi tiết bộ lọc tùy biến */}
-                  <div className="pt-2 border-t border-slate-50 flex flex-col gap-2 relative">
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Bộ chọn chi tiết</span>
+                  <div className="pt-3 border-t border-slate-50 flex flex-col gap-2 relative">
+                    <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Bộ chọn chi tiết</span>
                     <div className="flex justify-center w-full">
                       {timeframe === 'daily' && (() => {
                         const [y, m] = filterDate.split('-').map(Number);
@@ -458,23 +467,23 @@ const SalesDashboard = () => {
                                       setFilterDate(`${newY}-${String(newM).padStart(2, '0')}`);
                                     }} 
                                     className="hover:bg-white bg-transparent shadow-sm hover:shadow border border-transparent hover:border-slate-100 flex items-center justify-center text-slate-500 hover:text-[#00288E] transition-all"
-                                    style={{ width: '28px', height: '28px', borderRadius: '8px' }}
+                                    style={{ width: '36px', height: '36px', borderRadius: '9px' }}
                                     aria-label="Tháng trước">
-                              <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                              <span className="material-symbols-outlined text-[20px]">chevron_left</span>
                             </button>
                             <button onClick={(e) => { e.stopPropagation(); setDateTempYear(y); setShowDatePicker(!showDatePicker); setDatePickerView('months'); }} 
-                                    className={`transition-all flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-black text-slate-950 uppercase tracking-wider text-[10px] ${showDatePicker ? 'bg-white shadow' : 'hover:bg-white'}`}>
+                                    className={`transition-all flex items-center gap-1.5 px-4 py-2.5 rounded-lg font-black text-slate-950 uppercase tracking-wider text-[12px] ${showDatePicker ? 'bg-white shadow' : 'hover:bg-white'}`}>
                               <span>Tháng {m}, {y}</span>
                               <span className={`material-symbols-outlined text-slate-400 text-[14px] transition-transform ${showDatePicker ? 'rotate-180 text-blue-600' : ''}`}>expand_more</span>
                             </button>
                             {showDatePicker && (
-                              <div className="absolute top-full mt-2 right-0 left-0 z-[100] bg-white shadow-2xl rounded-2xl border border-slate-100 p-4 min-w-[280px] animate-fade-in">
+                              <div className="absolute top-full mt-2 right-0 left-0 z-[100] bg-white shadow-2xl rounded-2xl border border-slate-100 p-4 min-w-[340px] animate-fade-in">
                                 {datePickerView === 'months' ? (
                                   <div className="space-y-3">
                                     <div className="flex items-center justify-between border-b border-slate-50 pb-2">
-                                      <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Chọn tháng</span>
+                                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Chọn tháng</span>
                                       <button onClick={(e) => { e.stopPropagation(); setDatePickerView('years'); setDateYearRangeStart(Math.floor(dateTempYear / 12) * 12); }} 
-                                              className="flex items-center gap-1 px-2.5 py-1 bg-blue-50 rounded-lg border border-blue-100 text-[10px] font-black text-blue-600 uppercase">
+                                              className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 rounded-lg border border-blue-100 text-[11px] font-black text-blue-600 uppercase">
                                         {dateTempYear} <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
                                       </button>
                                     </div>
@@ -485,7 +494,7 @@ const SalesDashboard = () => {
                                                   setFilterDate(`${dateTempYear}-${String(idx + 1).padStart(2, '0')}`); 
                                                   setShowDatePicker(false); 
                                                 }} 
-                                                className={`text-[9px] font-black py-2 rounded-lg transition-all ${(idx + 1) === m && dateTempYear === y ? 'bg-blue-600 text-white shadow shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-50'}`}>
+                                                className={`text-[11px] font-black py-3 rounded-lg transition-all ${(idx + 1) === m && dateTempYear === y ? 'bg-blue-600 text-white shadow shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-50'}`}>
                                           {mName}
                                         </button>
                                       ))}
@@ -496,20 +505,20 @@ const SalesDashboard = () => {
                                     <div className="flex items-center justify-between border-b border-slate-50 pb-2">
                                       <div className="flex items-center gap-1">
                                         <button onClick={(e) => { e.stopPropagation(); setDatePickerView('months'); }} 
-                                                className="w-6 h-6 rounded flex items-center justify-center hover:bg-slate-50 text-slate-400 hover:text-blue-600">
-                                          <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+                                                className="w-7 h-7 rounded flex items-center justify-center hover:bg-slate-50 text-slate-400 hover:text-blue-600">
+                                          <span className="material-symbols-outlined text-[16px]">arrow_back</span>
                                         </button>
-                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Chọn Năm</span>
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Chọn Năm</span>
                                       </div>
                                       <div className="flex items-center gap-0.5 bg-slate-50 p-0.5 rounded-lg">
                                         <button onClick={(e) => { e.stopPropagation(); setDateYearRangeStart(prev => prev - 12); }} 
-                                                className="w-5 h-5 rounded flex items-center justify-center hover:bg-white text-blue-600">
-                                          <span className="material-symbols-outlined text-[12px]">chevron_left</span>
+                                                className="w-6 h-6 rounded flex items-center justify-center hover:bg-white text-blue-600">
+                                          <span className="material-symbols-outlined text-[14px]">chevron_left</span>
                                         </button>
-                                        <span className="text-[8px] font-black text-slate-500 px-1">{dateYearRangeStart} - {dateYearRangeStart + 11}</span>
+                                        <span className="text-[10px] font-black text-slate-500 px-1.5">{dateYearRangeStart} - {dateYearRangeStart + 11}</span>
                                         <button onClick={(e) => { e.stopPropagation(); setDateYearRangeStart(prev => prev + 12); }} 
-                                                className="w-5 h-5 rounded flex items-center justify-center hover:bg-white text-blue-600">
-                                          <span className="material-symbols-outlined text-[12px]">chevron_right</span>
+                                                className="w-6 h-6 rounded flex items-center justify-center hover:bg-white text-blue-600">
+                                          <span className="material-symbols-outlined text-[14px]">chevron_right</span>
                                         </button>
                                       </div>
                                     </div>
@@ -523,7 +532,7 @@ const SalesDashboard = () => {
                                                     setDateTempYear(yearOpt); 
                                                     setDatePickerView('months'); 
                                                   }} 
-                                                  className={`text-[9px] font-black py-2 rounded-lg transition-all ${yearOpt === dateTempYear ? 'bg-blue-600 text-white shadow' : 'text-slate-500 hover:bg-slate-50'}`}>
+                                                  className={`text-[11px] font-black py-3 rounded-lg transition-all ${yearOpt === dateTempYear ? 'bg-blue-600 text-white shadow' : 'text-slate-500 hover:bg-slate-50'}`}>
                                             {yearOpt}
                                           </button>
                                         ); 
@@ -540,9 +549,9 @@ const SalesDashboard = () => {
                                       setFilterDate(`${newY}-${String(newM).padStart(2, '0')}`);
                                     }} 
                                     className="hover:bg-white bg-transparent shadow-sm hover:shadow border border-transparent hover:border-slate-100 flex items-center justify-center text-slate-500 hover:text-[#00288E] transition-all"
-                                    style={{ width: '28px', height: '28px', borderRadius: '8px' }}
+                                    style={{ width: '36px', height: '36px', borderRadius: '9px' }}
                                     aria-label="Tháng tiếp theo">
-                              <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                              <span className="material-symbols-outlined text-[20px]">chevron_right</span>
                             </button>
                           </div>
                         );
@@ -552,28 +561,28 @@ const SalesDashboard = () => {
                         <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-1 w-full justify-between" ref={weekPickerRef}>
                           <button onClick={() => { const [y, w] = filterWeek.split('-W').map(Number); let newW = w - 1; let newY = y; if (newW < 1) { newY--; newW = 52; } setFilterWeek(`${newY}-W${String(newW).padStart(2, '0')}`); }} 
                                   className="hover:bg-white bg-transparent shadow-sm hover:shadow border border-transparent hover:border-slate-100 flex items-center justify-center text-slate-500 hover:text-[#00288E] transition-all"
-                                  style={{ width: '28px', height: '28px', borderRadius: '8px' }}
+                                  style={{ width: '36px', height: '36px', borderRadius: '9px' }}
                                   aria-label="Tuần trước">
-                            <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                            <span className="material-symbols-outlined text-[20px]">chevron_left</span>
                           </button>
                           <button onClick={(e) => { e.stopPropagation(); setShowWeekPicker(!showWeekPicker); }} 
-                                  className={`transition-all flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-black text-slate-950 uppercase tracking-wider text-[10px] ${showWeekPicker ? 'bg-white shadow' : 'hover:bg-white'}`}>
+                                  className={`transition-all flex items-center gap-1.5 px-4 py-2.5 rounded-lg font-black text-slate-950 uppercase tracking-wider text-[12px] ${showWeekPicker ? 'bg-white shadow' : 'hover:bg-white'}`}>
                             <span>{filterWeek.replace('-W', ', Tuần ')}</span>
                             <span className={`material-symbols-outlined text-slate-400 text-[14px] transition-transform ${showWeekPicker ? 'rotate-180 text-blue-600' : ''}`}>expand_more</span>
                           </button>
                           {showWeekPicker && (
-                            <div className="absolute top-full mt-2 right-0 left-0 z-[100] bg-white shadow-2xl rounded-2xl border border-slate-100 p-3 min-w-[280px] animate-fade-in">
-                              <div className="flex items-center justify-between mb-2 border-b border-slate-50 pb-1.5"><span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Chọn Tuần</span><span className="text-[9px] font-bold text-blue-600">{filterWeek.split('-W')[0]}</span></div>
-                              <div className="max-h-[200px] overflow-y-auto pr-1 scrollbar-none ">
-                                <div className="flex flex-col gap-0.5">{[...Array(52)].map((_, i) => { const weekNum = i + 1; const currentY = filterWeek.split('-W')[0]; const weekStr = `${currentY}-W${String(weekNum).padStart(2, '0')}`; return (<button key={i} onClick={() => { setFilterWeek(weekStr); setShowWeekPicker(false); }} className={`flex items-center justify-between px-2.5 py-2 rounded-lg transition-all ${filterWeek === weekStr ? 'bg-blue-600 text-white shadow' : 'hover:bg-slate-50 text-slate-600'}`}><div className="flex flex-col items-start"><span className="text-[9px] font-black uppercase tracking-tight">Tuần {weekNum}</span><span className={`text-[7px] font-bold ${filterWeek === weekStr ? 'text-blue-100' : 'text-slate-400'}`}>{getWeekRange(currentY, weekNum)}</span></div>{filterWeek === weekStr && <span className="material-symbols-outlined text-[14px]">check_circle</span>}</button>); })}</div>
+                            <div className="absolute top-full mt-2 right-0 left-0 z-[100] bg-white shadow-2xl rounded-2xl border border-slate-100 p-3 min-w-[340px] animate-fade-in">
+                              <div className="flex items-center justify-between mb-2 border-b border-slate-50 pb-1.5"><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Chọn Tuần</span><span className="text-[10px] font-bold text-blue-600">{filterWeek.split('-W')[0]}</span></div>
+                              <div className="max-h-[260px] overflow-y-auto pr-1 scrollbar-none ">
+                                <div className="flex flex-col gap-1">{[...Array(52)].map((_, i) => { const weekNum = i + 1; const currentY = filterWeek.split('-W')[0]; const weekStr = `${currentY}-W${String(weekNum).padStart(2, '0')}`; return (<button key={i} onClick={() => { setFilterWeek(weekStr); setShowWeekPicker(false); }} className={`flex items-center justify-between px-3.5 py-3 rounded-lg transition-all ${filterWeek === weekStr ? 'bg-blue-600 text-white shadow' : 'hover:bg-slate-50 text-slate-600'}`}><div className="flex flex-col items-start"><span className="text-[12px] font-black uppercase tracking-tight">Tuần {weekNum}</span><span className={`text-[10px] font-bold ${filterWeek === weekStr ? 'text-blue-100' : 'text-slate-400'}`}>{getWeekRange(currentY, weekNum)}</span></div>{filterWeek === weekStr && <span className="material-symbols-outlined text-[14px]">check_circle</span>}</button>); })}</div>
                               </div>
                             </div>
                           )}
                           <button onClick={() => { const [y, w] = filterWeek.split('-W').map(Number); let newW = w + 1; let newY = y; if (newW > 52) { newY++; newW = 1; } setFilterWeek(`${newY}-W${String(newW).padStart(2, '0')}`); }} 
                                   className="hover:bg-white bg-transparent shadow-sm hover:shadow border border-transparent hover:border-slate-100 flex items-center justify-center text-slate-500 hover:text-[#00288E] transition-all"
-                                  style={{ width: '28px', height: '28px', borderRadius: '8px' }}
+                                  style={{ width: '36px', height: '36px', borderRadius: '9px' }}
                                   aria-label="Tuần tiếp theo">
-                            <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                            <span className="material-symbols-outlined text-[20px]">chevron_right</span>
                           </button>
                         </div>
                       )}
@@ -582,27 +591,27 @@ const SalesDashboard = () => {
                         <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-1 w-full justify-between" ref={yearPickerRef}>
                           <button onClick={() => setFilterYear(prev => prev - 1)} 
                                   className="hover:bg-white bg-transparent shadow-sm hover:shadow border border-transparent hover:border-slate-100 flex items-center justify-center text-slate-500 hover:text-[#00288E] transition-all"
-                                  style={{ width: '28px', height: '28px', borderRadius: '8px' }}
+                                  style={{ width: '36px', height: '36px', borderRadius: '9px' }}
                                   aria-label="Năm trước">
-                            <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                            <span className="material-symbols-outlined text-[20px]">chevron_left</span>
                           </button>
                           <button onClick={(e) => { e.stopPropagation(); setShowYearPicker(!showYearPicker); }} 
-                                  className={`transition-all flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-black text-slate-950 uppercase tracking-wider text-[10px] ${showYearPicker ? 'bg-white shadow' : 'hover:bg-white'}`}>
+                                  className={`transition-all flex items-center gap-1.5 px-3.5 py-2 rounded-lg font-black text-slate-950 uppercase tracking-wider text-[12px] ${showYearPicker ? 'bg-white shadow' : 'hover:bg-white'}`}>
                             <span>Năm {filterYear}</span>
                             <span className={`material-symbols-outlined text-slate-400 text-[14px] transition-transform ${showYearPicker ? 'rotate-180 text-blue-600' : ''}`}>expand_more</span>
                           </button>
                           {showYearPicker && (
-                            <div className="absolute top-full mt-2 right-0 left-0 z-[100] bg-white shadow-2xl rounded-2xl border border-slate-100 p-3 min-w-[220px] animate-fade-in">
-                              <div className="flex items-center justify-between mb-2 border-b border-slate-50 pb-1.5"><span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Chọn Năm</span><div className="flex items-center gap-0.5 bg-slate-50 p-0.5 rounded-lg"><button onClick={(e) => { e.stopPropagation(); setYearRangeStart(prev => prev - 10); }} className="w-5 h-5 rounded flex items-center justify-center hover:bg-white text-blue-600"><span className="material-symbols-outlined text-[12px]">chevron_left</span></button><span className="text-[7px] font-black text-slate-500 px-1">{yearRangeStart} - {yearRangeStart + 9}</span><button onClick={(e) => { e.stopPropagation(); setYearRangeStart(prev => prev + 10); }} className="w-5 h-5 rounded flex items-center justify-center hover:bg-white text-blue-600"><span className="material-symbols-outlined text-[12px]">chevron_right</span></button></div></div>
-                              <div className="grid grid-cols-2 gap-1">{[...Array(10)].map((_, i) => { const y = yearRangeStart + i; return (<button key={y} onClick={() => { setFilterYear(y); setShowYearPicker(false); }} className={`text-[9px] font-black py-2 rounded-lg transition-all ${filterYear === y ? 'bg-blue-600 text-white shadow' : 'hover:bg-slate-50 text-slate-500'}`}>{y}</button>); })}</div>
+                            <div className="absolute top-full mt-2 right-0 left-0 z-[100] bg-white shadow-2xl rounded-2xl border border-slate-100 p-3 min-w-[260px] animate-fade-in">
+                              <div className="flex items-center justify-between mb-2 border-b border-slate-50 pb-1.5"><span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Chọn Năm</span><div className="flex items-center gap-0.5 bg-slate-50 p-0.5 rounded-lg"><button onClick={(e) => { e.stopPropagation(); setYearRangeStart(prev => prev - 10); }} className="w-5 h-5 rounded flex items-center justify-center hover:bg-white text-blue-600"><span className="material-symbols-outlined text-[12px]">chevron_left</span></button><span className="text-[9px] font-black text-slate-500 px-1">{yearRangeStart} - {yearRangeStart + 9}</span><button onClick={(e) => { e.stopPropagation(); setYearRangeStart(prev => prev + 10); }} className="w-5 h-5 rounded flex items-center justify-center hover:bg-white text-blue-600"><span className="material-symbols-outlined text-[12px]">chevron_right</span></button></div></div>
+                              <div className="grid grid-cols-2 gap-1">{[...Array(10)].map((_, i) => { const y = yearRangeStart + i; return (<button key={y} onClick={() => { setFilterYear(y); setShowYearPicker(false); }} className={`text-[11px] font-black py-3 rounded-lg transition-all ${filterYear === y ? 'bg-blue-600 text-white shadow' : 'hover:bg-slate-50 text-slate-500'}`}>{y}</button>); })}</div>
                             </div>
                           )}
                           <button onClick={() => { if (filterYear < now.getFullYear()) setFilterYear(prev => prev + 1); }} 
                                   disabled={filterYear >= now.getFullYear()} 
                                   className="hover:bg-white bg-transparent disabled:opacity-30 shadow-sm hover:shadow border border-transparent hover:border-slate-100 flex items-center justify-center text-slate-500 hover:text-[#00288E] transition-all"
-                                  style={{ width: '28px', height: '28px', borderRadius: '8px' }}
+                                  style={{ width: '36px', height: '36px', borderRadius: '9px' }}
                                   aria-label="Năm tiếp theo">
-                            <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                            <span className="material-symbols-outlined text-[20px]">chevron_right</span>
                           </button>
                         </div>
                       )}
@@ -611,26 +620,26 @@ const SalesDashboard = () => {
                         <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-1 w-full justify-between" ref={yearsCountPickerRef}>
                           <button onClick={() => { const opts = [3, 5, 10, 20]; setFilterYearsCount(opts[Math.max(0, opts.indexOf(filterYearsCount) - 1)]); }} 
                                   className="hover:bg-white bg-transparent shadow-sm hover:shadow border border-transparent hover:border-slate-100 flex items-center justify-center text-slate-500 hover:text-[#00288E] transition-all"
-                                  style={{ width: '28px', height: '28px', borderRadius: '8px' }}
+                                  style={{ width: '36px', height: '36px', borderRadius: '9px' }}
                                   aria-label="Giảm số năm">
-                            <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                            <span className="material-symbols-outlined text-[20px]">chevron_left</span>
                           </button>
                           <button onClick={(e) => { e.stopPropagation(); setShowYearsCountPicker(!showYearsCountPicker); }} 
-                                  className={`transition-all flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-black text-slate-950 uppercase tracking-wider text-[10px] ${showYearsCountPicker ? 'bg-white shadow' : 'hover:bg-white'}`}>
+                                  className={`transition-all flex items-center gap-1.5 px-3.5 py-2 rounded-lg font-black text-slate-950 uppercase tracking-wider text-[12px] ${showYearsCountPicker ? 'bg-white shadow' : 'hover:bg-white'}`}>
                             <span>{filterYearsCount} Năm qua</span>
                             <span className={`material-symbols-outlined text-slate-400 text-[14px] transition-transform ${showYearsCountPicker ? 'rotate-180 text-blue-600' : ''}`}>expand_more</span>
                           </button>
                           {showYearsCountPicker && (
-                            <div className="absolute top-full mt-2 right-0 left-0 z-[100] bg-white shadow-2xl rounded-2xl border border-slate-100 p-3 min-w-[160px] animate-fade-in">
-                              <div className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2 border-b border-slate-50 pb-1.5">Số lượng năm</div>
-                              <div className="flex flex-col gap-0.5">{[3, 5, 10, 20].map((v) => (<button key={v} onClick={() => { setFilterYearsCount(v); setShowYearsCountPicker(false); }} className={`px-2.5 py-2 rounded-lg text-left transition-all flex justify-between items-center ${filterYearsCount === v ? 'bg-blue-600 text-white shadow' : 'hover:bg-slate-50 text-slate-600'}`}><span className="text-[9px] font-black uppercase tracking-tight">{v} Năm</span>{filterYearsCount === v && <span className="material-symbols-outlined text-[14px]">check</span>}</button>))}</div>
+                            <div className="absolute top-full mt-2 right-0 left-0 z-[100] bg-white shadow-2xl rounded-2xl border border-slate-100 p-3 min-w-[200px] animate-fade-in">
+                              <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 border-b border-slate-50 pb-1.5">Số lượng năm</div>
+                              <div className="flex flex-col gap-0.5">{[3, 5, 10, 20].map((v) => (<button key={v} onClick={() => { setFilterYearsCount(v); setShowYearsCountPicker(false); }} className={`px-3.5 py-3 rounded-lg text-left transition-all flex justify-between items-center ${filterYearsCount === v ? 'bg-blue-600 text-white shadow' : 'hover:bg-slate-50 text-slate-600'}`}><span className="text-[11px] font-black uppercase tracking-tight">{v} Năm</span>{filterYearsCount === v && <span className="material-symbols-outlined text-[14px]">check</span>}</button>))}</div>
                             </div>
                           )}
                           <button onClick={() => { const opts = [3, 5, 10, 20]; setFilterYearsCount(opts[Math.min(opts.length - 1, opts.indexOf(filterYearsCount) + 1)]); }} 
                                   className="hover:bg-white bg-transparent shadow-sm hover:shadow border border-transparent hover:border-slate-100 flex items-center justify-center text-slate-500 hover:text-[#00288E] transition-all"
-                                  style={{ width: '28px', height: '28px', borderRadius: '8px' }}
+                                  style={{ width: '36px', height: '36px', borderRadius: '9px' }}
                                   aria-label="Tăng số năm">
-                            <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                            <span className="material-symbols-outlined text-[18px]">chevron_right</span>
                           </button>
                         </div>
                       )}
@@ -640,6 +649,7 @@ const SalesDashboard = () => {
               </div>
             )}
           </div>
+        </div>
         </div>
       </div>
 

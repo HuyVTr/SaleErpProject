@@ -633,7 +633,30 @@ const mockInvoices = () => {
   // FIX: Bao gồm cả đơn hàng từ localStorage để lookup userID cho hóa đơn mới
   const allOrders = [...(dbData.orders || []), ...getLocalOrders()];
   const allOrderItems = [...(dbData.orderItems || []), ...getLocalOrderItems()];
-  const allProducts = dbData.products || [];
+  // Gộp sản phẩm từ db.json và local storage (added_products) có lọc theo deleted_product_ids
+  const localProducts = (() => {
+    try {
+      const raw = localStorage.getItem('added_products');
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  })();
+  const deletedProductIds = (() => {
+    try {
+      const raw = localStorage.getItem('deleted_product_ids');
+      return raw ? JSON.parse(raw).map(Number) : [];
+    } catch (e) { return []; }
+  })();
+
+  const productMap = new Map();
+  (dbData.products || []).forEach(p => {
+    if (!deletedProductIds.includes(Number(p.productID))) {
+      productMap.set(Number(p.productID), p);
+    }
+  });
+  localProducts.forEach(p => {
+    productMap.set(Number(p.productID), p);
+  });
+  const allProducts = Array.from(productMap.values());
 
   return getAllCurrentInvoices().map(inv => {
     // FIX: So sánh ID dạng chuỗi để tránh lỗi NaN với các ID local hoặc có tiền tố
@@ -747,7 +770,7 @@ const mockPayments = () => {
   });
 };
 
-const mockDebtReport = () => {
+const mockDebtReport = (timeframe = 'monthly', options = {}) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -762,6 +785,34 @@ const mockDebtReport = () => {
 
     // 1. Đã thanh toán đủ -> Bỏ qua
     if (status === 'paid' || actualRemaining <= 0) return false;
+
+    // Lọc theo thời gian
+    if (timeframe && timeframe !== 'all') {
+      const pd = parseDateToObj(inv.invoiceDate || inv.createAt);
+      if (pd) {
+        const now = new Date();
+        if (timeframe === 'daily') {
+          const targetY = options.filterDate ? parseInt(options.filterDate.split('-')[0], 10) : now.getFullYear();
+          const targetM = options.filterDate ? parseInt(options.filterDate.split('-')[1], 10) : (now.getMonth() + 1);
+          const targetD = options.selectedDay || now.getDate();
+          if (!(pd.getFullYear() === targetY && (pd.getMonth() + 1) === targetM && pd.getDate() === targetD)) return false;
+        } else if (timeframe === 'weekly') {
+          const [yStr, wStr] = (options.filterWeek || "").split('-W');
+          const targetY = parseInt(yStr, 10) || now.getFullYear();
+          const targetW = parseInt(wStr, 10) || getISOWeek(now);
+          if (!(pd.getFullYear() === targetY && getISOWeek(pd) === targetW)) return false;
+        } else if (timeframe === 'monthly') {
+          const targetY = parseInt(options.filterYear, 10) || now.getFullYear();
+          if (pd.getFullYear() !== targetY) return false;
+        } else if (timeframe === 'yearly') {
+          const yearsCount = parseInt(options.filterYearsCount, 10) || 5;
+          const endY = now.getFullYear();
+          const startY = endY - yearsCount + 1;
+          const y = pd.getFullYear();
+          if (!(y >= startY && y <= endY)) return false;
+        }
+      }
+    }
 
     // 2. Mọi hóa đơn chưa thanh toán đủ đều là công nợ (hiện cả Partial, Overdue, Pending)
     return true;
@@ -1407,9 +1458,9 @@ const accountingService = {
     return response.data;
   },
 
-  getDebtReport: async () => {
-    if (USE_MOCK) return mockDebtReport();
-    const response = await api.get('/api/reports/debt');
+  getDebtReport: async (timeframe, options = {}) => {
+    if (USE_MOCK) return mockDebtReport(timeframe, options);
+    const response = await api.get('/api/reports/debt', { params: { timeframe, ...options } });
     return response.data;
   },
 

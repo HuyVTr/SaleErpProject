@@ -222,7 +222,7 @@ const CustomerCreate = () => {
                     id="customer_email"
                     {...register('email')}
                     type="email" 
-                    placeholder="example@hola.group" 
+                    placeholder="example@hizo.group" 
                     autoComplete="email"
                     spellCheck={false}
                     className={`w-full bg-slate-50 border-2 ${errors.email ? 'border-red-100' : 'border-transparent'} rounded-2xl p-4 text-sm font-bold outline-none focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 focus:bg-white transition-all text-slate-700`} 
@@ -252,7 +252,7 @@ const CustomerCreate = () => {
                       id="customer_company_name"
                       {...register('companyName')}
                       type="text" 
-                      placeholder="Công ty TNHH Hola Group" 
+                      placeholder="Công ty TNHH Hizo Group" 
                       autoComplete="organization"
                       className="w-full bg-slate-50 border-2 border-transparent rounded-2xl p-4 text-sm font-bold outline-none focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 focus:bg-white transition-all text-slate-700" 
                     />

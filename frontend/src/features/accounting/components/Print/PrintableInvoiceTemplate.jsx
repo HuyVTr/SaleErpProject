@@ -112,7 +112,7 @@ const PrintableInvoiceTemplate = ({ detail, extendedData }) => {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '1.5rem' }}>
                <div style={{ padding: '1.2rem', backgroundColor: '#f8fafc', borderRadius: '1.2rem', border: '1px solid #edf2f7' }}>
                   <span style={{ fontSize: '0.6rem', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Đơn vị cung cấp</span>
-                  <p style={{ margin: '0.4rem 0 0.2rem 0', fontSize: '0.85rem', fontWeight: '900', color: '#0f172a' }}>CÔNG TY CP TẬP ĐOÀN HOLAGROUP</p>
+                  <p style={{ margin: '0.4rem 0 0.2rem 0', fontSize: '0.85rem', fontWeight: '900', color: '#0f172a' }}>CÔNG TY CP TẬP ĐOÀN HIZOGROUP</p>
                   <p style={{ margin: 0, fontSize: '0.7rem', color: '#64748b', fontWeight: '700' }}>Địa chỉ: Quận 1, TP. Hồ Chí Minh</p>
                </div>
                <div style={{ padding: '1.2rem', backgroundColor: '#ffffff', borderRadius: '1.2rem', border: '1px solid #edf2f7' }}>
@@ -215,7 +215,7 @@ const PrintableInvoiceTemplate = ({ detail, extendedData }) => {
               size: auto;
               margin: 5mm 5mm 18mm 5mm;
               @bottom-left {
-                content: "Hệ thống HOLAGROUP ERP - Tài liệu lưu hành nội bộ";
+                content: "Hệ thống HIZOGROUP ERP - Tài liệu lưu hành nội bộ";
                 font-size: 8pt;
                 color: #94a3b8;
                 font-weight: 700;
@@ -293,7 +293,7 @@ const PrintableInvoiceTemplate = ({ detail, extendedData }) => {
                 <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'center' }}>
                    <div style={{ width: '2.8rem', height: '2.8rem', backgroundColor: '#00288E', borderRadius: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '900', fontSize: '1.5rem' }}>H</div>
                    <div>
-                      <h1 style={{ margin: 0, color: '#00288E', fontSize: '1.3rem', fontWeight: '900' }}>HOLAGROUP</h1>
+                      <h1 style={{ margin: 0, color: '#00288E', fontSize: '1.3rem', fontWeight: '900' }}>HIZOGROUP</h1>
                       <p style={{ margin: 0, fontSize: '0.6rem', color: '#718096', fontWeight: '800', textTransform: 'uppercase' }}>Hệ thống Quản trị Tài chính</p>
                    </div>
                 </div>
@@ -334,7 +334,7 @@ const PrintableInvoiceTemplate = ({ detail, extendedData }) => {
                    <p style={{ margin: 0, fontWeight: '900', fontSize: '0.85rem' }}>KẾ TOÁN TRƯỞNG</p>
                    <p style={{ margin: '0.4rem 0 0 0', fontSize: '0.6rem', color: '#94a3b8' }}>(Ký và ghi rõ họ tên)</p>
                    <div style={{ height: '3rem' }}></div>
-                   <p style={{ margin: 0, fontWeight: '900', fontSize: '1rem', color: '#00288E' }}>Hệ thống ERP Hola</p>
+                   <p style={{ margin: 0, fontWeight: '900', fontSize: '1rem', color: '#00288E' }}>Hệ thống ERP Hizo</p>
                 </div>
               </div>
             </td>

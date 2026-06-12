@@ -54,7 +54,7 @@ const DebtTable = ({ debts, loading, onReminder, onToggleAuto, isMasterAutoEnabl
 
   if (!debts || debts.length === 0) {
     return (
-      <div className="text-center py-24 bg-slate-50/50 rounded-[2.5rem] border-2 border-dashed border-slate-100/50">
+      <div className="flex-1 flex flex-col items-center justify-center text-center py-24 bg-slate-50/50 rounded-[2.5rem] border-2 border-dashed border-slate-100/50">
         <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
           <span className="material-symbols-outlined text-4xl text-slate-200" aria-hidden="true">sentiment_satisfied</span>
         </div>

@@ -38,6 +38,8 @@ const OrderDetailDrawer = ({ open, onClose, order, onRefresh }) => {
   const [tabValue, setTabValue] = useState(0);
   const [activities, setActivities] = useState([]);
   const [loadingActivities, setLoadingActivities] = useState(false);
+  // Popup xác nhận dùng chung cho các hành động quan trọng (xác nhận / hủy đơn)
+  const [confirmAction, setConfirmAction] = useState(null);
 
   const handleUpdateStatus = async (status) => {
     try {
@@ -347,20 +349,48 @@ const OrderDetailDrawer = ({ open, onClose, order, onRefresh }) => {
           </Box>
         </Box>
   
+        {/* Đơn đang giao: hàng đã rời kho nên không còn hành động xác nhận/hủy nào khả dụng từ phía Sales */}
+        {rawStatus === 'SHIPPING' && (
+          <div className="p-6 bg-white border-t border-slate-200 shrink-0 font-inter">
+            <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 text-[#00288E] rounded-xl text-xs font-bold uppercase tracking-wide">
+              <span className="material-symbols-outlined text-lg">local_shipping</span>
+              Đơn hàng đang được giao — không thể xác nhận hoặc hủy ở bước này
+            </div>
+          </div>
+        )}
+
         {/* Footer Actions */}
-        {rawStatus !== 'DELIVERED' && rawStatus !== 'CANCELLED' && (
+        {rawStatus !== 'DELIVERED' && rawStatus !== 'CANCELLED' && rawStatus !== 'SHIPPING' && (
           <div className="p-6 bg-white border-t border-slate-200 flex gap-4 shrink-0 font-inter">
             {rawStatus === 'PENDING' && (
-              <button 
-                onClick={() => handleUpdateStatus('CONFIRMED')}
+              <button
+                onClick={() => setConfirmAction({
+                  title: 'Xác nhận đơn hàng',
+                  message: `Bạn có chắc chắn muốn xác nhận đơn hàng ${order?.displayID || ('#' + order?.orderID)}?`,
+                  icon: 'check_circle',
+                  iconBg: 'bg-blue-50',
+                  iconColor: 'text-[#00288E]',
+                  confirmLabel: 'Xác nhận đơn',
+                  confirmClass: 'bg-[#00288E] hover:bg-[#001D6E] shadow-blue-900/20',
+                  onConfirm: () => handleUpdateStatus('CONFIRMED'),
+                })}
                 className="flex-1 group flex items-center justify-center gap-2 bg-[#00288E] hover:bg-white text-white hover:text-[#00288E] py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 shadow-lg shadow-blue-900/10 border-2 border-[#00288E] active:scale-95"
               >
                 <span className="material-symbols-outlined text-sm group-hover:rotate-12 transition-transform">check_circle</span>
                 Xác nhận đơn
               </button>
             )}
-            <button 
-              onClick={() => handleUpdateStatus('CANCELLED')}
+            <button
+              onClick={() => setConfirmAction({
+                title: 'Hủy đơn hàng',
+                message: `Bạn có chắc chắn muốn hủy đơn hàng ${order?.displayID || ('#' + order?.orderID)}? Hành động này không thể hoàn tác.`,
+                icon: 'cancel',
+                iconBg: 'bg-rose-50',
+                iconColor: 'text-rose-500',
+                confirmLabel: 'Hủy đơn hàng',
+                confirmClass: 'bg-rose-600 hover:bg-rose-700 shadow-rose-200',
+                onConfirm: () => handleUpdateStatus('CANCELLED'),
+              })}
               className="flex-1 group flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-700 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 border-2 border-slate-300 active:scale-95"
             >
               <span className="material-symbols-outlined text-sm text-rose-500">cancel</span>
@@ -369,6 +399,42 @@ const OrderDetailDrawer = ({ open, onClose, order, onRefresh }) => {
           </div>
         )}
       </div>
+
+      {/* Popup xác nhận hành động (theo style chung của dự án) */}
+      {confirmAction && (
+        <div className="fixed inset-0 z-[1300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in" onClick={() => setConfirmAction(null)}>
+          <div className="bg-white rounded-2xl p-6 sm:p-10 max-w-md w-full shadow-2xl animate-in zoom-in duration-300 border border-slate-200" onClick={(e) => e.stopPropagation()}>
+            <div className="text-center">
+              <div className={`w-16 h-16 sm:w-20 sm:h-20 ${confirmAction.iconBg} ${confirmAction.iconColor} rounded-xl flex items-center justify-center text-3xl sm:text-4xl mx-auto mb-6`}>
+                <span className="material-symbols-outlined text-3xl sm:text-4xl">{confirmAction.icon}</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 uppercase tracking-tight mb-2">{confirmAction.title}</h2>
+              <p className="text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
+                {confirmAction.message}
+              </p>
+            </div>
+            <div className="flex gap-4 mt-8 sm:mt-10">
+              <button
+                onClick={() => setConfirmAction(null)}
+                className="flex-1 px-4 py-3 sm:py-4 bg-slate-100 text-slate-400 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 hover:text-slate-600 transition-all active:scale-95"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                onClick={() => {
+                  const action = confirmAction;
+                  setConfirmAction(null);
+                  action.onConfirm();
+                }}
+                className={`flex-1 px-4 py-3 sm:py-4 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 ${confirmAction.confirmClass}`}
+              >
+                <span className="material-symbols-outlined text-base">{confirmAction.icon}</span>
+                {confirmAction.confirmLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Drawer>
   );
 };

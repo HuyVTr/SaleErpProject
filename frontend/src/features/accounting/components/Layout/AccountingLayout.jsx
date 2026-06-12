@@ -64,18 +64,7 @@ const AccountingLayout = () => {
         />
         
         <div className="flex-1 flex flex-col h-screen overflow-hidden">
-          {/* Header Wrapper */}
-          <div className="flex items-center bg-white border-b border-gray-200 shrink-0 pr-4">
-             <button 
-               onClick={toggleSidebar}
-               className="xl:hidden pl-4 pr-2 py-4 text-acc-text-muted hover:text-acc-primary transition-colors"
-             >
-               <span className="material-symbols-outlined text-3xl">menu</span>
-             </button>
-             <div className="flex-1 px-4 py-2 border-l border-gray-100/50 my-1 ml-1 xl:ml-0">
-               <Header />
-             </div>
-          </div>
+          <Header onToggleSidebar={toggleSidebar} toggleBreakpoint="xl" />
 
           <main className="flex-1 overflow-hidden relative bg-acc-surface"> 
             <div className="absolute inset-0 flex flex-col px-3 py-3 sm:px-4 sm:py-4 lg:px-5 lg:py-5 lg:max-w-[120rem] mx-auto w-full">

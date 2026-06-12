@@ -126,7 +126,7 @@ const InvoiceDetail = () => {
                <table className="w-full text-left border-collapse relative acc-responsive-table">
                   <thead className="bg-slate-50 border-b border-slate-100 sticky top-0 z-10 backdrop-blur-md">
                     <tr>
-                      <th className="px-6 py-4 text-[9px] font-black text-acc-text-muted uppercase tracking-[0.2em] w-64">Danh mục hàng hóa</th>
+                      <th className="px-6 py-4 text-[9px] font-black text-acc-text-muted uppercase tracking-[0.2em] w-64 text-center">Danh mục hàng hóa</th>
                       <th className="px-4 py-4 text-[9px] font-black text-acc-text-muted uppercase tracking-[0.2em] text-left">Sản phẩm</th>
                       <th className="px-4 py-4 text-[9px] font-black text-acc-text-muted uppercase tracking-[0.2em] text-left w-40">SL</th>
                       <th className="px-6 py-4 text-[9px] font-black text-acc-text-muted uppercase tracking-[0.2em] text-left w-64">Thành tiền</th>
@@ -141,9 +141,9 @@ const InvoiceDetail = () => {
                       </tr>
                     ) : invoice.items.map((item, i) => (
                       <tr key={i} className="hover:bg-slate-50/50 transition-all duration-200 group">
-                        <td className="px-6 py-5" data-label="Danh mục">
-                          <div className="flex flex-col">
-                            <span className="text-[10px] text-acc-primary font-black uppercase tracking-widest px-2 py-1 bg-acc-primary/5 rounded-lg whitespace-nowrap block w-fit max-w-[150px] truncate">
+                        <td className="px-6 py-5 text-center" data-label="Danh mục">
+                          <div className="flex flex-col items-center justify-center">
+                            <span className="bg-slate-100 text-slate-500 font-black rounded-lg border border-slate-200 uppercase tracking-tighter text-[9px] px-2.5 py-1 block w-fit max-w-[150px] truncate">
                               {item.categoryName || 'Sản phẩm'}
                             </span>
                           </div>

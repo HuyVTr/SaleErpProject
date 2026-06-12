@@ -112,7 +112,7 @@ const TransactionDetail = () => {
          const yOffset = margin;
 
          pdf.addImage(imgData, 'PNG', xOffset, yOffset, finalWidth, finalHeight, undefined, 'FAST');
-         pdf.save(`HolaGroup_ChungTu_${id}_${new Date().getTime()}.pdf`);
+         pdf.save(`HizoGroup_ChungTu_${id}_${new Date().getTime()}.pdf`);
       } catch (error) {
          console.error("Lỗi khi tải PDF:", error);
          alert("Có lỗi xảy ra khi tạo file PDF. Vui lòng thử lại.");
@@ -511,7 +511,7 @@ const TransactionDetail = () => {
                          <span className="material-symbols-outlined text-base">verified</span> Chứng thư số ERP
                       </p>
                       <p className="text-[0.6875rem] sm:text-[0.75rem] text-acc-text-muted leading-relaxed font-medium">
-                         {extendedData?.note || "Chứng từ được khởi tạo và ký số bởi hệ thống quản trị Hola Group ERP. Dữ liệu có giá trị pháp lý trong luồng nghiệp vụ nội bộ."}
+                         {extendedData?.note || "Chứng từ được khởi tạo và ký số bởi hệ thống quản trị Hizo Group ERP. Dữ liệu có giá trị pháp lý trong luồng nghiệp vụ nội bộ."}
                       </p>
                    </div>
                 </div>

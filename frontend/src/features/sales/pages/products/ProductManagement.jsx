@@ -142,7 +142,9 @@ const ProductManagement = () => {
 
         const mapped = productsData.map(p => {
           const cat = categoriesData.find(c => c.categoryID === p.categoryID);
-          const stock = p.stock !== undefined ? p.stock : [120, 0, 15, 340][p.productID % 4];
+          const stock = p.stockQuantity !== undefined 
+            ? p.stockQuantity 
+            : (p.stock !== undefined ? p.stock : [120, 0, 15, 340][Number(p.productID) % 4]);
           
           let displayStatus = 'Còn hàng';
           if (p.status !== 'ACTIVE') {
@@ -317,19 +319,18 @@ const ProductManagement = () => {
     <div className="font-inter flex flex-col w-full h-full bg-slate-50 animate-fade-in gap-4 md:gap-6 pb-6 overflow-hidden">
       
       {/* 1. Header Section */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-3 sm:gap-4 px-1 sm:px-2 md:px-0 shrink-0">
-        <div className="space-y-1 sm:space-y-2">
-          <h1 className="text-2xl sm:text-3xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">Quản lý sản phẩm</h1>
-          <p className="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed">
-            Hệ thống đang lưu trữ{" "}
+      <div className="flex flex-col gap-2 sm:gap-3 px-1 sm:px-2 md:px-0 shrink-0">
+        <h1 className="text-2xl sm:text-3xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">Quản lý sản phẩm</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <p className="text-sm sm:text-base text-slate-500 font-medium leading-relaxed">
+            Đang lưu trữ{" "}
             <span className="inline-flex items-center align-middle mx-1 px-2.5 py-0.5 rounded-lg bg-blue-50 text-[#00288E] font-bold whitespace-nowrap animate-fade-in">
               {products.length} mã SKU
             </span>{" "}
-            thuộc {categories.length} danh mục
+            · {categories.length} danh mục
           </p>
-        </div>
-        
-        <div className="flex gap-3" style={{ gap: 'clamp(8px, 0.8vw, 16px)' }}>
+
+          <div className="flex gap-3" style={{ gap: 'clamp(8px, 0.8vw, 16px)' }}>
           {basePath === '/admin' && (
             <button 
               className="bg-white border-2 border-slate-100 text-slate-400 rounded-2xl font-black uppercase tracking-widest hover:bg-slate-50 hover:text-slate-600 transition-all flex items-center active:scale-95 shadow-sm"
@@ -345,10 +346,11 @@ const ProductManagement = () => {
             </button>
           )}
         </div>
+        </div>
       </div>
 
       {/* 2. Stats Grid - Động hóa 4 cột trên iPad/Tablet và 2 cột trên Mobile */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-2 md:px-0 shrink-0">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-2 md:px-0 shrink-0">
             <StatCard 
               label="GIÁ TRỊ KHO" 
               value={formatCurrency(stats.inventoryValue, false, true)} 
@@ -394,7 +396,7 @@ const ProductManagement = () => {
       </div>
 
       {/* 3. Separated Filter & Search Bar - Phân chia side-by-side trên iPad và xếp chồng trên Mobile */}
-      <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-slate-300 shadow-sm flex flex-row md:flex-row justify-between items-center gap-2 lg:gap-6 mx-2 md:mx-0 hover:border-blue-500 hover:shadow-xl transition-[border-color,box-shadow] duration-300 shrink-0">
+      <div className="relative z-20 bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-slate-300 shadow-sm flex flex-row md:flex-row justify-between items-center gap-2 lg:gap-6 mx-2 md:mx-0 hover:border-blue-500 hover:shadow-xl transition-[border-color,box-shadow] duration-300 shrink-0">
             <div className="relative flex-1 md:w-[350px] lg:w-[400px] md:flex-none group">
               <input 
                 type="text" 
@@ -610,7 +612,7 @@ const ProductManagement = () => {
                       <td className="p-4 sm:p-6 text-center" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
                         <div className="flex items-center justify-center w-full">
                           <span className="bg-slate-100 text-slate-500 font-black rounded-lg border border-slate-200 uppercase tracking-tighter"
-                                style={{ fontSize: 'clamp(8px, 0.75vw, 9px)', padding: 'clamp(2px, 0.4vw, 4px) clamp(6px, 0.8vw, 12px)' }}>
+                                style={{ fontSize: 'clamp(9px, 0.8vw, 10px)', padding: 'clamp(3px, 0.5vw, 5px) clamp(8px, 1vw, 14px)' }}>
                             {product.category}
                           </span>
                         </div>
@@ -716,7 +718,7 @@ const ProductManagement = () => {
                             SKU: {product.id}
                           </div>
                           <div className="mt-2">
-                            <span className="inline-block bg-slate-100 text-slate-500 font-black rounded-lg border border-slate-200 uppercase tracking-tighter text-[9px] px-2 py-0.5">
+                            <span className="inline-block bg-slate-100 text-slate-500 font-black rounded-lg border border-slate-200 uppercase tracking-tighter text-[10px] px-2.5 py-1">
                               {product.category}
                             </span>
                           </div>

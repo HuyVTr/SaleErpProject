@@ -55,6 +55,8 @@ const QuotationDetailDrawer = ({ open, onClose, quotation, onRefresh }) => {
   const [activities, setActivities] = useState([]);
   const [loadingActivities, setLoadingActivities] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  // Popup xác nhận dùng chung cho các hành động quan trọng (duyệt / từ chối / chuyển đơn)
+  const [confirmAction, setConfirmAction] = useState(null);
   const navigate = useNavigate();
 
   const showToastMsg = (message, type = 'success') => {
@@ -340,8 +342,17 @@ const QuotationDetailDrawer = ({ open, onClose, quotation, onRefresh }) => {
         <div className="p-4 bg-white border-t border-slate-200 flex gap-2.5 w-full shrink-0 font-inter items-center justify-between">
           {(quotation.status === 'APPROVED' || quotation.status === 'ĐỒNG Ý' || quotation.status === 'ĐÃ DUYỆT') ? (
             <>
-              <button 
-                onClick={handleConvertToOrder}
+              <button
+                onClick={() => setConfirmAction({
+                  title: 'Chuyển thành đơn hàng',
+                  message: `Bạn có chắc chắn muốn chuyển báo giá ${quotation?.displayID || ('#' + quotation?.quotationID)} thành đơn hàng mới?`,
+                  icon: 'sync_alt',
+                  iconBg: 'bg-blue-50',
+                  iconColor: 'text-[#00288E]',
+                  confirmLabel: 'Chuyển đơn hàng',
+                  confirmClass: 'bg-[#00288E] hover:bg-[#001D6E] shadow-blue-900/20',
+                  onConfirm: handleConvertToOrder,
+                })}
                 className="flex-1 min-w-0 group flex items-center justify-center gap-1.5 bg-[#00288E] border-2 border-[#00288E] hover:bg-blue-850 hover:border-blue-850 hover:shadow-xl text-white py-3.5 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-wider transition-all duration-300 shadow-md shadow-blue-900/10 active:scale-95 whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               >
                 <span className="material-symbols-outlined text-sm sm:text-base group-hover:rotate-180 transition-transform duration-500">sync_alt</span>
@@ -367,15 +378,33 @@ const QuotationDetailDrawer = ({ open, onClose, quotation, onRefresh }) => {
             </>
           ) : (
             <>
-              <button 
-                onClick={() => handleUpdateStatus('APPROVED')}
+              <button
+                onClick={() => setConfirmAction({
+                  title: 'Duyệt báo giá',
+                  message: `Bạn có chắc chắn muốn duyệt báo giá ${quotation?.displayID || ('#' + quotation?.quotationID)}?`,
+                  icon: 'check_circle',
+                  iconBg: 'bg-blue-50',
+                  iconColor: 'text-[#00288E]',
+                  confirmLabel: 'Duyệt báo giá',
+                  confirmClass: 'bg-[#00288E] hover:bg-[#001D6E] shadow-blue-900/20',
+                  onConfirm: () => handleUpdateStatus('APPROVED'),
+                })}
                 className="flex-1 group flex items-center justify-center gap-1.5 bg-[#00288E] border-2 border-[#00288E] hover:bg-blue-850 hover:border-blue-850 hover:shadow-xl text-white py-3.5 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-wider transition-all duration-300 shadow-md shadow-blue-900/10 active:scale-95 whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               >
                 <span className="material-symbols-outlined text-sm sm:text-base group-hover:scale-110 transition-transform">check_circle</span>
                 <span>Duyệt</span>
               </button>
-              <button 
-                onClick={() => handleUpdateStatus('CANCELLED')}
+              <button
+                onClick={() => setConfirmAction({
+                  title: 'Từ chối báo giá',
+                  message: `Bạn có chắc chắn muốn từ chối báo giá ${quotation?.displayID || ('#' + quotation?.quotationID)}? Hành động này không thể hoàn tác.`,
+                  icon: 'cancel',
+                  iconBg: 'bg-rose-50',
+                  iconColor: 'text-rose-500',
+                  confirmLabel: 'Từ chối',
+                  confirmClass: 'bg-rose-600 hover:bg-rose-700 shadow-rose-200',
+                  onConfirm: () => handleUpdateStatus('CANCELLED'),
+                })}
                 className="flex-1 group flex items-center justify-center gap-1.5 bg-white border-2 border-rose-300 hover:bg-rose-50/50 text-rose-600 py-3.5 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-wider transition-all duration-300 active:scale-95 whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               >
                 <span className="material-symbols-outlined text-sm sm:text-base">cancel</span>
@@ -395,6 +424,42 @@ const QuotationDetailDrawer = ({ open, onClose, quotation, onRefresh }) => {
           </div>
         )}
       </div>
+
+      {/* Popup xác nhận hành động (theo style chung của dự án) */}
+      {confirmAction && (
+        <div className="fixed inset-0 z-[1300] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in" onClick={() => setConfirmAction(null)}>
+          <div className="bg-white rounded-2xl p-6 sm:p-10 max-w-md w-full shadow-2xl animate-in zoom-in duration-300 border border-slate-200" onClick={(e) => e.stopPropagation()}>
+            <div className="text-center">
+              <div className={`w-16 h-16 sm:w-20 sm:h-20 ${confirmAction.iconBg} ${confirmAction.iconColor} rounded-xl flex items-center justify-center text-3xl sm:text-4xl mx-auto mb-6`}>
+                <span className="material-symbols-outlined text-3xl sm:text-4xl">{confirmAction.icon}</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 uppercase tracking-tight mb-2">{confirmAction.title}</h2>
+              <p className="text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
+                {confirmAction.message}
+              </p>
+            </div>
+            <div className="flex gap-4 mt-8 sm:mt-10">
+              <button
+                onClick={() => setConfirmAction(null)}
+                className="flex-1 px-4 py-3 sm:py-4 bg-slate-100 text-slate-400 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 hover:text-slate-600 transition-all active:scale-95"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                onClick={() => {
+                  const action = confirmAction;
+                  setConfirmAction(null);
+                  action.onConfirm();
+                }}
+                className={`flex-1 px-4 py-3 sm:py-4 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 ${confirmAction.confirmClass}`}
+              >
+                <span className="material-symbols-outlined text-base">{confirmAction.icon}</span>
+                {confirmAction.confirmLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Drawer>
   );
 };

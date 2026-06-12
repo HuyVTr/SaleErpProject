@@ -16,14 +16,34 @@ const PriceListDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [priceList, setPriceList] = useState(null);
+  const [items, setItems] = useState([]);
 
   useEffect(() => {
     let mounted = true;
-    adminService.getPriceLists().then(list => {
+    Promise.all([adminService.getPriceLists(), adminService.getProducts()]).then(([list, products]) => {
       if (!mounted) return;
       const arr = Array.isArray(list) ? list : [];
-      const found = arr.find(p => String(p.id) === String(id));
+      const productList = Array.isArray(products) ? products : [];
+      const cleanTargetId = String(id).replace('BG-', '').replace(/^0+/, '');
+      const found = arr.find(p => String(p.id).replace('BG-', '').replace(/^0+/, '') === cleanTargetId);
       setPriceList(found);
+      if (!found) return;
+
+      adminService.getPriceListItems(found.id).then(savedItems => {
+        if (!mounted) return;
+        const arr2 = Array.isArray(savedItems) ? savedItems : [];
+        setItems(arr2.map(it => {
+          const product = productList.find(p => String(p.productID || p.id) === String(it.productID));
+          return {
+            sku: `SP-${String(it.productID).padStart(3, '0')}`,
+            name: product?.productName || it.productName || `Sản phẩm #${it.productID}`,
+            basePrice: product?.salePrice ?? it.basePrice ?? it.price,
+            price: it.price
+          };
+        }));
+      }).catch(err => {
+        console.error('Load price list items failed', err);
+      });
     }).catch(err => {
       console.error('Load pricelists failed', err);
       setPriceList(undefined);
@@ -32,7 +52,14 @@ const PriceListDetail = () => {
   }, [id]);
 
   if (priceList === null) {
-    return (<div className="p-6">Đang tải...</div>);
+    return (
+      <div className="font-inter flex min-h-screen items-center justify-center bg-slate-50 p-6" aria-live="polite" aria-busy="true">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Đang tải dữ liệu…</p>
+        </div>
+      </div>
+    );
   }
 
   if (!priceList) {
@@ -44,7 +71,7 @@ const PriceListDetail = () => {
           <button
             type="button"
             onClick={() => navigate('/admin/price-lists')}
-            className="mt-6 rounded-2xl bg-[#00288E] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#00288E]/90"
+            className="mt-6 rounded-2xl bg-[#00288E] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#00288E]/90 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 outline-none"
           >
             Quay lại danh sách
           </button>
@@ -53,14 +80,12 @@ const PriceListDetail = () => {
     );
   }
 
-  const items = priceList.items || [];
-
   return (
     <div className="font-inter flex flex-col w-full min-h-screen bg-slate-50 gap-4 pb-10 animate-fade-in">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 uppercase tracking-tight">Chi tiết bảng giá</h1>
-          <p className="mt-2 text-sm text-slate-600 max-w-2xl">
+          <h1 className="text-3xl sm:text-4xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight">Chi tiết bảng giá</h1>
+          <p className="mt-2 text-sm sm:text-base text-slate-600 max-w-2xl">
             Xem thông tin chi tiết và danh sách sản phẩm trong bảng giá.
           </p>
         </div>
@@ -69,17 +94,17 @@ const PriceListDetail = () => {
           <button
             type="button"
             onClick={() => navigate('/admin/price-lists')}
-            className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+            className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 outline-none"
           >
-            <span className="material-symbols-outlined">arrow_back</span>
+            <span className="material-symbols-outlined" aria-hidden="true">arrow_back</span>
             Quay lại
           </button>
           <button
             type="button"
             onClick={() => navigate(`/admin/price-lists/edit/${priceList.id}`)}
-            className="inline-flex items-center gap-2 rounded-2xl bg-[#00288E] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#00288E]/90"
+            className="inline-flex items-center gap-2 rounded-2xl bg-[#00288E] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#00288E]/90 focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 outline-none"
           >
-            <span className="material-symbols-outlined">edit</span>
+            <span className="material-symbols-outlined" aria-hidden="true">edit</span>
             Chỉnh sửa
           </button>
         </div>
@@ -177,8 +202,8 @@ const PriceListDetail = () => {
                   <tr key={`${item.sku}-${index}`} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4 font-semibold text-slate-900">{item.sku}</td>
                     <td className="px-6 py-4">{item.name}</td>
-                    <td className="px-6 py-4">{formatMoney(item.basePrice)}</td>
-                    <td className="px-6 py-4 font-semibold text-slate-900">{formatMoney(item.price)}</td>
+                    <td className="px-6 py-4 tabular-nums">{formatMoney(item.basePrice)}</td>
+                    <td className="px-6 py-4 font-semibold text-slate-900 tabular-nums">{formatMoney(item.price)}</td>
                   </tr>
                 ))}
               </tbody>

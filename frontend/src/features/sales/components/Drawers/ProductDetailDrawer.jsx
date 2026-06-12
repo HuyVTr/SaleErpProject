@@ -30,7 +30,7 @@ const formatDate = (dateStr) => {
   return `${day}/${month}/${year}`;
 };
 
-const ProductDetailDrawer = ({ open, onClose, product, basePath, navigate, onRefresh }) => {
+const ProductDetailDrawer = ({ open, onClose, product, basePath, navigate, onRefresh, onEdit, onDelete }) => {
   const swipeHandlers = useSwipeToClose(onClose);
   const [tabValue, setTabValue] = useState(0);
   const [history, setHistory] = useState({ orders: [], invoices: [], orderItems: [] });
@@ -771,13 +771,43 @@ const ProductDetailDrawer = ({ open, onClose, product, basePath, navigate, onRef
 
       {/* Footer Actions */}
       <div className="p-6 bg-white border-t border-slate-200 flex gap-4 shrink-0 font-inter">
-        <button 
-          onClick={onClose}
-          className="w-full flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 border-2 border-slate-300 active:scale-95 cursor-pointer"
-        >
-          <span className="material-symbols-outlined text-sm">close</span>
-          Đóng
-        </button>
+        {(onEdit || onDelete) ? (
+          <>
+            {onEdit && (
+              <button
+                onClick={() => onEdit(product)}
+                className="flex-1 flex items-center justify-center gap-2 bg-[#00288E] border-2 border-[#00288E] hover:bg-[#001D6E] hover:border-[#001D6E] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 active:scale-95 cursor-pointer shadow-md shadow-blue-900/10"
+              >
+                <span className="material-symbols-outlined text-sm">edit</span>
+                Sửa
+              </button>
+            )}
+            {onDelete && (
+              <button
+                onClick={() => onDelete(product)}
+                className="flex-1 flex items-center justify-center gap-2 bg-white border-2 border-rose-300 hover:bg-rose-50/50 text-rose-600 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 active:scale-95 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-sm">delete</span>
+                Xóa
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="flex-1 flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 border-2 border-slate-300 active:scale-95 cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-sm">close</span>
+              Đóng
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={onClose}
+            className="w-full flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 border-2 border-slate-300 active:scale-95 cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-sm">close</span>
+            Đóng
+          </button>
+        )}
       </div>
 
       {/* Toast Alert */}

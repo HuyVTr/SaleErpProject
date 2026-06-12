@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
-const USE_MOCK = true; // Force mock for now as requested by user or implied by current state
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -14,7 +14,8 @@ const mockUsers = [
   { "userID": 1, "lastName": "Nguyễn Văn", "firstName": "An", "email": "sale@gmail.com", "roleID": 2, "roleName": "Nhân viên bán hàng" },
   { "userID": 3, "lastName": "Võ", "firstName": "Huy", "email": "accounting@gmail.com", "roleID": 1, "roleName": "Kế toán" },
   { "userID": 4, "lastName": "Lê Văn", "firstName": "Kho", "email": "warehouse@gmail.com", "roleID": 4, "roleName": "Nhân viên kho" },
-  { "userID": 5, "lastName": "Phạm", "firstName": "Admin", "email": "admin@gmail.com", "roleID": 3, "roleName": "Quản trị viên" }
+  { "userID": 5, "lastName": "Phạm", "firstName": "Admin", "email": "admin@gmail.com", "roleID": 5, "roleName": "Super Admin" },
+  { "userID": 9, "lastName": "Nguyễn", "firstName": "Admin Thường", "email": "admin1@gmail.com", "roleID": 3, "roleName": "Quản trị viên" }
 ];
 
 export const authService = {
@@ -83,9 +84,62 @@ export const authService = {
   isAuthenticated: () => {
     return !!(localStorage.getItem('auth_token') || localStorage.getItem('token'));
   },
-  
+
   getMockUsers: () => {
     return mockUsers;
+  },
+
+  updateProfile: async (payload) => {
+    if (USE_MOCK) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      try {
+        const user = localStorage.getItem('current_user') || localStorage.getItem('user');
+        const userData = user ? JSON.parse(user) : null;
+        if (!userData) return { success: false, message: 'Không tìm thấy người dùng' };
+
+        const updated = { ...userData, ...payload };
+        localStorage.setItem('current_user', JSON.stringify(updated));
+        localStorage.setItem('user', JSON.stringify(updated));
+        return { success: true, user: updated };
+      } catch (e) {
+        return { success: false, message: 'Lỗi cập nhật hồ sơ' };
+      }
+    } else {
+      try {
+        const response = await apiClient.put('/api/auth/me', payload);
+        if (response.data.success) {
+          localStorage.setItem('current_user', JSON.stringify(response.data.user));
+          localStorage.setItem('user', JSON.stringify(response.data.user));
+        }
+        return response.data;
+      } catch (error) {
+        return { success: false, message: error.response?.data?.message || 'Lỗi cập nhật hồ sơ' };
+      }
+    }
+  },
+
+  changePassword: async (payload) => {
+    if (USE_MOCK) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      // Mock validation: current password should be '123456'
+      if (payload.currentPassword !== '123456') {
+        return { success: false, message: 'Mật khẩu hiện tại không chính xác' };
+      }
+      if (payload.newPassword !== payload.confirmPassword) {
+        return { success: false, message: 'Mật khẩu xác nhận không khớp' };
+      }
+      if (payload.newPassword.length < 6) {
+        return { success: false, message: 'Mật khẩu phải có ít nhất 6 ký tự' };
+      }
+      return { success: true, message: 'Mật khẩu được cập nhật thành công' };
+    } else {
+      try {
+        const response = await apiClient.put('/api/auth/change-password', payload);
+        return response.data;
+      } catch (error) {
+        return { success: false, message: error.response?.data?.message || 'Lỗi đổi mật khẩu' };
+      }
+    }
   }
 };
 

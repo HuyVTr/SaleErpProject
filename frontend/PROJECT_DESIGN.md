@@ -1,4 +1,4 @@
-# THIẾT KẾ HỆ THỐNG SALES - HOLA GROUP
+# THIẾT KẾ HỆ THỐNG SALES - HIZO GROUP
 
 ## ✅ Tổng quan yêu cầu
 Hệ thống được chia thành 4 phân hệ (module) chính dựa trên vai trò người dùng:

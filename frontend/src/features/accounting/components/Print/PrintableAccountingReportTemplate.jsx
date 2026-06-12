@@ -44,7 +44,7 @@ const PrintableAccountingReportTemplate = ({
               size: auto;
               margin: 5mm 5mm 18mm 5mm;
               @bottom-left {
-                content: "Hệ thống HOLAGROUP ERP - Tài liệu lưu hành nội bộ";
+                content: "Hệ thống HIZOGROUP ERP - Tài liệu lưu hành nội bộ";
                 font-size: 8pt;
                 color: #94a3b8;
                 font-weight: 700;
@@ -122,7 +122,7 @@ const PrintableAccountingReportTemplate = ({
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                   <div style={{ width: '45px', height: '45px', backgroundColor: '#00288E', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '900', fontSize: '24px' }}>H</div>
                   <div>
-                    <h1 style={{ margin: 0, color: '#00288E', fontSize: '20px', fontWeight: '900', letterSpacing: '-0.5px' }}>HOLA GROUP</h1>
+                    <h1 style={{ margin: 0, color: '#00288E', fontSize: '20px', fontWeight: '900', letterSpacing: '-0.5px' }}>HIZO GROUP</h1>
                     <p style={{ margin: 0, fontSize: '10px', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase' }}>Hệ thống Quản trị Bán hàng & Tài chính</p>
                   </div>
                 </div>

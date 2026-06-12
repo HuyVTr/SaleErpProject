@@ -1,6 +1,6 @@
 # Danh sách tài khoản thử nghiệm (Mock Accounts) - Đã sửa lỗi Email
 
-Tài liệu này ghi lại danh sách các tài khoản được sử dụng để test phân quyền trong hệ thống Sales của Hola Group (Đã được thêm `@gmail.com` để vượt qua validation của trình duyệt).
+Tài liệu này ghi lại danh sách các tài khoản được sử dụng để test phân quyền trong hệ thống Sales của Hizo Group (Đã được thêm `@gmail.com` để vượt qua validation của trình duyệt).
 
 **Mật khẩu chung cho tất cả tài khoản:** `123456`
 

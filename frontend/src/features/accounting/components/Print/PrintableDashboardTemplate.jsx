@@ -39,7 +39,7 @@ const PrintableDashboardTemplate = ({ stats, chartData, timeframeLabels, timefra
               size: auto;
               margin: 5mm 5mm 18mm 5mm;
               @bottom-left {
-                content: "Hệ thống HOLAGROUP ERP - Tài liệu lưu hành nội bộ";
+                content: "Hệ thống HIZOGROUP ERP - Tài liệu lưu hành nội bộ";
                 font-size: 8pt;
                 color: #94a3b8;
                 font-weight: 700;
@@ -117,7 +117,7 @@ const PrintableDashboardTemplate = ({ stats, chartData, timeframeLabels, timefra
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                   <div style={{ width: '3.5rem', height: '3.5rem', backgroundColor: '#00288E', borderRadius: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '900', fontSize: '2rem' }}>H</div>
                   <div>
-                    <h1 style={{ margin: 0, color: '#00288E', fontSize: '1.7rem', fontWeight: '900', letterSpacing: '-0.02em' }}>HOLA GROUP</h1>
+                    <h1 style={{ margin: 0, color: '#00288E', fontSize: '1.7rem', fontWeight: '900', letterSpacing: '-0.02em' }}>HIZO GROUP</h1>
                     <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Hệ thống Quản trị Doanh nghiệp</p>
                   </div>
                 </div>

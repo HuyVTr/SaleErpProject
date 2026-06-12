@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import salesService from '../../services/salesService';
+import adminService from '../../../admin/services/adminService';
 import { useSalesToast } from '../../components/Notification/useSalesToast';
 import SalesToastNotification from '../../components/Notification/SalesToastNotification';
 
@@ -722,6 +723,27 @@ const AddQuotation = () => {
   const [quotationItems, setQuotationItems] = useState([]);
   const [isProductDrawerOpen, setIsProductDrawerOpen] = useState(false);
 
+  // Bảng giá riêng được gán cho khách hàng đang chọn (nếu có), dùng để áp giá tự động
+  const [customerPriceMap, setCustomerPriceMap] = useState(null);
+
+  useEffect(() => {
+    if (!selectedCustomer?.priceListId) {
+      setCustomerPriceMap(null);
+      return;
+    }
+    let mounted = true;
+    adminService.getPriceListItems(selectedCustomer.priceListId).then(items => {
+      if (!mounted) return;
+      const map = new Map();
+      (Array.isArray(items) ? items : []).forEach(it => map.set(Number(it.productID), Number(it.price)));
+      setCustomerPriceMap(map);
+    }).catch(err => {
+      console.error('Lỗi khi tải bảng giá khách hàng:', err);
+      setCustomerPriceMap(null);
+    });
+    return () => { mounted = false; };
+  }, [selectedCustomer]);
+
   // Global taxes & discounts
   const [taxPercent, setTaxPercent] = useState(10);
   const [discountPercent, setDiscountPercent] = useState(0);
@@ -786,6 +808,7 @@ const AddQuotation = () => {
 
   // Add item from drawer
   const handleAddItem = (prod) => {
+    const overridePrice = customerPriceMap?.get(Number(prod.productID));
     setQuotationItems(prev => {
       const existing = prev.find(item => item.productID === prod.productID);
       if (existing) return prev;
@@ -795,7 +818,7 @@ const AddQuotation = () => {
           productID: prod.productID,
           productName: prod.productName,
           unit: prod.unit || 'm2',
-          unitPrice: prod.salePrice || 0,
+          unitPrice: overridePrice ?? prod.salePrice ?? 0,
           quantity: 1,
           discount: 0
         }
@@ -1173,6 +1196,13 @@ const AddQuotation = () => {
                       </div>
                     </div>
 
+                    {customerPriceMap && (
+                      <div className="flex items-center gap-2 bg-emerald-400/10 border border-emerald-300/20 text-emerald-300 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest">
+                        <span className="material-symbols-outlined text-sm">sell</span>
+                        Đã áp dụng bảng giá riêng (BG-{String(selectedCustomer.priceListId).padStart(3, '0')})
+                      </div>
+                    )}
+
                     <div className="space-y-2.5 text-[11px] font-bold text-white/70 bg-white/5 p-4 rounded-xl border border-white/5">
                       <div className="flex justify-between">
                         <span>Điện thoại:</span>
@@ -1202,7 +1232,7 @@ const AddQuotation = () => {
                         type="text" 
                         name="customer-search"
                         aria-label="Tìm kiếm khách hàng nhận báo giá"
-                        placeholder="Tìm kiếm khách hàng (ví dụ: Công ty Hola)…" 
+                        placeholder="Tìm kiếm khách hàng (ví dụ: Công ty Hizo)…" 
                         value={customerSearch}
                         onChange={(e) => {
                           setCustomerSearch(e.target.value);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import salesService from '../../services/salesService';
+import adminService from '../../../admin/services/adminService';
 import { useSalesToast } from '../../components/Notification/useSalesToast';
 import SalesToastNotification from '../../components/Notification/SalesToastNotification';
 
@@ -35,6 +36,7 @@ const CreateOrder = () => {
   const [isOpenCategoryDropdown, setIsOpenCategoryDropdown] = useState(false);
   const [categorySearchQuery, setCategorySearchQuery] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [customerPriceMap, setCustomerPriceMap] = useState(null);
 
   const showToastMsg = (message, type = 'success') => {
     showToast(message, type);
@@ -55,6 +57,8 @@ const CreateOrder = () => {
     if (autoCust) {
       return {
         id: `KH-${autoCust.customerID.toString().padStart(5, '0')}`,
+        customerID: autoCust.customerID,
+        priceListId: autoCust.priceListId,
         name: autoCust.companyName || `${autoCust.lastName} ${autoCust.firstName}`,
         phone: autoCust.phoneNumber || 'N/A',
         address: autoCust.address || 'N/A',
@@ -120,6 +124,8 @@ const CreateOrder = () => {
           if (customer) {
             setSelectedCustomer({
               id: `KH-${customer.customerID.toString().padStart(5, '0')}`,
+              customerID: customer.customerID,
+              priceListId: customer.priceListId,
               name: customer.companyName || `${customer.lastName} ${customer.firstName}`,
               phone: customer.phoneNumber || '0982 • 334 • 999',
               address: customer.address || '123 Đường Lê Lợi, Phường Bến Thành, Quận 1, TP. HCM',
@@ -134,6 +140,21 @@ const CreateOrder = () => {
       fetchCustomer();
     }
   }, [quotation]);
+
+  // Apply customer-specific price list overrides
+  useEffect(() => {
+    if (selectedCustomer?.priceListId) {
+      adminService.getPriceListItems(selectedCustomer.priceListId).then(items => {
+        const map = new Map((Array.isArray(items) ? items : []).map(it => [Number(it.productID), Number(it.price)]));
+        setCustomerPriceMap(map);
+      }).catch(err => {
+        console.error('Load price list items failed', err);
+        setCustomerPriceMap(null);
+      });
+    } else {
+      setCustomerPriceMap(null);
+    }
+  }, [selectedCustomer]);
 
   const updateQuantity = (id, delta) => {
     setCart(prevCart => 
@@ -154,6 +175,8 @@ const CreateOrder = () => {
   const handleSelectCustomer = (customer) => {
     setSelectedCustomer({
       id: `KH-${customer.customerID.toString().padStart(5, '0')}`,
+      customerID: customer.customerID,
+      priceListId: customer.priceListId,
       name: customer.companyName || `${customer.lastName} ${customer.firstName}`,
       phone: customer.phoneNumber || 'N/A',
       address: customer.address || 'N/A',
@@ -165,11 +188,12 @@ const CreateOrder = () => {
   };
 
   const handleAddProduct = (prod) => {
+    const overridePrice = customerPriceMap?.get(Number(prod.productID));
     setCart(prevCart => {
       const existing = prevCart.find(item => item.id === prod.productID);
       if (existing) {
-        return prevCart.map(item => 
-          item.id === prod.productID 
+        return prevCart.map(item =>
+          item.id === prod.productID
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
@@ -181,7 +205,7 @@ const CreateOrder = () => {
           sku: `SP-${prod.productID.toString().padStart(3, '0')}`,
           name: prod.productName,
           icon: '📦',
-          price: prod.salePrice,
+          price: overridePrice ?? prod.salePrice,
           quantity: 1
         }
       ];
@@ -425,6 +449,12 @@ const CreateOrder = () => {
                       </div>
                       <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-1 break-all whitespace-normal lg:truncate lg:whitespace-nowrap">{selectedCustomer.phone}</p>
                       <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest mt-0.5 break-words whitespace-normal lg:truncate lg:whitespace-nowrap">{selectedCustomer.address}</p>
+                      {customerPriceMap && (
+                        <div className="mt-2 inline-flex items-center gap-1.5 bg-emerald-400/10 border border-emerald-300/20 text-emerald-300 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">
+                          <span className="material-symbols-outlined text-xs">sell</span>
+                          Đã áp dụng bảng giá riêng (BG-{String(selectedCustomer.priceListId).padStart(3, '0')})
+                        </div>
+                      )}
                     </div>
                     <button 
                       onClick={() => setSelectedCustomer(null)}

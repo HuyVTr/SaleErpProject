@@ -60,7 +60,7 @@ const AccountingSidebar = ({ isOpen, onClose }) => {
                 <ChartIcon className="text-white text-2xl" />
               </div>
               <div>
-                <h2 className="text-white font-black text-xl tracking-tighter leading-none mb-1">HOLAGROUP</h2>
+                <h2 className="text-white font-black text-xl tracking-tighter leading-none mb-1">HIZOGROUP</h2>
                 <p className="text-blue-200/60 text-label-xs">Accounting Module</p>
               </div>
             </div>

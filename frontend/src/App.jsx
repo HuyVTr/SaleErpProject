@@ -10,6 +10,7 @@ import SalesLayout from './features/sales/components/Layout/SalesLayout';
 import AdminDashboard from './features/admin/pages/dashboard/AdminDashboard.jsx';
 import StaffManagement from './features/admin/pages/staffs/StaffManagement.jsx';
 import StaffCreate from './features/admin/pages/staffs/StaffCreate.jsx';
+import StaffEdit from './features/admin/pages/staffs/StaffEdit.jsx';
 import CategoryManagement from './features/admin/pages/category/CategoryManagement.jsx';
 import AddCategory from './features/admin/pages/category/AddCategory.jsx';
 import AdminProductManagement from './features/admin/pages/products/ProductManagement.jsx';
@@ -43,11 +44,11 @@ import TransactionDetail from './features/accounting/pages/dashboard/Transaction
 
 // === MODULE KHO HÀNG (Warehouse) ===
 import WarehouseLayout from './features/warehouse/components/Layout/WarehouseLayout';
-import WarehouseDashboard from './features/warehouse/pages/WarehouseDashboard';
-import DeliveryOrders from './features/warehouse/pages/DeliveryOrders';
-import DeliveryDetail from './features/warehouse/pages/DeliveryDetail';
-import StockImport from './features/warehouse/pages/StockImport';
-import InventoryReport from './features/warehouse/pages/InventoryReport';
+import WarehouseDashboard from './features/warehouse/pages/dashboard/index.jsx';
+import DeliveryOrders from './features/warehouse/pages/delivery-orders/index.jsx';
+import DeliveryDetail from './features/warehouse/pages/delivery-detail/index.jsx';
+import StockImport from './features/warehouse/pages/stock-import/index.jsx';
+import InventoryReport from './features/warehouse/pages/inventory/index.jsx';
 
 function App() {
   return (
@@ -65,6 +66,7 @@ function App() {
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="staffs" element={<StaffManagement />} />
         <Route path="staffs/add" element={<StaffCreate />} />
+        <Route path="staffs/edit/:id" element={<StaffEdit />} />
         <Route path="products" element={<AdminProductManagement />} />
         <Route path="products/add" element={<AdminAddProduct />} />
         <Route path="products/edit/:id" element={<AdminEditProduct />} />

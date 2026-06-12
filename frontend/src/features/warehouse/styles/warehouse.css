@@ -44,7 +44,7 @@
 }
 
 .warehouse-module-wrapper {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Manrope', system-ui, -apple-system, sans-serif;
   font-feature-settings: "cv02", "cv03", "cv04", "tnum";
   /* Kích hoạt Tabular Numbers cho kế toán */
   color: var(--wh-text-main);
@@ -64,6 +64,7 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
   z-index: 100;
   animation: fadeIn 0.2s ease-out;
@@ -131,10 +132,6 @@
   border-radius: 0 2px 2px 0;
 }
 
-.wh-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-}
 
 .wh-scrollbar::-webkit-scrollbar {
   width: 6px;
@@ -245,6 +242,11 @@
   box-shadow: var(--wh-shadow-float);
   transform: translateY(-0.5rem);
   border-color: var(--wh-accent);
+}
+
+/* Bảng dữ liệu: giữ hiệu ứng viền/đổ bóng khi hover nhưng bỏ hiệu ứng nảy lên */
+.wh-card-table:hover {
+  transform: none;
 }
 
 .wh-table-container {
@@ -386,8 +388,8 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.wh-input:focus,
-.wh-select:focus {
+.wh-input:focus-visible,
+.wh-select:focus-visible {
   outline: none;
   border-color: var(--wh-primary);
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
@@ -1755,10 +1757,158 @@
 }
 
 .no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+  -ms-overflow-style: none;  /* IE and Edge */
 }
 
 .flex-nowrap {
   flex-wrap: nowrap !important;
+}
+
+/* ============================================================
+   WAREHOUSE DASHBOARD RESPONSIVE SYSTEM
+   CHỈ override Mobile & iPad — Desktop (>= 1280px) KHÔNG bị thay đổi
+   ============================================================ */
+
+/* xs breakpoint utility (< 480px) — dùng cho button text */
+@media (min-width: 480px) {
+  .xs\:inline { display: inline; }
+  .xs\:hidden  { display: none;   }
+}
+@media (max-width: 479px) {
+  .xs\:inline { display: none;   }
+  .xs\:hidden  { display: inline; }
+}
+
+/* line-clamp-1 */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Mobile (< 640px) ──────────────────────────────────────── */
+@media (max-width: 639px) {
+  /* Thêm padding ngang cho toàn bộ dashboard wrapper */
+  #warehouse-dashboard-content {
+    padding: 0.75rem;
+  }
+
+  /* Header h1 đã có text-xl từ JSX — không cần override */
+
+  /* Stat card compact trên mobile */
+  #warehouse-dashboard-content .stat-card-container,
+  #warehouse-dashboard-content [class*="rounded-xl"][class*="bg-white"][class*="border-slate-300"] {
+    border-radius: 0.75rem;
+  }
+}
+
+/* ── Tablet / iPad (641px - 1279px) ────────────────────────── */
+/* Chỉ ảnh hưởng tablet, KHÔNG ảnh hưởng desktop >= 1280px    */
+@media (min-width: 641px) and (max-width: 1279px) {
+  /* Thêm padding ngang cho dashboard wrapper trên tablet */
+  #warehouse-dashboard-content {
+    padding: 1rem;
+  }
+
+  /* H1 scale nhẹ trên tablet */
+  #warehouse-dashboard-content h1 {
+    font-size: clamp(1.25rem, 2.5vw, 1.875rem);
+  }
+}
+
+/* ── iPad Mini (768px - 819px) — bảng Low Stock scroll ngang ── */
+@media (min-width: 641px) and (max-width: 1023px) {
+  /* Bảng Low Stock: scroll ngang mượt trên iPad */
+  #warehouse-dashboard-content .wh-ls-table-wrapper {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+
+  #warehouse-dashboard-content .wh-ls-table-wrapper::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  #warehouse-dashboard-content .wh-ls-table-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  #warehouse-dashboard-content .wh-ls-table-wrapper::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+}
+
+/* ── Chỉ Mobile & iPad (dưới 1024px): table wrapper ẩn, card view hiện ── */
+@media (max-width: 1024px) {
+  /* Ẩn table wrapper trên mobile và ipad */
+  #warehouse-dashboard-content .wh-ls-table-wrapper {
+    display: none !important;
+  }
+
+  /* Hiện card view trên mobile và ipad */
+  #warehouse-dashboard-content .wh-ls-card-view {
+    display: block !important;
+  }
+}
+
+@media (min-width: 1025px) {
+  /* Ẩn card view trên desktop */
+  #warehouse-dashboard-content .wh-ls-card-view {
+    display: none !important;
+  }
+
+  /* Hiện table wrapper trên desktop */
+  #warehouse-dashboard-content .wh-ls-table-wrapper {
+    display: block !important;
+  }
+}
+
+/* ── Reduced Motion ─────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .wh-nav-item:hover {
+    transform: none;
+  }
+
+  .wh-card,
+  .wh-card:hover {
+    transform: none;
+    transition: box-shadow 0.01ms, border-color 0.01ms;
+  }
+
+  .wh-btn-primary,
+  .wh-btn-secondary,
+  .wh-btn-primary:hover,
+  .wh-btn-secondary:hover {
+    transform: none;
+  }
+
+  .wh-filter-tab,
+  .wh-filter-tab:hover {
+    transform: none;
+  }
+
+  .animate-fade-up,
+  .animate-fade-in,
+  .animate-zoom-in,
+  .animate-bounce-subtle,
+  .wh-animate-scale-in,
+  .wh-animate-fade-up,
+  .wh-animate-fade-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
 }

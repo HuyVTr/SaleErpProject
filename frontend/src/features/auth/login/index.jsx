@@ -41,7 +41,7 @@ const LoginPage = () => {
             Giải pháp tối ưu cho<br />Doanh nghiệp.
           </h1>
           <p className="text-[18px] opacity-90 mb-10 text-blue-100">
-            Hệ thống quản trị tài nguyên tập trung dành cho các bộ phận chuyên trách của Hola Group.
+            Hệ thống quản trị tài nguyên tập trung dành cho các bộ phận chuyên trách của Hizo Group.
           </p>
           
           {/* Grid 4 Module - Đã đổi icon sang Material Symbols và thêm hiệu ứng Hover mượt mà */}
@@ -100,7 +100,7 @@ const LoginPage = () => {
               <label className="block text-xs text-[#444653] mb-2 font-medium">EMAIL</label>
               <input 
                 type="email" 
-                placeholder="name@holagroup.vn" 
+                placeholder="name@hizogroup.vn" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full p-4 bg-[#e6e8ea] border border-transparent rounded-lg text-base text-[#191c1e] outline-none transition-all duration-300 focus:border-blue-600 focus:bg-white"

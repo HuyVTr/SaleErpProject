@@ -476,31 +476,28 @@ const CustomerList = () => {
   return (
     <div className="font-inter flex flex-col w-full h-full bg-slate-50 animate-fade-in gap-4 md:gap-6 pb-6">
       
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-3 sm:gap-4 px-1 sm:px-2 md:px-0 shrink-0">
-        <div className="space-y-1 sm:space-y-2">
-          <h1 className="text-2xl sm:text-3xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">Danh sách khách hàng</h1>
-          <p className="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed">
-            Quản lý và theo dõi thông tin{" "}
+      <div className="flex flex-col gap-2 sm:gap-3 px-1 sm:px-2 md:px-0 shrink-0">
+        <h1 className="text-2xl sm:text-3xl lg:text-[2rem] font-black text-slate-900 uppercase tracking-tight leading-tight">Danh sách khách hàng</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <p className="text-sm sm:text-base text-slate-500 font-medium leading-relaxed">
+            Đang quản lý{" "}
             <span className="inline-flex items-center align-middle mx-1 px-2.5 py-0.5 rounded-lg bg-blue-50 text-[#00288E] font-bold whitespace-nowrap animate-fade-in">
               {customers.length} khách hàng
-            </span>{" "}
-            đang tham gia hệ thống
+            </span>
           </p>
+
+          <button
+            onClick={() => navigate('/sales/customers/add')}
+            className="group flex-1 w-full sm:w-auto sm:flex-none flex items-center justify-center bg-[#00288E] hover:bg-white text-white hover:text-[#00288E] rounded-xl font-black uppercase tracking-widest transition-all duration-300 shadow-lg shadow-blue-900/10 border border-[#00288E] active:scale-95 whitespace-nowrap px-4 py-3"
+            style={{
+              fontSize: 'clamp(9px, 0.75vw, 11px)',
+              gap: 'clamp(6px, 0.6vw, 10px)'
+            }}
+          >
+            <span className="material-symbols-outlined group-hover:rotate-90 transition-transform duration-500" style={{ fontSize: 'clamp(14px, 1.2vw, 18px)' }}>person_add</span>
+            Thêm khách hàng mới
+          </button>
         </div>
-        
-        <button 
-          onClick={() => navigate('/sales/customers/add')}
-          className="group flex items-center justify-center bg-[#00288E] hover:bg-white text-white hover:text-[#00288E] rounded-2xl font-black uppercase tracking-widest transition-all duration-300 shadow-lg shadow-blue-900/10 border-2 border-[#00288E] active:scale-95"
-          style={{
-            padding: 'clamp(8px, 0.9vw, 16px) clamp(20px, 2.2vw, 40px)',
-            fontSize: 'clamp(9px, 0.75vw, 12px)',
-            borderRadius: 'clamp(8px, 0.9vw, 16px)',
-            gap: 'clamp(6px, 0.6vw, 12px)'
-          }}
-        >
-          <span className="material-symbols-outlined group-hover:rotate-90 transition-transform duration-500" style={{ fontSize: 'clamp(14px, 1.2vw, 18px)' }}>person_add</span>
-          Thêm khách hàng mới
-        </button>
       </div>
 
       {/* Statistics Grid */}
@@ -587,41 +584,63 @@ const CustomerList = () => {
         </div>
 
         {/* Mobile View: Collapsed Dropdown Button */}
-        <div className="md:hidden ml-auto relative" ref={filterDropdownRef}>
-          <button 
+        <div className="md:hidden ml-auto relative w-auto" ref={filterDropdownRef}>
+          <button
+            type="button"
             onClick={() => setIsOpenFilterDropdown(!isOpenFilterDropdown)}
-            aria-expanded={isOpenFilterDropdown}
-            aria-haspopup="true"
-            className="bg-slate-50 border-2 border-slate-200 text-slate-600 hover:border-[#00288E] active:scale-95 transition-all p-4 rounded-xl flex items-center justify-center shadow-sm"
-            aria-label="Lọc khách hàng"
+            className="w-full sm:w-auto bg-slate-50 border-2 border-slate-200 hover:border-[#00288E] transition-all rounded-xl px-3 sm:px-4 py-4 flex items-center justify-between gap-2 shadow-sm active:scale-95 cursor-pointer text-slate-700 focus:bg-white focus:border-[#00288E]"
           >
-            <span className="material-symbols-outlined text-lg">tune</span>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <span className="material-symbols-outlined text-slate-400 font-bold" style={{ fontSize: '18px' }}>filter_alt</span>
+              <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider truncate max-w-[100px] sm:max-w-none">
+                {filterGroup === 'all' ? 'Tất cả' : filterGroup}
+              </span>
+            </div>
+            <span className={`material-symbols-outlined text-slate-400 transition-transform duration-300 ${isOpenFilterDropdown ? 'rotate-180' : ''}`} style={{ fontSize: '18px' }}>
+              keyboard_arrow_down
+            </span>
           </button>
 
           {isOpenFilterDropdown && (
-            <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-slate-200 rounded-2xl shadow-2xl z-40 py-2 animate-fade-in origin-top-right">
-              <div className="px-4 py-2 border-b border-slate-100 mb-1">
-                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Phân loại</span>
+            <>
+              <div
+                className="fixed inset-0 z-20"
+                onClick={() => setIsOpenFilterDropdown(false)}
+              />
+
+              <div className="absolute right-0 top-full mt-2 w-64 bg-white border-2 border-slate-200 rounded-3xl shadow-2xl z-30 overflow-hidden flex flex-col animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#00288E] opacity-80">CHỌN PHÂN LOẠI</span>
+                </div>
+
+                <div className="p-4 space-y-2">
+                  {['all', 'VIP', 'GOLD', 'TIÊU CHUẨN'].map((grp) => {
+                    const isSelected = filterGroup === grp;
+                    const labelText = grp === 'all' ? 'Tất cả' : grp;
+                    return (
+                      <button
+                        key={grp}
+                        type="button"
+                        onClick={() => {
+                          setFilterGroup(grp);
+                          setIsOpenFilterDropdown(false);
+                        }}
+                        className={`w-full px-4 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider text-left transition-all flex items-center justify-between active:scale-95 cursor-pointer ${
+                          isSelected
+                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 font-black'
+                            : 'bg-slate-50 hover:bg-blue-50 text-slate-500 hover:text-blue-600'
+                        }`}
+                      >
+                        <span>{labelText}</span>
+                        {isSelected && (
+                          <span className="material-symbols-outlined text-base">check_circle</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-              {['all', 'VIP', 'GOLD', 'TIÊU CHUẨN'].map((grp) => {
-                const isSelected = filterGroup === grp;
-                return (
-                  <button 
-                    key={grp}
-                    onClick={() => {
-                      setFilterGroup(grp);
-                      setIsOpenFilterDropdown(false);
-                    }}
-                    className={`w-full px-4 py-2.5 flex items-center justify-between text-left text-xs font-bold transition-colors ${
-                      isSelected ? 'text-blue-600 bg-blue-50/30' : 'text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    <span>{grp === 'all' ? 'Tất cả' : grp}</span>
-                    {isSelected && <span className="material-symbols-outlined text-sm font-black text-blue-600">check</span>}
-                  </button>
-                );
-              })}
-            </div>
+            </>
           )}
         </div>
       </div>
@@ -703,7 +722,7 @@ const CustomerList = () => {
                           </p>
                           <p className="font-bold text-slate-400 uppercase tracking-wider mt-0.5"
                              style={{ fontSize: 'clamp(8px, 0.75vw, 10px)' }}>
-                            ID: KH-{customer.customerID.toString().slice(-4)}
+                            ID: KH-{customer.customerID.toString().padStart(3, '0')}
                           </p>
                         </div>
                       </div>
@@ -873,7 +892,7 @@ const CustomerList = () => {
                             {customer.name}
                           </p>
                           <p className="font-bold text-slate-400 uppercase tracking-wider text-[8px] mt-0.5">
-                            ID: KH-{customer.customerID.toString().slice(-4)}
+                            ID: KH-{customer.customerID.toString().padStart(3, '0')}
                           </p>
                         </div>
                       </div>

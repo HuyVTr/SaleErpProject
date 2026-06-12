@@ -54,6 +54,41 @@ const formatDateString = (dateObj) => {
   return `${day}/${month}/${year}`;
 };
 
+// Lấy userID (số) của user đầu tiên theo roleID — phục vụ cột userID trong bảng Activities.
+const getUserIdByRole = (roleID) => {
+  const user = (dbData.users || []).find(u => Number(u.roleID) === Number(roleID));
+  return user ? Number(user.userID) : null;
+};
+
+// Tạo 1 bản ghi hoạt động BÁM ĐÚNG cấu trúc bảng Activities (srs.sql #7):
+//   relatedType, relatedID, activityType, description, status, activityTime, createdAt, userID
+// Đồng thời kèm các field hiển thị (title/time/user/color/desc/timestamp) để component ActivityItem
+// render mà không phải đổi UI. Khi ghép BE: chỉ cần map thẳng 1 row của bảng Activities sang object này.
+//   - when: nhận Date HOẶC timestamp (ms) → activityTime/createdAt là DATETIME thật (có giờ-phút).
+//   - userID = null khi sự kiện do hệ thống tự sinh (vd "Hệ thống Logistics").
+const buildActivity = ({ relatedType, relatedID, activityType, title, status, color, when, userID = null, userName = 'Hệ thống' }) => {
+  const ts = typeof when === 'number' ? when : parseSafeDate(when).getTime();
+  const at = new Date(ts);
+  return {
+    // ── Cột map theo bảng Activities ──
+    relatedType,
+    relatedID: Number(relatedID),
+    activityType,
+    description: title,
+    status,
+    activityTime: at.toISOString(),
+    createdAt: at.toISOString(),
+    userID,
+    // ── Field phục vụ hiển thị (ActivityItem) ──
+    title,
+    time: formatDateString(at),
+    user: userName,
+    color,
+    desc: status,
+    timestamp: ts,
+  };
+};
+
 // ─── LOCAL STORAGE HELPERS (SHARED WITH ACCOUNTING) ────────────────────────
 
 const getLocalInvoices = () => {
@@ -483,17 +518,18 @@ const salesService = {
     if (USE_MOCK) {
       const currentUser = getCurrentUser();
       const activeUserID = userID || currentUser?.userID;
-      
-      const allOrders = [...dbData.orders, ...getLocalOrders()];
-      
+
+      const allOrders = [...(dbData.orders || []), ...getLocalOrders()];
+
       // 1. Lọc đơn hàng và báo giá của nhân viên
-      let userOrders = activeUserID 
-        ? allOrders.filter(o => Number(o.userID) === Number(activeUserID)) 
+      const shouldFilterByUser = activeUserID && currentUser?.roleID === 2 && !options.ignoreUserFilter;
+      let userOrders = shouldFilterByUser
+        ? allOrders.filter(o => Number(o.userID) === Number(activeUserID))
         : allOrders;
-      
+
       const allQuotes = dbData.quotations || [];
-      let userQuotes = activeUserID 
-        ? allQuotes.filter(q => Number(q.userID) === Number(activeUserID)) 
+      let userQuotes = shouldFilterByUser
+        ? allQuotes.filter(q => Number(q.userID) === Number(activeUserID))
         : allQuotes;
       
       // 2. Phân loại đơn hàng theo thời gian
@@ -817,7 +853,7 @@ const salesService = {
       if (found) {
         localStorage.setItem('added_orders', JSON.stringify(updatedLocal));
       } else {
-        const originalOrder = dbData.orders.find(o => Number(o.orderID) === Number(orderID));
+        const originalOrder = (dbData.orders || []).find(o => Number(o.orderID) === Number(orderID));
         if (originalOrder) {
           const updatedOriginal = { ...originalOrder, orderStatus: status };
           localStorage.setItem('added_orders', JSON.stringify([updatedOriginal, ...local]));
@@ -868,7 +904,7 @@ const salesService = {
       if (found) {
         localStorage.setItem('added_quotations', JSON.stringify(updatedLocal));
       } else {
-        const originalQuote = dbData.quotations.find(q => Number(q.quotationID) === Number(quotationID));
+        const originalQuote = (dbData.quotations || []).find(q => Number(q.quotationID) === Number(quotationID));
         if (originalQuote) {
           const updatedOriginal = { ...originalQuote, status };
           localStorage.setItem('added_quotations', JSON.stringify([updatedOriginal, ...local]));
@@ -935,7 +971,7 @@ const salesService = {
       );
       const isOriginal = !local.some(c => Number(c.customerID) === Number(customerID));
       if (isOriginal) {
-        const originalCustomer = dbData.customers.find(c => Number(c.customerID) === Number(customerID));
+        const originalCustomer = (dbData.customers || []).find(c => Number(c.customerID) === Number(customerID));
         if (originalCustomer) {
           const updatedOriginal = { ...originalCustomer, ...customerData };
           localStorage.setItem('added_customers', JSON.stringify([updatedOriginal, ...local]));
@@ -995,73 +1031,57 @@ const salesService = {
       const list = [];
       const orderDate = parseSafeDate(order.orderDate || order.date);
       const rawStatus = order.orderStatus || 'PENDING';
-      
-      const creatorName = salesService.getUserFullName(order.userID || 1);
-      const warehouseStaff = salesService.getUserByRole(4); 
 
-      list.push({
-        title: "Đơn hàng được khởi tạo thành công",
-        time: formatDateString(orderDate),
-        user: creatorName,
-        color: "bg-blue-600",
-        desc: "Khởi tạo",
-        timestamp: orderDate.getTime()
-      });
+      const creatorId = order.userID || 1;
+      const creatorName = salesService.getUserFullName(creatorId);
+      const warehouseStaffId = getUserIdByRole(4);
+      const warehouseStaff = salesService.getUserByRole(4);
+
+      list.push(buildActivity({
+        relatedType: 'Order', relatedID: order.orderID, activityType: 'ORDER_CREATED',
+        title: "Đơn hàng được khởi tạo thành công", status: "Khởi tạo", color: "bg-blue-600",
+        when: orderDate, userID: creatorId, userName: creatorName,
+      }));
 
       if (rawStatus === 'CANCELLED') {
-        list.push({
-          title: "Đơn hàng đã bị hủy bỏ",
-          time: formatDateString(orderDate),
-          user: creatorName,
-          color: "bg-rose-500",
-          desc: "Đã hủy",
-          timestamp: orderDate.getTime()
-        });
+        list.push(buildActivity({
+          relatedType: 'Order', relatedID: order.orderID, activityType: 'ORDER_CANCELLED',
+          title: "Đơn hàng đã bị hủy bỏ", status: "Đã hủy", color: "bg-rose-500",
+          when: orderDate, userID: creatorId, userName: creatorName,
+        }));
       } else {
         if (rawStatus === 'PENDING') {
-          list.push({
-            title: "Chờ xác nhận từ bộ phận kho",
-            time: formatDateString(orderDate),
-            user: "Hệ thống tự động",
-            color: "bg-slate-300",
-            desc: "Kiểm kho",
-            timestamp: orderDate.getTime()
-          });
+          list.push(buildActivity({
+            relatedType: 'Order', relatedID: order.orderID, activityType: 'ORDER_PENDING',
+            title: "Chờ xác nhận từ bộ phận kho", status: "Kiểm kho", color: "bg-slate-300",
+            when: orderDate, userID: null, userName: "Hệ thống tự động",
+          }));
         }
 
         if (['CONFIRMED', 'SHIPPING', 'DELIVERED'].includes(rawStatus)) {
-          list.push({
-            title: "Đơn hàng đã được xác nhận",
-            time: formatDateString(orderDate),
-            user: creatorName,
-            color: "bg-indigo-500",
-            desc: "Xác nhận",
-            timestamp: orderDate.getTime()
-          });
+          list.push(buildActivity({
+            relatedType: 'Order', relatedID: order.orderID, activityType: 'ORDER_CONFIRMED',
+            title: "Đơn hàng đã được xác nhận", status: "Xác nhận", color: "bg-indigo-500",
+            when: orderDate, userID: creatorId, userName: creatorName,
+          }));
         }
 
         if (['SHIPPING', 'DELIVERED'].includes(rawStatus)) {
           const deliveryDate = parseSafeDate(order.deliveryDate || orderDate);
-          list.push({
-            title: "Đơn hàng bắt đầu được giao đi",
-            time: formatDateString(deliveryDate),
-            user: warehouseStaff,
-            color: "bg-amber-500",
-            desc: "Đang giao",
-            timestamp: deliveryDate.getTime()
-          });
+          list.push(buildActivity({
+            relatedType: 'Order', relatedID: order.orderID, activityType: 'ORDER_SHIPPING',
+            title: "Đơn hàng bắt đầu được giao đi", status: "Đang giao", color: "bg-amber-500",
+            when: deliveryDate, userID: warehouseStaffId, userName: warehouseStaff,
+          }));
         }
 
         if (rawStatus === 'DELIVERED') {
           const deliveryDate = parseSafeDate(order.deliveryDate || orderDate);
-          list.push({
-            title: "Giao hàng và thanh toán thành công",
-            time: formatDateString(deliveryDate),
-            user: "Hệ thống Logistics",
-            color: "bg-emerald-500",
-            desc: "Hoàn thành",
-            timestamp: deliveryDate.getTime()
-          });
+          list.push(buildActivity({
+            relatedType: 'Order', relatedID: order.orderID, activityType: 'ORDER_DELIVERED',
+            title: "Giao hàng và thanh toán thành công", status: "Hoàn thành", color: "bg-emerald-500",
+            when: deliveryDate, userID: null, userName: "Hệ thống Logistics",
+          }));
         }
       }
 
@@ -1081,27 +1101,35 @@ const salesService = {
       const list = [];
       const quotationDate = parseSafeDate(quotation.createAt || quotation.date);
       const rawStatus = quotation.status || 'DRAFT';
+      const qID = quotation.quotationID;
 
-      const saleStaff = salesService.getUserFullName(quotation.userID || 1);
-      const managerStaff = salesService.getUserFullName(5); 
+      const saleStaffId = quotation.userID || 1;
+      const saleStaff = salesService.getUserFullName(saleStaffId);
+      const managerId = 5;
+      const managerStaff = salesService.getUserFullName(managerId);
+      const customerActor = quotation.customerName || quotation.name || "Khách hàng";
+
+      const A = (activityType, title, status, color, when, userID, userName) => buildActivity({
+        relatedType: 'Quotation', relatedID: qID, activityType, title, status, color, when, userID, userName,
+      });
 
       if (rawStatus === 'DRAFT') {
-        list.push({ title: "Khởi tạo báo giá bản nháp", time: formatDateString(quotationDate), user: "Hệ thống", color: "bg-slate-400", desc: "Bản nháp", timestamp: quotationDate.getTime() });
+        list.push(A('QUOTATION_DRAFT', "Khởi tạo báo giá bản nháp", "Bản nháp", "bg-slate-400", quotationDate.getTime(), null, "Hệ thống"));
       } else if (rawStatus === 'SENT') {
-        list.push({ title: "Khởi tạo báo giá", time: formatDateString(quotationDate), user: "Hệ thống", color: "bg-blue-500", desc: "Khởi tạo", timestamp: quotationDate.getTime() });
-        list.push({ title: "Gửi báo giá tới khách hàng", time: formatDateString(quotationDate), user: saleStaff, color: "bg-indigo-500", desc: "Đã gửi", timestamp: quotationDate.getTime() + 1800000 });
+        list.push(A('QUOTATION_CREATED', "Khởi tạo báo giá", "Khởi tạo", "bg-blue-500", quotationDate.getTime(), null, "Hệ thống"));
+        list.push(A('QUOTATION_SENT', "Gửi báo giá tới khách hàng", "Đã gửi", "bg-indigo-500", quotationDate.getTime() + 1800000, saleStaffId, saleStaff));
       } else if (rawStatus === 'APPROVED') {
-        list.push({ title: "Khởi tạo báo giá", time: formatDateString(quotationDate), user: "Hệ thống", color: "bg-blue-500", desc: "Khởi tạo", timestamp: quotationDate.getTime() });
-        list.push({ title: "Gửi báo giá tới khách hàng", time: formatDateString(quotationDate), user: saleStaff, color: "bg-indigo-500", desc: "Đã gửi", timestamp: quotationDate.getTime() + 1800000 });
-        
+        list.push(A('QUOTATION_CREATED', "Khởi tạo báo giá", "Khởi tạo", "bg-blue-500", quotationDate.getTime(), null, "Hệ thống"));
+        list.push(A('QUOTATION_SENT', "Gửi báo giá tới khách hàng", "Đã gửi", "bg-indigo-500", quotationDate.getTime() + 1800000, saleStaffId, saleStaff));
+
         const appDate = parseSafeDate(quotation.approvedDate || quotationDate);
-        list.push({ title: "Khách hàng đồng ý báo giá", time: formatDateString(appDate), user: quotation.customerName || quotation.name || "Khách hàng", color: "bg-emerald-500", desc: "Phản hồi", timestamp: appDate.getTime() });
-        list.push({ title: "Đã duyệt báo giá thành công", time: formatDateString(appDate), user: managerStaff, color: "bg-teal-500", desc: "Đã duyệt", timestamp: appDate.getTime() + 3600000 });
+        list.push(A('QUOTATION_CUSTOMER_AGREED', "Khách hàng đồng ý báo giá", "Phản hồi", "bg-emerald-500", appDate.getTime(), null, customerActor));
+        list.push(A('QUOTATION_APPROVED', "Đã duyệt báo giá thành công", "Đã duyệt", "bg-teal-500", appDate.getTime() + 3600000, managerId, managerStaff));
       } else if (rawStatus === 'CANCELLED') {
-        list.push({ title: "Khởi tạo báo giá", time: formatDateString(quotationDate), user: "Hệ thống", color: "bg-blue-500", desc: "Khởi tạo", timestamp: quotationDate.getTime() });
-        list.push({ title: "Đã hủy báo giá", time: formatDateString(quotationDate), user: managerStaff, color: "bg-rose-500", desc: "Đã hủy", timestamp: quotationDate.getTime() + 3600000 });
+        list.push(A('QUOTATION_CREATED', "Khởi tạo báo giá", "Khởi tạo", "bg-blue-500", quotationDate.getTime(), null, "Hệ thống"));
+        list.push(A('QUOTATION_CANCELLED', "Đã hủy báo giá", "Đã hủy", "bg-rose-500", quotationDate.getTime() + 3600000, managerId, managerStaff));
       } else {
-        list.push({ title: "Khởi tạo báo giá", time: formatDateString(quotationDate), user: "Hệ thống", color: "bg-blue-500", desc: "Khởi tạo", timestamp: quotationDate.getTime() });
+        list.push(A('QUOTATION_CREATED', "Khởi tạo báo giá", "Khởi tạo", "bg-blue-500", quotationDate.getTime(), null, "Hệ thống"));
       }
 
       return list.sort((a, b) => b.timestamp - a.timestamp);
@@ -1124,60 +1152,43 @@ const salesService = {
 
       const productOrderItems = allOrderItems.filter(oi => Number(oi.productID) === Number(productID));
       const list = [];
-      const accountantStaff = salesService.getUserByRole(1); 
+      const accountantId = getUserIdByRole(1);
+      const accountantStaff = salesService.getUserByRole(1);
+
+      const A = (activityType, title, status, color, when, userID, userName) => buildActivity({
+        relatedType: 'Product', relatedID: productID, activityType, title, status, color, when, userID, userName,
+      });
 
       productOrderItems.forEach(oi => {
         const order = allOrders.find(o => Number(o.orderID) === Number(oi.orderID));
         if (!order) return;
 
         const orderDate = parseSafeDate(order.orderDate || order.date);
-        const saleStaff = salesService.getUserFullName(order.userID || 1);
+        const saleStaffId = order.userID || 1;
+        const saleStaff = salesService.getUserFullName(saleStaffId);
+        const displayOrderID = order.displayID || ('ORD-' + String(order.orderID).padStart(3, '0'));
 
-        list.push({
-          title: `Xuất kho đơn hàng #${order.displayID || ('ORD-' + String(order.orderID).padStart(3, '0'))}`,
-          time: formatDateString(orderDate),
-          user: saleStaff,
-          color: "bg-rose-500",
-          desc: `-${oi.quantity} ${product.unit || 'Cái'}`,
-          timestamp: orderDate.getTime()
-        });
+        list.push(A('PRODUCT_STOCK_OUT', `Xuất kho đơn hàng #${displayOrderID}`,
+          `-${oi.quantity} ${product.unit || 'Cái'}`, "bg-rose-500", orderDate.getTime(), saleStaffId, saleStaff));
 
         if (order.orderStatus === 'DELIVERED') {
           const deliveryDate = parseSafeDate(order.deliveryDate || orderDate);
-          list.push({
-            title: `Đơn hàng #${order.displayID || ('ORD-' + String(order.orderID).padStart(3, '0'))} giao thành công`,
-            time: formatDateString(deliveryDate),
-            user: "Hệ thống Logistics",
-            color: "bg-emerald-500",
-            desc: "Hoàn thành",
-            timestamp: deliveryDate.getTime()
-          });
+          list.push(A('PRODUCT_ORDER_DELIVERED', `Đơn hàng #${displayOrderID} giao thành công`,
+            "Hoàn thành", "bg-emerald-500", deliveryDate.getTime(), null, "Hệ thống Logistics"));
         }
 
         const correspondingInvoice = allInvoices.find(inv => Number(inv.orderID) === Number(order.orderID));
         if (correspondingInvoice) {
           const invDate = parseSafeDate(correspondingInvoice.createAt || correspondingInvoice.invoiceDate);
           const displayInvID = correspondingInvoice.displayID || `INV-${correspondingInvoice.invoiceID.toString().padStart(3, '0')}`;
-          
-          list.push({
-            title: `Phát hành hóa đơn #${displayInvID}`,
-            time: formatDateString(invDate),
-            user: accountantStaff,
-            color: "bg-indigo-500",
-            desc: "Hóa đơn",
-            timestamp: invDate.getTime()
-          });
+
+          list.push(A('PRODUCT_INVOICE_ISSUED', `Phát hành hóa đơn #${displayInvID}`,
+            "Hóa đơn", "bg-indigo-500", invDate.getTime(), accountantId, accountantStaff));
 
           const invStatus = (correspondingInvoice.status || '').toUpperCase();
           if (invStatus === 'PAID' || invStatus === 'ĐÃ THANH TOÁN') {
-            list.push({
-              title: `Thanh toán thành công hóa đơn #${displayInvID}`,
-              time: formatDateString(invDate),
-              user: accountantStaff, 
-              color: "bg-emerald-500",
-              desc: "Thanh toán",
-              timestamp: invDate.getTime() + 3600000
-            });
+            list.push(A('PRODUCT_INVOICE_PAID', `Thanh toán thành công hóa đơn #${displayInvID}`,
+              "Thanh toán", "bg-emerald-500", invDate.getTime() + 3600000, accountantId, accountantStaff));
           }
         }
       });
@@ -1200,79 +1211,51 @@ const salesService = {
       const customerInvoices = allInvoices.filter(inv => Number(inv.customerID) === Number(customerID));
 
       const list = [];
-      const accountantStaff = salesService.getUserByRole(1); 
+      const accountantId = getUserIdByRole(1);
+      const accountantStaff = salesService.getUserByRole(1);
+
+      const A = (activityType, title, status, color, when, userID, userName) => buildActivity({
+        relatedType: 'Customer', relatedID: customerID, activityType, title, status, color, when, userID, userName,
+      });
 
       customerOrders.forEach(order => {
         const orderDate = parseSafeDate(order.orderDate || order.date);
-        const saleStaff = salesService.getUserFullName(order.userID || 1);
+        const saleStaffId = order.userID || 1;
+        const saleStaff = salesService.getUserFullName(saleStaffId);
 
-        list.push({
-          title: `Tạo đơn hàng mới #${order.displayID}`,
-          time: formatDateString(orderDate),
-          user: saleStaff,
-          color: "bg-blue-500",
-          desc: "Đơn hàng",
-          timestamp: orderDate.getTime()
-        });
+        list.push(A('CUSTOMER_ORDER_CREATED', `Tạo đơn hàng mới #${order.displayID}`,
+          "Đơn hàng", "bg-blue-500", orderDate.getTime(), saleStaffId, saleStaff));
 
         if (order.orderStatus === 'DELIVERED') {
           const deliveryDate = parseSafeDate(order.deliveryDate || orderDate);
-          list.push({
-            title: `Đơn hàng #${order.displayID} đã giao thành công`,
-            time: formatDateString(deliveryDate),
-            user: "Hệ thống Logistics",
-            color: "bg-emerald-500",
-            desc: "Hoàn thành",
-            timestamp: deliveryDate.getTime()
-          });
+          list.push(A('CUSTOMER_ORDER_DELIVERED', `Đơn hàng #${order.displayID} đã giao thành công`,
+            "Hoàn thành", "bg-emerald-500", deliveryDate.getTime(), null, "Hệ thống Logistics"));
         } else if (order.orderStatus === 'CANCELLED') {
-          list.push({
-            title: `Đơn hàng #${order.displayID} đã bị hủy bỏ`,
-            time: formatDateString(orderDate),
-            user: order.customerName || "Khách hàng",
-            color: "bg-rose-500",
-            desc: "Đã hủy",
-            timestamp: orderDate.getTime() + 1800000
-          });
+          list.push(A('CUSTOMER_ORDER_CANCELLED', `Đơn hàng #${order.displayID} đã bị hủy bỏ`,
+            "Đã hủy", "bg-rose-500", orderDate.getTime() + 1800000, null, order.customerName || "Khách hàng"));
         }
       });
 
       customerQuotations.forEach(quo => {
         const qDate = parseSafeDate(quo.createAt || quo.date);
-        const saleStaff = salesService.getUserFullName(quo.userID || 1);
+        const saleStaffId = quo.userID || 1;
+        const saleStaff = salesService.getUserFullName(saleStaffId);
 
-        list.push({
-          title: `Gửi báo giá mới #${quo.displayID}`,
-          time: formatDateString(qDate),
-          user: saleStaff,
-          color: "bg-purple-500",
-          desc: "Báo giá",
-          timestamp: qDate.getTime()
-        });
+        list.push(A('CUSTOMER_QUOTATION_SENT', `Gửi báo giá mới #${quo.displayID}`,
+          "Báo giá", "bg-purple-500", qDate.getTime(), saleStaffId, saleStaff));
       });
 
       customerInvoices.forEach(inv => {
         const invDate = parseSafeDate(inv.createAt || inv.invoiceDate);
         const displayInvID = inv.displayID || `INV-${inv.invoiceID.toString().padStart(3, '0')}`;
-        list.push({
-          title: `Phát hành hóa đơn #${displayInvID}`,
-          time: formatDateString(invDate),
-          user: accountantStaff,
-          color: "bg-indigo-500",
-          desc: "Hóa đơn",
-          timestamp: invDate.getTime()
-        });
+
+        list.push(A('CUSTOMER_INVOICE_ISSUED', `Phát hành hóa đơn #${displayInvID}`,
+          "Hóa đơn", "bg-indigo-500", invDate.getTime(), accountantId, accountantStaff));
 
         const invStatus = (inv.status || '').toUpperCase();
         if (invStatus === 'PAID' || invStatus === 'ĐÃ THANH TOÁN') {
-          list.push({
-            title: `Thanh toán thành công hóa đơn #${displayInvID}`,
-            time: formatDateString(invDate),
-            user: accountantStaff,
-            color: "bg-emerald-500",
-            desc: "Thanh toán",
-            timestamp: invDate.getTime() + 3600000
-          });
+          list.push(A('CUSTOMER_INVOICE_PAID', `Thanh toán thành công hóa đơn #${displayInvID}`,
+            "Thanh toán", "bg-emerald-500", invDate.getTime() + 3600000, accountantId, accountantStaff));
         }
       });
 

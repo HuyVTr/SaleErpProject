@@ -22,13 +22,13 @@ export const exportToPDF = async (options) => {
     });
 
     // 1. Header & Brand
-    pdf.setFillColor(0, 40, 142); // HOLA PRIMARY BLUE
+    pdf.setFillColor(0, 40, 142); // HIZO PRIMARY BLUE
     pdf.rect(0, 0, 210, 40, 'F');
     
     pdf.setTextColor(255, 255, 255);
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(22);
-    pdf.text('HOLA GROUP', 15, 20);
+    pdf.text('HIZO GROUP', 15, 20);
     
     pdf.setFontSize(10);
     pdf.setFont('helvetica', 'normal');
@@ -79,7 +79,7 @@ export const exportToPDF = async (options) => {
       pdf.setFontSize(8);
       pdf.setTextColor(148, 163, 184);
       pdf.text(`Trang ${i} / ${pageCount}`, 105, 285, { align: 'center' });
-      pdf.text('Tai lieu luu hanh noi bo - Hola Group Sales System', 15, 285);
+      pdf.text('Tai lieu luu hanh noi bo - Hizo Group Sales System', 15, 285);
     }
 
     pdf.save(filename);

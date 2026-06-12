@@ -1,30 +1,87 @@
 {
+  "priceLists": [
+    {
+      "id": 1,
+      "name": "Bảng giá bán lẻ tiêu chuẩn",
+      "type": "Bán lẻ",
+      "effectiveDate": "2026-01-01",
+      "status": "Kích hoạt",
+      "itemsCount": 25,
+      "description": "Áp dụng cho khách hàng mua lẻ tại cửa hàng và online."
+    },
+    {
+      "id": 2,
+      "name": "Bảng giá đại lý cấp 1",
+      "type": "Bán sỉ",
+      "effectiveDate": "2026-01-01",
+      "status": "Kích hoạt",
+      "itemsCount": 18,
+      "description": "Chiết khấu ưu đãi cho đại lý cấp 1 theo hợp đồng phân phối."
+    },
+    {
+      "id": 3,
+      "name": "Bảng giá khuyến mãi hè 2026",
+      "type": "Khuyến mãi",
+      "effectiveDate": "2026-06-01",
+      "status": "Kích hoạt",
+      "itemsCount": 10,
+      "description": "Chương trình giảm giá theo mùa, áp dụng từ 01/06 đến 31/08/2026."
+    },
+    {
+      "id": 4,
+      "name": "Bảng giá đại lý cấp 2",
+      "type": "Bán sỉ",
+      "effectiveDate": "2025-09-01",
+      "status": "Tạm dừng",
+      "itemsCount": 18,
+      "description": "Đã thay thế bằng bảng giá đại lý cấp 1, tạm ngưng áp dụng."
+    },
+    {
+      "id": 5,
+      "name": "Bảng giá nội bộ nhân viên",
+      "type": "Nội bộ",
+      "effectiveDate": "2025-03-15",
+      "status": "Kích hoạt",
+      "itemsCount": 30,
+      "description": "Giá ưu đãi dành riêng cho cán bộ nhân viên công ty."
+    }
+  ],
+  "priceListItems": [
+    { "id": 1, "priceListId": 1, "productID": 1, "price": 320000 },
+    { "id": 2, "priceListId": 1, "productID": 2, "price": 450000 },
+    { "id": 3, "priceListId": 1, "productID": 4, "price": 185000 },
+    { "id": 4, "priceListId": 2, "productID": 1, "price": 295000 },
+    { "id": 5, "priceListId": 2, "productID": 2, "price": 410000 },
+    { "id": 6, "priceListId": 3, "productID": 5, "price": 250000 }
+  ],
   "roles": [
     { "roleID": 1, "roleName": "Kế toán" },
     { "roleID": 2, "roleName": "Nhân viên bán hàng" },
     { "roleID": 3, "roleName": "Quản trị viên" },
-    { "roleID": 4, "roleName": "Nhân viên kho" }
+    { "roleID": 4, "roleName": "Nhân viên kho" },
+    { "roleID": 5, "roleName": "Super Admin" }
   ],
   "users": [
-    { "userID": 1, "lastName": "Nguyễn Văn", "firstName": "An", "dateOfBirth": "1990-01-01", "phoneNumber": "0901112222", "email": "sale@gmail.com", "address": "TP.HCM", "roleID": 2 },
-    { "userID": 3, "lastName": "Võ", "firstName": "Huy", "dateOfBirth": "1988-12-25", "phoneNumber": "0933445566", "email": "accounting@gmail.com", "address": "Quận 1, TP.HCM", "roleID": 1 },
-    { "userID": 4, "lastName": "Lê Văn", "firstName": "Kho", "dateOfBirth": "1995-03-15", "phoneNumber": "0905556666", "email": "warehouse@gmail.com", "address": "Bình Dương", "roleID": 4 },
-    { "userID": 5, "lastName": "Phạm", "firstName": "Admin", "dateOfBirth": "1985-07-20", "phoneNumber": "0907778888", "email": "admin@gmail.com", "address": "TP.HCM", "roleID": 3 },
-    { "userID": 6, "lastName": "Trần Thị", "firstName": "Bình", "dateOfBirth": "1992-05-10", "phoneNumber": "0912223344", "email": "binh.tran@gmail.com", "address": "Quận 3, TP.HCM", "roleID": 2 },
-    { "userID": 7, "lastName": "Lê Hoàng", "firstName": "Cường", "dateOfBirth": "1994-11-20", "phoneNumber": "0945556677", "email": "cuong.le@gmail.com", "address": "Quận 10, TP.HCM", "roleID": 2 },
-    { "userID": 8, "lastName": "Ngô Gia", "firstName": "Bảo", "dateOfBirth": "1993-08-15", "phoneNumber": "0966778899", "email": "bao.ngo@gmail.com", "address": "Quận 7, TP.HCM", "roleID": 2 }
+    { "userID": 1, "lastName": "Nguyễn Văn", "firstName": "An", "dateOfBirth": "1990-01-01", "phoneNumber": "0901112222", "email": "sale@gmail.com", "address": "TP.HCM", "roleID": 2, "dept": "Kinh doanh" },
+    { "userID": 3, "lastName": "Võ", "firstName": "Huy", "dateOfBirth": "1988-12-25", "phoneNumber": "0933445566", "email": "accounting@gmail.com", "address": "Quận 1, TP.HCM", "roleID": 1, "dept": "Kế toán" },
+    { "userID": 4, "lastName": "Lê Văn", "firstName": "Kho", "dateOfBirth": "1995-03-15", "phoneNumber": "0905556666", "email": "warehouse@gmail.com", "address": "Bình Dương", "roleID": 4, "dept": "Kho vận" },
+    { "userID": 5, "lastName": "Phạm", "firstName": "Admin", "dateOfBirth": "1985-07-20", "phoneNumber": "0907778888", "email": "admin@gmail.com", "address": "TP.HCM", "roleID": 5, "dept": "Ban Quản trị" },
+    { "userID": 9, "lastName": "Nguyễn", "firstName": "Admin Thường", "dateOfBirth": "1990-08-12", "phoneNumber": "0981112222", "email": "admin1@gmail.com", "address": "TP.HCM", "roleID": 3, "dept": "Ban Quản trị" },
+    { "userID": 6, "lastName": "Trần Thị", "firstName": "Bình", "dateOfBirth": "1992-05-10", "phoneNumber": "0912223344", "email": "binh.tran@gmail.com", "address": "Quận 3, TP.HCM", "roleID": 2, "dept": "Kinh doanh" },
+    { "userID": 7, "lastName": "Lê Hoàng", "firstName": "Cường", "dateOfBirth": "1994-11-20", "phoneNumber": "0945556677", "email": "cuong.le@gmail.com", "address": "Quận 10, TP.HCM", "roleID": 2, "dept": "Kinh doanh" },
+    { "userID": 8, "lastName": "Ngô Gia", "firstName": "Bảo", "dateOfBirth": "1993-08-15", "phoneNumber": "0966778899", "email": "bao.ngo@gmail.com", "address": "Quận 7, TP.HCM", "roleID": 2, "dept": "Kinh doanh" }
   ],
   "customers": [
     { "customerID": 1, "firstName": "Kiến Trúc Việt", "lastName": "Công ty CP", "address": "123 Đường Lê Lợi, Quận 1, TP.HCM", "phoneNumber": "0901234567", "email": "ktviet@email.com", "companyName": "Công ty CP Kiến Trúc Việt", "status": "ACTIVE" },
-    { "customerID": 2, "firstName": "Hola miền Nam", "lastName": "Đại lý", "address": "456 Nguyễn Hữu Thọ, Quận 7, TP.HCM", "phoneNumber": "0988776655", "email": "holamn@email.com", "companyName": "Đại lý Hola miền Nam", "status": "ACTIVE" },
+    { "customerID": 2, "firstName": "Hizo miền Nam", "lastName": "Đại lý", "address": "456 Nguyễn Hữu Thọ, Quận 7, TP.HCM", "phoneNumber": "0988776655", "email": "hizomn@email.com", "companyName": "Đại lý Hizo miền Nam", "status": "ACTIVE" },
     { "customerID": 3, "firstName": "Việt Thắng", "lastName": "Tập đoàn Dệt may", "address": "KCN Linh Trung, Thủ Đức, TP.HCM", "phoneNumber": "02838445566", "email": "vietthang@email.com", "companyName": "Tập đoàn Dệt may Việt Thắng", "status": "INACTIVE" },
     { "customerID": 4, "firstName": "An Phong", "lastName": "Cty TNHH Thiết Kế Xây Dựng", "address": "235 Điện Biên Phủ, Bình Thạnh, TP.HCM", "phoneNumber": "0909123456", "email": "anphong@email.com", "companyName": "Cty TNHH Thiết Kế Xây Dựng An Phong", "status": "ACTIVE" },
     { "customerID": 5, "firstName": "Minh Quân", "lastName": "Đại lý Vật liệu Xây dựng", "address": "789 Quốc Lộ 1A, Thủ Đức, TP.HCM", "phoneNumber": "0918234567", "email": "minhquan@email.com", "companyName": "Đại lý Vật liệu Xây dựng Minh Quân", "status": "ACTIVE" },
     { "customerID": 6, "firstName": "Hòa Bình", "lastName": "Tổng Công ty Xây dựng", "address": "235 Võ Thị Sáu, Quận 3, TP.HCM", "phoneNumber": "0908345678", "email": "hoabinh@email.com", "companyName": "Tổng Công ty Xây dựng Hòa Bình", "status": "ACTIVE" },
     { "customerID": 7, "firstName": "Ricons", "lastName": "Cty CP Đầu tư & Phát triển", "address": "53 Hùng Vương, Quận 5, TP.HCM", "phoneNumber": "0938456789", "email": "ricons@email.com", "companyName": "Cty CP Đầu tư & Phát triển Ricons", "status": "ACTIVE" },
-    { "customerID": 8, "firstName": "Hola miền Bắc", "lastName": "Đại lý", "address": "12 Cát Linh, Đống Đa, Hà Nội", "phoneNumber": "0977889900", "email": "holamb@email.com", "companyName": "Đại lý Hola miền Bắc", "status": "ACTIVE" },
+    { "customerID": 8, "firstName": "Hizo miền Bắc", "lastName": "Đại lý", "address": "12 Cát Linh, Đống Đa, Hà Nội", "phoneNumber": "0977889900", "email": "hizomb@email.com", "companyName": "Đại lý Hizo miền Bắc", "status": "ACTIVE" },
     { "customerID": 9, "firstName": "Coteccons", "lastName": "Công ty TNHH", "address": "236 Ung Văn Khiêm, Bình Thạnh, TP.HCM", "phoneNumber": "0902555666", "email": "coteccons@email.com", "companyName": "Công ty TNHH Coteccons", "status": "ACTIVE" },
-    { "customerID": 10, "firstName": "Hola miền Trung", "lastName": "Đại lý", "address": "45 Nguyễn Hữu Thọ, Hải Châu, Đà Nẵng", "phoneNumber": "0989111222", "email": "holamt@email.com", "companyName": "Đại lý Hola miền Trung", "status": "ACTIVE" },
+    { "customerID": 10, "firstName": "Hizo miền Trung", "lastName": "Đại lý", "address": "45 Nguyễn Hữu Thọ, Hải Châu, Đà Nẵng", "phoneNumber": "0989111222", "email": "hizomt@email.com", "companyName": "Đại lý Hizo miền Trung", "status": "ACTIVE" },
     { "customerID": 11, "firstName": "Không Gian Mới", "lastName": "Cty TNHH Decor & Nội thất", "address": "12 Lũy Bán Bích, Tân Phú, TP.HCM", "phoneNumber": "0932333444", "email": "kgm@email.com", "companyName": "Cty TNHH Decor & Nội thất Không Gian Mới", "status": "ACTIVE" },
     { "customerID": 12, "firstName": "Novaland", "lastName": "Tập đoàn Bất động sản", "address": "65 Nguyễn Du, Quận 1, TP.HCM", "phoneNumber": "0909555444", "email": "novaland@email.com", "companyName": "Tập đoàn Bất động sản Novaland", "status": "INACTIVE" },
     { "customerID": 13, "firstName": "Thịnh Phát", "lastName": "Công ty TNHH Đầu tư", "address": "15 Song Hành, Quận 2, TP.HCM", "phoneNumber": "0912345678", "email": "thinhphat@email.com", "companyName": "Công ty TNHH Đầu tư Thịnh Phát", "status": "ACTIVE" },
@@ -175,23 +232,34 @@
     { "quotationID": 20, "customerID": 20, "userID": 1, "totalAmount": 130000000, "status": "SENT", "createAt": "2026-05-18" }
   ],
   "categories": [
-    { "categoryID": 1, "categoryName": "Gạch men & Đá", "priceListItemID": 1 },
-    { "categoryID": 2, "categoryName": "Thiết bị vệ sinh", "priceListItemID": 2 },
-    { "categoryID": 3, "categoryName": "Gỗ & Sàn", "priceListItemID": 3 }
+    { "categoryID": 1, "categoryName": "Gạch men & Đá", "icon": "grid_on", "parentCategoryID": 4, "status": "Đang hoạt động", "createdAt": "2026-01-02T08:00:00Z", "priceListItemID": 1 },
+    { "categoryID": 2, "categoryName": "Thiết bị vệ sinh", "icon": "shower", "parentCategoryID": 5, "status": "Đang hoạt động", "createdAt": "2026-01-02T08:00:00Z", "priceListItemID": 2 },
+    { "categoryID": 3, "categoryName": "Gỗ & Sàn", "icon": "layers", "parentCategoryID": 4, "status": "Đang hoạt động", "createdAt": "2026-01-02T08:00:00Z", "priceListItemID": 3 },
+    { "categoryID": 4, "categoryName": "Vật liệu thô & Hoàn thiện", "icon": "construction", "parentCategoryID": null, "status": "Đang hoạt động", "createdAt": "2026-01-01T08:00:00Z", "priceListItemID": null },
+    { "categoryID": 5, "categoryName": "Nội ngoại thất & Thiết bị", "icon": "package_2", "parentCategoryID": null, "status": "Đang hoạt động", "createdAt": "2026-01-01T08:00:00Z", "priceListItemID": null }
   ],
   "products": [
-    { "productID": 1, "productName": "Gạch men cao cấp 60x60", "salePrice": 320000, "unit": "m2", "status": "ACTIVE", "categoryID": 1 },
-    { "productID": 2, "productName": "Đá hoa cương đen Huế", "salePrice": 450000, "unit": "m2", "status": "ACTIVE", "categoryID": 1 },
-    { "productID": 3, "productName": "Bồn cầu thông minh Hola-X1", "salePrice": 2000000, "unit": "bộ", "status": "ACTIVE", "categoryID": 2 },
-    { "productID": 4, "productName": "Sàn gỗ công nghiệp 8mm", "salePrice": 185000, "unit": "m2", "status": "ACTIVE", "categoryID": 3 },
-    { "productID": 5, "productName": "Gạch giả cổ Terra cao cấp", "salePrice": 280000, "unit": "m2", "status": "ACTIVE", "categoryID": 1 },
-    { "productID": 6, "productName": "Chậu rửa chén chống trầy Hola-S1", "salePrice": 1500000, "unit": "cái", "status": "ACTIVE", "categoryID": 2 },
-    { "productID": 7, "productName": "Vách kính phòng tắm cường lực", "salePrice": 3200000, "unit": "bộ", "status": "ACTIVE", "categoryID": 2 },
-    { "productID": 8, "productName": "Sàn gỗ tự nhiên Gõ Đỏ", "salePrice": 1200000, "unit": "m2", "status": "ACTIVE", "categoryID": 3 },
-    { "productID": 9, "productName": "Gạch bông cổ điển 20x20", "salePrice": 350000, "unit": "m2", "status": "ACTIVE", "categoryID": 1 },
-    { "productID": 10, "productName": "Sen tắm đứng nóng lạnh Hola-W2", "salePrice": 2500000, "unit": "bộ", "status": "ACTIVE", "categoryID": 2 },
-    { "productID": 11, "productName": "Gỗ nhựa ngoài trời lót ban công", "salePrice": 650000, "unit": "m2", "status": "ACTIVE", "categoryID": 3 },
-    { "productID": 12, "productName": "Keo dán gạch chống thấm Hola-G1", "salePrice": 180000, "unit": "bao", "status": "ACTIVE", "categoryID": 1 }
+    { "productID": 1, "productName": "Gạch men cao cấp 60x60", "salePrice": 320000, "unit": "m2", "status": "ACTIVE", "categoryID": 1, "stockQuantity": 150, "createdAt": "2026-01-01", "updatedAt": "2026-01-01" },
+    { "productID": 2, "productName": "Đá hoa cương đen Huế", "salePrice": 450000, "unit": "m2", "status": "ACTIVE", "categoryID": 1, "stockQuantity": 85, "createdAt": "2026-01-01", "updatedAt": "2026-01-01" },
+    { "productID": 3, "productName": "Bồn cầu thông minh Hizo-X1", "salePrice": 2000000, "unit": "bộ", "status": "ACTIVE", "categoryID": 2, "stockQuantity": 0, "createdAt": "2026-01-01", "updatedAt": "2026-01-01" },
+    { "productID": 4, "productName": "Sàn gỗ công nghiệp 8mm", "salePrice": 185000, "unit": "m2", "status": "ACTIVE", "categoryID": 3, "stockQuantity": 340, "createdAt": "2026-01-01", "updatedAt": "2026-01-01" },
+    { "productID": 5, "productName": "Gạch giả cổ Terra cao cấp", "salePrice": 280000, "unit": "m2", "status": "ACTIVE", "categoryID": 1, "stockQuantity": 120, "createdAt": "2026-02-15", "updatedAt": "2026-02-15" },
+    { "productID": 6, "productName": "Chậu rửa chén chống trầy Hizo-S1", "salePrice": 1500000, "unit": "cái", "status": "ACTIVE", "categoryID": 2, "stockQuantity": 15, "createdAt": "2026-02-15", "updatedAt": "2026-02-15" },
+    { "productID": 7, "productName": "Vách kính phòng tắm cường lực", "salePrice": 3200000, "unit": "bộ", "status": "ACTIVE", "categoryID": 2, "stockQuantity": 0, "createdAt": "2026-02-15", "updatedAt": "2026-02-15" },
+    { "productID": 8, "productName": "Sàn gỗ tự nhiên Gõ Đỏ", "salePrice": 1200000, "unit": "m2", "status": "ACTIVE", "categoryID": 3, "stockQuantity": 60, "createdAt": "2026-02-15", "updatedAt": "2026-02-15" },
+    { "productID": 9, "productName": "Gạch bông cổ điển 20x20", "salePrice": 350000, "unit": "m2", "status": "ACTIVE", "categoryID": 1, "stockQuantity": 200, "createdAt": "2026-05-10", "updatedAt": "2026-05-10" },
+    { "productID": 10, "productName": "Sen tắm đứng nóng lạnh Hizo-W2", "salePrice": 2500000, "unit": "bộ", "status": "ACTIVE", "categoryID": 2, "stockQuantity": 8, "createdAt": "2026-05-10", "updatedAt": "2026-05-10" },
+    { "productID": 11, "productName": "Gỗ nhựa ngoài trời lót ban công", "salePrice": 650000, "unit": "m2", "status": "ACTIVE", "categoryID": 3, "stockQuantity": 45, "createdAt": "2026-05-10", "updatedAt": "2026-05-10" },
+    { "productID": 12, "productName": "Keo dán gạch chống thấm Hizo-G1", "salePrice": 180000, "unit": "bao", "status": "ACTIVE", "categoryID": 1, "stockQuantity": 500, "createdAt": "2026-05-10", "updatedAt": "2026-05-10" }
+  ],
+  "notifications": [
+    { "id": 1, "type": "order", "title": "Đơn hàng #103 đã được duyệt", "message": "Đơn hàng của Công ty CP Kiến Trúc Việt có giá trị 450 triệu đã được phê duyệt.", "link": "/sales/orders/103", "createdAt": "2026-06-11T14:30:00Z", "isRead": false, "roleIds": [2, 3, 5] },
+    { "id": 2, "type": "warehouse", "title": "Cảnh báo tồn kho", "message": "Sản phẩm 'Bồn cầu thông minh Hizo-X1' đã hết hàng.", "link": "/warehouse/inventory", "createdAt": "2026-06-11T10:15:00Z", "isRead": false, "roleIds": [4, 3, 5] },
+    { "id": 3, "type": "payment", "title": "Công nợ sắp đến hạn", "message": "Hóa đơn #1 từ Đơn hàng #101 sắp đến hạn thanh toán (25/06/2026).", "link": "/accounting/invoices/1", "createdAt": "2026-06-10T09:45:00Z", "isRead": true, "roleIds": [1, 3, 5] },
+    { "id": 4, "type": "system", "title": "Thông báo hệ thống", "message": "Bảo trì hệ thống dự kiến vào 15/06/2026, 22:00-23:00.", "link": null, "createdAt": "2026-06-09T16:20:00Z", "isRead": true, "roleIds": null },
+    { "id": 5, "type": "order", "title": "Đơn hàng #105 đã được giao", "message": "Đơn hàng của Công ty CP Kiến Trúc Việt đã được giao thành công vào 14/05/2026.", "link": "/sales/orders/105", "createdAt": "2026-05-14T15:00:00Z", "isRead": true, "roleIds": [2, 3, 5] },
+    { "id": 6, "type": "warehouse", "title": "Yêu cầu nhập kho mới", "message": "Nhập kho sản phẩm Gạch men cao cấp 60x60 - Số lượng: 150 m2", "link": "/warehouse/inbound", "createdAt": "2026-06-11T13:00:00Z", "isRead": false, "roleIds": [4, 3, 5] },
+    { "id": 7, "type": "payment", "title": "Khách hàng thanh toán đơn hàng #100", "message": "Công ty CP Kiến Trúc Việt đã thanh toán toàn bộ hóa đơn #0.", "link": "/accounting/payments", "createdAt": "2026-06-10T11:30:00Z", "isRead": true, "roleIds": [1, 3, 5] }
   ],
   "stats": {
     "totalBalance": "2.500.000.000",

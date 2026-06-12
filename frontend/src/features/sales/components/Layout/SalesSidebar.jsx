@@ -51,7 +51,7 @@ const SalesSidebar = ({ isOpen, onClose }) => {
                 <span className="material-symbols-outlined text-white text-2xl">trending_up</span>
               </div>
               <div>
-                <h2 className="text-white font-black text-xl tracking-tighter leading-none mb-1">HOLAGROUP</h2>
+                <h2 className="text-white font-black text-xl tracking-tighter leading-none mb-1">HIZOGROUP</h2>
                 <p className="text-blue-200/60" style={{ fontSize: '0.8125rem', lineHeight: '1.1rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05rem' }}>Phân hệ Kinh doanh</p>
               </div>
             </div>
