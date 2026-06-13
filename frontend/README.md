@@ -1,86 +1,67 @@
-# Hola Group FE - Hệ Thống Quản Lý Sales (Sales ERP Project)
+# Hola Group — Frontend App
 
-Dự án Frontend cho Hệ thống Quản lý Sales của Hola Group (Hizo Group). Đây là hệ thống ERP thu nhỏ hỗ trợ quản lý quy trình bán hàng khép kín từ khâu tiếp cận khách hàng, báo giá, lên đơn hàng, giao nhận kho cho đến đối soát kế toán và báo cáo doanh thu.
+Giao diện người dùng cho hệ thống quản lý bán hàng, xây dựng bằng **React 19 + Vite + Tailwind CSS + Material UI (MUI) v6**.
 
-## 🚀 Tính Năng Chính Theo Phân Hệ
+## Yêu cầu
 
-Hệ thống được thiết kế và phân quyền chặt chẽ theo 4 vai trò (roles) chính:
+- Node.js >= 18
+- Backend API đang chạy (mặc định tại http://localhost:5000)
 
-### 1. 👑 Quản trị viên / Quản lý (Admin)
-*   **Quản lý người dùng & phân quyền:** Tạo tài khoản nhân viên, cấp quyền truy cập hệ thống.
-*   **Quản lý sản phẩm & danh mục:** Thêm mới, chỉnh sửa thông tin, giá bán và danh mục sản phẩm.
-*   **Quản lý bảng giá:** Cấu hình bảng giá bán linh hoạt cho từng đối tượng khách hàng.
-*   **Báo cáo tổng quan:** Dashboard theo dõi toàn bộ doanh thu, công nợ và hiệu suất kinh doanh của doanh nghiệp.
+## Cài đặt lần đầu
 
-### 2. 👨‍💼 Nhân viên Kinh doanh (Sales)
-*   **Quản lý khách hàng:** Lưu trữ thông tin khách hàng, lịch sử giao dịch và chăm sóc khách hàng.
-*   **Tra cứu sản phẩm:** Xem thông tin chi tiết sản phẩm, giá bán theo bảng giá được áp dụng.
-*   **Quản lý báo giá:** Tạo và gửi báo giá cho khách hàng, theo dõi trạng thái phê duyệt báo giá.
-*   **Quản lý đơn hàng:** Lên đơn bán hàng trực tiếp hoặc chuyển đổi từ báo giá được phê duyệt.
-*   **Báo cáo cá nhân:** Theo dõi chỉ tiêu doanh số cá nhân đạt được.
-
-### 3. 📦 Nhân viên Kho (Warehouse)
-*   **Quản lý lệnh giao hàng:** Theo dõi các yêu cầu xuất kho từ đơn hàng bán thành công.
-*   **Cập nhật trạng thái giao hàng:** Quản lý giao nhận hàng hóa đến khách hàng.
-*   **Quản lý nhập kho:** Ghi nhận thông tin hàng hóa nhập kho mới.
-*   **Báo cáo tồn kho:** Theo dõi số lượng hàng tồn, cảnh báo khi hàng sắp hết.
-
-### 4. 💰 Kế toán (Accountant)
-*   **Quản lý hóa đơn:** Tạo và quản lý hóa đơn tài chính cho các đơn hàng.
-*   **Xác nhận thanh toán:** Ghi nhận thanh toán từ khách hàng (tiền mặt, chuyển khoản).
-*   **Quản lý công nợ:** Theo dõi công nợ của từng khách hàng, thời hạn thanh toán.
-*   **Báo cáo tài chính:** Thống kê doanh thu, dòng tiền và xuất dữ liệu báo cáo sang định dạng Excel/PDF.
-
----
-
-## 🛠️ Stack Công Nghệ Sử Dụng
-
-*   **Core:** React 19, Vite (HMR)
-*   **Routing:** React Router v6
-*   **State Management:** Redux Toolkit
-*   **UI Framework:** Material UI (MUI) v6
-*   **Form & Validation:** React Hook Form, Zod
-*   **HTTP Client:** Axios
-*   **Thống kê & Biểu đồ:** Recharts
-*   **Xuất tài liệu:** SheetJS (Excel), jsPDF (PDF)
-*   **Authentication:** JWT Token
-
----
-
-## 📂 Cấu Trúc Thư Mục Dự Án
-
-```
-src/
-├── assets/                 # Tài nguyên tĩnh (hình ảnh, fonts, logo)
-├── components/             # Components dùng chung (Layout, Table, Form, Modals...)
-├── features/               # Các module chức năng (Feature Sliced Design)
-│   ├── auth/               # Đăng nhập, xác thực và phân quyền
-│   ├── admin/              # Giao diện & nghiệp vụ Quản trị viên
-│   ├── sales/              # Giao diện & nghiệp vụ Nhân viên Kinh doanh
-│   ├── warehouse/          # Giao diện & nghiệp vụ Quản lý Kho hàng
-│   └── accounting/         # Giao diện & nghiệp vụ Kế toán
-├── hooks/                  # Custom hooks dùng chung
-├── services/               # Cấu hình API Client (Axios client)
-├── store/                  # Cấu hình Redux Store chung
-├── routes/                 # Quản lý định tuyến và bảo vệ Route theo vai trò
-└── utils/                  # Thư viện helper, hằng số chung
-```
-
----
-
-## 💻 Hướng Dẫn Phát Triển (Development)
-
-### Cài đặt dependencies
 ```bash
+cd frontend
+
+# 1. Cài thư viện
 npm install
+
+# 2. Tạo file cấu hình từ mẫu, kiểm tra cấu hình VITE_API_BASE_URL
+cp .env.example .env
 ```
 
-### Chạy dự án ở môi trường local
+## Chạy ứng dụng
+
 ```bash
-npm run dev
+npm run dev      # chế độ phát triển (tự reload khi sửa code, mặc định chạy ở http://localhost:5173)
+npm run build    # build ứng dụng ra thư mục dist/ để production deploy
 ```
 
-### Build production
-```bash
-npm run build
+Ứng dụng mặc định: http://localhost:5173
+
+## Đăng nhập (tài khoản mẫu)
+
+Mọi tài khoản dùng chung mật khẩu demo: **123456**
+
+| Email                 | Vai trò              | Quyền truy cập phân hệ (Isolated Module) |
+| --------------------- | -------------------- | --------------------------------------- |
+| admin@gmail.com       | Super Admin          | `/admin` (Quản trị hệ thống, nhân sự)    |
+| sale@gmail.com        | Nhân viên bán hàng   | `/sales` (Khách hàng, đơn hàng, báo giá) |
+| accounting@gmail.com  | Kế toán              | `/accounting` (Hóa đơn, thanh toán, nợ) |
+| warehouse@gmail.com   | Nhân viên kho        | `/warehouse` (Phiếu nhập, giao nhận)    |
+
+*Lưu ý: Hệ thống đã được thiết lập bảo mật cô lập. Tài khoản thuộc vai trò nào chỉ có thể truy cập phân hệ tương ứng ở cả Frontend và Backend.*
+
+## Cấu trúc thư mục
+
 ```
+frontend/
+├─ public/              # Tài nguyên tĩnh (Logo, icon...)
+├─ src/
+│  ├─ components/       # Các component dùng chung (Layout, Header...)
+│  ├─ features/         # Các phân hệ nghiệp vụ (FSD pattern)
+│  │  ├─ auth/          # Đăng nhập, đăng xuất, authService
+│  │  ├─ admin/         # Phân hệ Quản trị viên
+│  │  ├─ sales/         # Phân hệ Nhân viên Kinh doanh
+│  │  ├─ accounting/    # Phân hệ Kế toán
+│  │  └─ warehouse/     # Phân hệ Kho vận
+│  ├─ services/         # Axios client kết nối API
+│  ├─ utils/            # Các hàm helper dùng chung
+│  ├─ App.jsx           # Cấu hình routes & phân quyền
+│  └─ main.jsx          # Điểm khởi động ứng dụng React
+```
+
+## Thêm trang/chức năng mới
+
+1. Định nghĩa component hoặc trang mới trong thư mục `pages/` của feature tương ứng (ví dụ `features/sales/pages/`).
+2. Khai báo Route mới bên trong phân hệ của nó trong file `src/App.jsx`.
+3. Cập nhật các mục menu điều hướng tương ứng tại file `Sidebar` của phân hệ đó (ví dụ `features/sales/components/Layout/SalesSidebar.jsx`).
