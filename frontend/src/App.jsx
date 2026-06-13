@@ -2,7 +2,6 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
 import LoginPage from './features/auth/login';
-import MainLayout from './components/Layout/MainLayout';
 import AdminLayout from './features/admin/components/Layout/AdminLayout';
 import SalesLayout from './features/sales/components/Layout/SalesLayout';
 
@@ -50,18 +49,42 @@ import DeliveryDetail from './features/warehouse/pages/delivery-detail/index.jsx
 import StockImport from './features/warehouse/pages/stock-import/index.jsx';
 import InventoryReport from './features/warehouse/pages/inventory/index.jsx';
 
+// ProtectedRoute component để phân quyền người dùng strictly theo từng phân hệ
+const ProtectedRoute = ({ children, allowedRoles }) => {
+  const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const rawUser = localStorage.getItem('current_user') || localStorage.getItem('user');
+  const currentUser = rawUser ? JSON.parse(rawUser) : null;
+  const roleID = currentUser ? Number(currentUser.roleID) : null;
+
+  if (allowedRoles.includes(roleID)) {
+    return children;
+  }
+
+  // Chuyển hướng người dùng về module tương ứng với quyền hạn nếu truy cập sai phân hệ
+  if (roleID === 2) return <Navigate to="/sales/dashboard" replace />;
+  if (roleID === 4) return <Navigate to="/warehouse/dashboard" replace />;
+  if (roleID === 1) return <Navigate to="/accounting/dashboard" replace />;
+  if (roleID === 3 || roleID === 5) return <Navigate to="/admin/dashboard" replace />;
+
+  return <Navigate to="/login" replace />;
+};
+
 function App() {
   return (
     <Routes>
       <Route path="/" element={<LoginPage />} />
-      
-      {/* Tuyến đường Home chính - chọn các module */}
-      <Route path="/home" element={<MainLayout />}>
-        <Route index element={<div className="p-4 flex h-full items-center justify-center text-gray-500">Vui lòng chọn một Module từ Sidebar để tiếp tục</div>} />
-      </Route>
+      <Route path="/login" element={<LoginPage />} />
       
       {/* Tuyến đường Admin Module */}
-      <Route path="/admin" element={<AdminLayout />}>
+      <Route path="/admin" element={
+        <ProtectedRoute allowedRoles={[3, 5]}>
+          <AdminLayout />
+        </ProtectedRoute>
+      }>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="staffs" element={<StaffManagement />} />
@@ -79,7 +102,11 @@ function App() {
       </Route>
 
       {/* Tuyến đường Sales Module */}
-      <Route path="/sales" element={<SalesLayout />}>
+      <Route path="/sales" element={
+        <ProtectedRoute allowedRoles={[2]}>
+          <SalesLayout />
+        </ProtectedRoute>
+      }>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<SalesDashboard />} />
         <Route path="customers" element={<CustomerList />} />
@@ -92,8 +119,12 @@ function App() {
         <Route path="quotations/edit/:id" element={<QuotationCreate />} />
       </Route>
 
-      {/* Tuyến đường Kế toán sử dụng AccountingLayout (Phát triển cục bộ) */}
-      <Route path="/accounting" element={<AccountingLayout />}>
+      {/* Tuyến đường Kế toán sử dụng AccountingLayout */}
+      <Route path="/accounting" element={
+        <ProtectedRoute allowedRoles={[1]}>
+          <AccountingLayout />
+        </ProtectedRoute>
+      }>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<AccountingDashboard />} />
         <Route path="sales-invoices" element={<InvoiceList />} />
@@ -106,7 +137,11 @@ function App() {
       </Route>
 
       {/* Tuyến đường Kho hàng sử dụng WarehouseLayout */}
-      <Route path="/warehouse" element={<WarehouseLayout />}>
+      <Route path="/warehouse" element={
+        <ProtectedRoute allowedRoles={[4]}>
+          <WarehouseLayout />
+        </ProtectedRoute>
+      }>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<WarehouseDashboard />} />
         <Route path="delivery" element={<DeliveryOrders />} />

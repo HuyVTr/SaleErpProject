@@ -129,7 +129,7 @@ const CustomerList = () => {
           const customerOrders = orders.filter(o => o.customerID === c.customerID);
           const customerInvoices = invoices.filter(inv => inv.customerID === c.customerID);
           
-          const revenue = customerOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+          const revenue = customerOrders.reduce((sum, o) => sum + (Number(o.totalAmount) || 0), 0);
           
           // Logic Trạng thái: Đang giao dịch nếu có hóa đơn chưa thanh toán hết
           const hasUnpaidInvoice = customerInvoices.some(inv => {

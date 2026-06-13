@@ -288,134 +288,99 @@ export const DELIVERY_STATUSES = ['CONFIRMED', 'SHIPPING', 'DELIVERED'];
 // ============================================================
 // WAREHOUSE SERVICE
 // ============================================================
+// WAREHOUSE SERVICE
+// ============================================================
+import api from '../../../services/api';
+
 const warehouseService = {
 
   // ─── DELIVERY ORDERS (3.1) ──────────────────────────────────
   getDeliveryOrders: async (filters = {}) => {
-    const localOrders = getLocalOrders();
-    const apiOrders = dbData.orders || [];
-    const localIds = new Set(localOrders.map(o => Number(o.orderID)));
-    let allOrders = [...localOrders, ...apiOrders.filter(o => !localIds.has(Number(o.orderID)))];
+    // Gọi API đơn hàng thật từ Backend
+    const response = await api.get('/orders', { params: filters });
+    const orders = response.data?.success ? response.data.data : response.data || [];
 
-    allOrders = allOrders.filter(o =>
+    // Lọc các đơn hàng cần giao theo trạng thái giống logic mock
+    const deliveryOrders = orders.filter(o =>
       ['CONFIRMED', 'SHIPPING', 'DELIVERED', 'FAILED'].includes(o.orderStatus)
     );
 
-    const deliveryNotes = getDeliveryNotes();
-
-    let result = allOrders.map(order => ({
+    return deliveryOrders.map(order => ({
       ...order,
       displayID: formatOrderID(order.orderID),
-      customerName: getCustomerName(order.customerID),
-      totalAmount: Number(order.totalAmount) * 1.1,
-      deliveryNote: deliveryNotes[String(order.orderID)] || '',
-      items: getOrderItems(order),
+      customerName: order.customer 
+        ? (order.customer.companyName || `${order.customer.lastName || ''} ${order.customer.firstName || ''}`.trim()) 
+        : 'Khách hàng',
+      totalAmount: Number(order.totalAmount) * 1.1, // Cộng thuế
+      deliveryNote: order.deliveryNote || '',
+      items: (order.items || []).map(item => ({
+        productID: item.productID,
+        productName: item.product ? item.product.productName : 'Sản phẩm',
+        quantity: Number(item.quantity) || 1,
+        unitPrice: Number(item.unitPrice) || 0,
+        total: (Number(item.quantity) || 1) * (Number(item.unitPrice) || 0),
+        stockQuantity: item.product ? (item.product.stockQuantity || 0) : 0,
+        sku: item.product ? (item.product.sku || '') : '',
+      })),
     }));
-
-    if (filters.status && filters.status !== 'all') {
-      result = result.filter(o => o.orderStatus === filters.status);
-    }
-
-    if (filters.search) {
-      const s = filters.search.toLowerCase();
-      result = result.filter(o =>
-        o.displayID.toLowerCase().includes(s) ||
-        o.customerName.toLowerCase().includes(s)
-      );
-    }
-
-    result.sort((a, b) => new Date(b.orderDate || b.date || 0) - new Date(a.orderDate || a.date || 0));
-    return result;
   },
 
   // ─── ORDER DETAIL (3.2) ─────────────────────────────────────
   getOrderDetail: async (orderID) => {
-    const localOrders = getLocalOrders();
-    const apiOrders = dbData.orders || [];
-    const allOrders = [...localOrders, ...apiOrders];
-
-    const order = allOrders.find(o => String(o.orderID) === String(orderID) || formatOrderID(o.orderID) === String(orderID));
+    const response = await api.get(`/orders/${orderID}`);
+    const order = response.data?.success ? response.data.data : response.data;
     if (!order) return null;
 
-    const deliveryNotes = getDeliveryNotes();
-    const statusHistory = getDeliveryStatusHistory();
+    // Lấy lịch sử giao hàng từ BE
+    const historyResponse = await api.get(`/warehouse/delivery-history/${order.orderID}`);
+    const statusHistory = historyResponse.data || [];
 
     return {
       ...order,
       displayID: formatOrderID(order.orderID),
-      customerName: getCustomerName(order.customerID),
+      customerName: order.customer 
+        ? (order.customer.companyName || `${order.customer.lastName || ''} ${order.customer.firstName || ''}`.trim()) 
+        : 'Khách hàng',
       totalAmount: Number(order.totalAmount) * 1.1,
-      deliveryNote: deliveryNotes[String(order.orderID)] || '',
-      // Mỗi entry mô phỏng đúng cấu trúc bảng DeliveryStatusHistory (xem srs.sql #24)
-      // để khi backend thật ghép vào, chỉ cần đổi nguồn dữ liệu mà không đổi UI.
-      // Đơn chưa từng thao tác trên UI → dựng tiến trình mặc định theo orderDate/deliveryDate thật của đơn.
-      statusHistory: statusHistory[String(order.orderID)] || buildDefaultStatusHistory(order),
-      items: getOrderItems(order),
+      deliveryNote: order.deliveryNote || '',
+      statusHistory: statusHistory.length > 0 ? statusHistory.map((h, idx) => ({
+        historyID: h.historyID,
+        orderID: h.orderID,
+        status: h.status,
+        note: h.note,
+        changedAt: h.changedAt,
+        userID: h.userID,
+        date: new Date(h.changedAt).toLocaleString('vi-VN'),
+      })) : buildDefaultStatusHistory(order),
+      items: (order.items || []).map(item => ({
+        productID: item.productID,
+        productName: item.product ? item.product.productName : 'Sản phẩm',
+        quantity: Number(item.quantity) || 1,
+        unitPrice: Number(item.unitPrice) || 0,
+        total: (Number(item.quantity) || 1) * (Number(item.unitPrice) || 0),
+        stockQuantity: item.product ? (item.product.stockQuantity || 0) : 0,
+        sku: item.product ? (item.product.sku || '') : '',
+      })),
     };
   },
 
   // ─── UPDATE DELIVERY STATUS (3.2) ───────────────────────────
   updateDeliveryStatus: async (orderID, newStatus, note = '', deliveryFailed = false) => {
-    const localOrders = getLocalOrders();
-    // Lấy đơn TRƯỚC khi cập nhật — dùng để dựng các mốc lịch sử đã qua (nếu đơn này
-    // chưa từng có bản ghi lịch sử thật trong localStorage), tránh bị mất mốc cũ.
-    const orderBeforeUpdate = [...localOrders, ...(dbData.orders || [])]
-      .find(o => Number(o.orderID) === Number(orderID));
-    let found = false;
-
-    const updatedLocal = localOrders.map(o => {
-      if (Number(o.orderID) === Number(orderID)) {
-        found = true;
-        return { ...o, orderStatus: newStatus };
-      }
-      return o;
-    });
-
-    if (found) {
-      saveLocalOrders(updatedLocal);
-    } else {
-      const originalOrder = (dbData.orders || []).find(o => Number(o.orderID) === Number(orderID));
-      if (originalOrder) {
-        saveLocalOrders([{ ...originalOrder, orderStatus: newStatus }, ...localOrders]);
-      }
-    }
-
-    if (note) {
-      saveDeliveryNote(orderID, note);
-    }
-
-    const currentUser = getCurrentUser();
-    const allHistory = getDeliveryStatusHistory();
-    // Nếu đơn này chưa từng có bản ghi lịch sử thật → seed bằng tiến trình mặc định
-    // (dựng từ trạng thái CŨ trước khi cập nhật) để không bị mất các mốc đã hiển thị,
-    // rồi mới nối thêm mốc mới — tránh hiện tượng "ghi đè" lên thực thể trước đó.
-    const currentHistory = allHistory[String(orderID)]
-      || (orderBeforeUpdate ? buildDefaultStatusHistory(orderBeforeUpdate) : []);
-    const now = new Date();
-    // Cấu trúc entry bám theo bảng DeliveryStatusHistory (srs.sql #24): orderID, status, note, changedAt, userID
-    const newHistoryEntry = {
-      historyID: Number(orderID) * 100 + currentHistory.length + 1,
+    // Gửi cập nhật lịch sử giao hàng lên BE, BE sẽ tự update trạng thái đơn hàng
+    await api.post('/warehouse/delivery-history', {
       orderID: Number(orderID),
       status: deliveryFailed ? 'FAILED' : newStatus,
       note: note || STATUS_LABELS[newStatus] || newStatus,
-      changedAt: now.toISOString(),
-      userID: currentUser?.userID || null,
-      date: now.toLocaleString('vi-VN'),
-    };
-    saveDeliveryStatusHistory(orderID, [...currentHistory, newHistoryEntry]);
-
+    });
     return { success: true };
   },
 
   markDeliveryFailed: async (orderID, reason) => {
-    // Đơn chuyển hẳn sang trạng thái FAILED (không rollback về CONFIRMED) để
-    // phản ánh đúng kết quả giao hàng — đơn vẫn lưu trên màn hình kho với
-    // trạng thái "Giao thất bại" và chờ kho kích hoạt giao lại.
     await warehouseService.updateDeliveryStatus(orderID, 'FAILED', `Giao thất bại: ${reason}`, true);
     return { success: true };
   },
 
-  // ─── RETRY DELIVERY (giao lại sau khi thất bại) ─────────────
+  // ─── RETRY DELIVERY ─────────────────────────────────────────
   retryDelivery: async (orderID) => {
     await warehouseService.updateDeliveryStatus(
       orderID,
@@ -427,158 +392,49 @@ const warehouseService = {
 
   // ─── INVENTORY / PRODUCTS (3.3 + 3.4) ──────────────────────
   getInventory: async (filters = {}) => {
-    let data = getAllProducts();
-    const categories = dbData.categories || [];
+    const response = await api.get('/products', { params: filters });
+    const products = response.data?.success ? response.data.data : response.data || [];
 
-    if (filters.category) {
-      data = data.filter(p => {
-        const cat = categories.find(c => Number(c.categoryID) === Number(p.categoryID));
-        const catName = cat ? cat.categoryName : 'Chưa phân loại';
-        return String(p.categoryID) === String(filters.category) || p.category === filters.category || catName === filters.category;
-      });
-    }
-    if (filters.search) {
-      const s = filters.search.toLowerCase();
-      data = data.filter(p =>
-        (p.productName || '').toLowerCase().includes(s) ||
-        (p.productCode || p.sku || '').toLowerCase().includes(s)
-      );
-    }
-    if (filters.stockStatus === 'low') {
-      data = data.filter(p => p.stockQuantity > 0 && p.stockQuantity <= (p.minStock || 10));
-    } else if (filters.stockStatus === 'out') {
-      data = data.filter(p => p.stockQuantity === 0 || !p.stockQuantity);
-    } else if (filters.stockStatus === 'ok') {
-      data = data.filter(p => p.stockQuantity > (p.minStock || 10));
-    }
-
-    return data.map(p => {
-      const cat = categories.find(c => Number(c.categoryID) === Number(p.categoryID));
-      const categoryName = cat ? cat.categoryName : 'Chưa phân loại';
-      
-      return {
-        ...p,
-        id: p.productID,
-        name: p.productName || 'Sản phẩm',
-        sku: p.productCode || p.sku || `PRD-${String(p.productID).padStart(3, '0')}`,
-        category: categoryName,
-        unitPrice: Number(p.salePrice || p.unitPrice) || 0,
-        stockQuantity: Number(p.stockQuantity) || 0,
-        minStock: Number(p.minStock) || 10,
-        unit: p.unit || 'Cái',
-      };
-    });
+    return products.map(p => ({
+      ...p,
+      id: p.productID,
+      name: p.productName || 'Sản phẩm',
+      sku: p.sku || `PRD-${String(p.productID).padStart(3, '0')}`,
+      category: p.category ? p.category.categoryName : 'Chưa phân loại',
+      unitPrice: Number(p.salePrice) || 0,
+      stockQuantity: Number(p.stockQuantity) || 0,
+      minStock: Number(p.minStock) || 10,
+      unit: p.unit || 'Cái',
+    }));
   },
 
   getCategories: async () => {
-    return dbData.categories || [];
+    const response = await api.get('/categories');
+    return response.data || [];
   },
 
   updateStock: async (productID, additionalQty) => {
-    const localProducts = getLocalProducts();
-    let found = false;
-
-    const updatedLocal = localProducts.map(p => {
-      if (Number(p.productID) === Number(productID)) {
-        found = true;
-        return { ...p, stockQuantity: (Number(p.stockQuantity) || 0) + additionalQty };
-      }
-      return p;
+    // Gọi API nhập kho của BE để thay đổi tồn kho
+    await api.post('/warehouse/imports', {
+      items: [{ productId: productID, quantity: additionalQty }]
     });
-
-    if (found) {
-      saveLocalProducts(updatedLocal);
-    } else {
-      const originalProduct = (dbData.products || []).find(p => Number(p.productID) === Number(productID));
-      if (originalProduct) {
-        const newProduct = {
-          ...originalProduct,
-          stockQuantity: (Number(originalProduct.stockQuantity) || 0) + additionalQty,
-        };
-        saveLocalProducts([newProduct, ...localProducts]);
-      }
-    }
-
     return { success: true };
   },
 
   // ─── IMPORT HISTORY (3.3) ───────────────────────────────────
   getImportHistory: async () => {
-    return getLocalImportHistory();
+    const response = await api.get('/warehouse/imports');
+    return response.data || [];
   },
 
   createImportReceipt: async (receipt) => {
-    const history = getLocalImportHistory();
-    const currentUser = getCurrentUser();
-    const createdBy = currentUser
-      ? `${currentUser.lastName || ''} ${currentUser.firstName || ''}`.trim() || 'Nhân viên Kho'
-      : 'Nhân viên Kho';
-
-    // Tìm số lớn nhất hiện có trong lịch sử (NK-XXX có đúng 3 chữ số)
-    let maxNum = 0;
-    history.forEach(item => {
-      if (item.id && item.id.startsWith('NK-')) {
-        const idStr = item.id.replace('NK-', '');
-        if (idStr.length === 3) {
-          const num = parseInt(idStr, 10);
-          if (!isNaN(num) && num > maxNum) {
-            maxNum = num;
-          }
-        }
-      }
-    });
-    const nextNum = maxNum + 1;
-    const nextId = `NK-${String(nextNum).padStart(3, '0')}`;
-
-    const newReceipt = {
-      id: nextId,
-      date: new Date().toISOString().substring(0, 10),
-      ...receipt,
-      status: 'completed',
-      createdBy,
-    };
-
-    saveLocalImportHistory([newReceipt, ...history]);
-
-    for (const item of receipt.items) {
-      if (item.productId || item.productID) {
-        await warehouseService.updateStock(item.productId || item.productID, Number(item.quantity) || 0);
-      }
-    }
-
-    return newReceipt;
+    const response = await api.post('/warehouse/imports', receipt);
+    return response.data?.data || response.data;
   },
 
   revertImportReceipt: async (receiptId) => {
-    const history = getLocalImportHistory();
-    const targetIdx = history.findIndex(r => r.id === receiptId);
-    if (targetIdx === -1) {
-      return { success: false, error: 'Không tìm thấy phiếu nhập kho.' };
-    }
-
-    const receipt = history[targetIdx];
-    if (receipt.status === 'cancelled') {
-      return { success: false, error: 'Phiếu nhập kho này đã được hủy trước đó.' };
-    }
-
-    // Đảo ngược tồn kho (trừ bớt số lượng đã cộng)
-    for (const item of receipt.items) {
-      const pId = item.productId || item.productID;
-      if (pId) {
-        await warehouseService.updateStock(pId, -Number(item.quantity));
-      }
-    }
-
-    // Đổi trạng thái thành cancelled
-    const updatedReceipt = {
-      ...receipt,
-      status: 'cancelled',
-    };
-
-    history[targetIdx] = updatedReceipt;
-    saveLocalImportHistory(history);
-
-    return { success: true, receipt: updatedReceipt };
+    const response = await api.post(`/warehouse/imports/${receiptId}/revert`);
+    return response.data;
   },
 
   // ─── DASHBOARD STATS (3.4 + 3.5) ───────────────────────────

@@ -300,9 +300,19 @@ const StaffManagement = () => {
         const initials = getInitials(firstName, lastName);
         const avatarGradient = getAvatarGradient(firstName, lastName);
 
-        let rawRole = u.role || u.roleName || 'User';
+        let rawRole = 'User';
+        if (u.role) {
+          if (typeof u.role === 'string') {
+            rawRole = u.role;
+          } else if (typeof u.role === 'object') {
+            rawRole = u.role.roleName || u.role.name || 'User';
+          }
+        } else if (u.roleName) {
+          rawRole = u.roleName;
+        }
+
         if (rawRole === 'User' || !u.role) {
-          const roleId = Number(u.roleID);
+          const roleId = Number(u.roleID || (u.role && typeof u.role === 'object' && u.role.roleID));
           if (roleId === 1) rawRole = 'Accounting';
           else if (roleId === 2) rawRole = 'Sales';
           else if (roleId === 3) rawRole = 'Admin';
@@ -312,7 +322,7 @@ const StaffManagement = () => {
 
         let rawDept = u.dept || u.department || u.group || 'Chưa phân';
         if (rawDept === 'Chưa phân' || !rawDept) {
-          const r = rawRole.toLowerCase();
+          const r = String(rawRole).toLowerCase();
           if (r === 'admin' || r === 'super admin') rawDept = 'Ban Quản trị';
           else if (r === 'sales') rawDept = 'Kinh doanh';
           else if (r === 'warehouse') rawDept = 'Kho vận';
@@ -385,10 +395,11 @@ const StaffManagement = () => {
       
       let matchRole = filterRole === 'all';
       if (!matchRole) {
+        const roleStr = String(s.role || '');
         if (filterRole.toLowerCase() === 'admin') {
-          matchRole = s.role.toLowerCase() === 'admin' || s.role.toLowerCase() === 'super admin';
+          matchRole = roleStr.toLowerCase() === 'admin' || roleStr.toLowerCase() === 'super admin';
         } else {
-          matchRole = s.role.toLowerCase() === filterRole.toLowerCase();
+          matchRole = roleStr.toLowerCase() === filterRole.toLowerCase();
         }
       }
       return matchSearch && matchRole;
@@ -421,8 +432,11 @@ const StaffManagement = () => {
   const stats = useMemo(() => {
     const total = staffList.length;
     const active = staffList.filter(s => s.status === 'Hoạt động').length;
-    const adminCount = staffList.filter(s => s.role.toLowerCase() === 'admin' || s.role.toLowerCase() === 'super admin').length;
-    const salesCount = staffList.filter(s => s.role.toLowerCase() === 'sales').length;
+    const adminCount = staffList.filter(s => {
+      const r = String(s.role || '').toLowerCase();
+      return r === 'admin' || r === 'super admin';
+    }).length;
+    const salesCount = staffList.filter(s => String(s.role || '').toLowerCase() === 'sales').length;
 
     return {
       total,

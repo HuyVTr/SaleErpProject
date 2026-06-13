@@ -161,10 +161,21 @@ const CategoryManagement = () => {
       
       setCategories(cats.map(c => {
         const rawId = c.categoryID || c.id;
-        const name = c.categoryName || c.name || c.title;
+        const name = c.categoryName || c.name || c.title || '';
         const count = prods.filter(p => {
-          const catName = p.categoryName || p.category || '';
-          return String(p.categoryID) === String(rawId) || catName.toLowerCase() === name.toLowerCase();
+          let catName = '';
+          if (typeof p.categoryName === 'string') {
+            catName = p.categoryName;
+          } else if (p.category) {
+            if (typeof p.category === 'string') {
+              catName = p.category;
+            } else if (typeof p.category === 'object') {
+              catName = p.category.categoryName || p.category.name || '';
+            }
+          } else if (typeof p.categoryName === 'number') {
+            catName = String(p.categoryName);
+          }
+          return String(p.categoryID) === String(rawId) || String(catName).toLowerCase() === String(name).toLowerCase();
         }).length;
 
         const parentCat = cats.find(parent => String(parent.categoryID || parent.id) === String(c.parentCategoryID));
@@ -205,8 +216,17 @@ const CategoryManagement = () => {
     try {
       const products = await adminService.getProducts();
       const hasProducts = products.some(p => {
-        const catName = p.categoryName || p.category || '';
-        return catName.toLowerCase() === targetCategory?.name?.toLowerCase();
+        let catName = '';
+        if (typeof p.categoryName === 'string') {
+          catName = p.categoryName;
+        } else if (p.category) {
+          if (typeof p.category === 'string') {
+            catName = p.category;
+          } else if (typeof p.category === 'object') {
+            catName = p.category.categoryName || p.category.name || '';
+          }
+        }
+        return String(catName).toLowerCase() === String(targetCategory?.name || '').toLowerCase();
       });
 
       if (hasProducts) {

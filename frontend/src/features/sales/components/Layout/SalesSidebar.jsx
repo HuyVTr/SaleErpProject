@@ -25,6 +25,17 @@ const SalesSidebar = ({ isOpen, onClose }) => {
     roleName: 'Nhân viên Sales'
   };
 
+  const getRoleName = (roleID) => {
+    switch (Number(roleID)) {
+      case 1: return 'Kế toán';
+      case 2: return 'Nhân viên Sales';
+      case 3: return 'Quản trị viên';
+      case 4: return 'Nhân viên kho';
+      case 5: return 'Super Admin';
+      default: return 'Nhân viên';
+    }
+  };
+
   const fullName = `${user.lastName} ${user.firstName}`;
   const initials = `${user.lastName?.charAt(0) || ''}${user.firstName?.charAt(0) || ''}`.toUpperCase();
 
@@ -80,18 +91,7 @@ const SalesSidebar = ({ isOpen, onClose }) => {
             </NavLink>
           ))}
 
-          {/* Nút quay lại hệ thống chính */}
-          <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '0.0625rem solid rgba(255,255,255,0.1)' }}>
-            <NavLink
-              to="/home"
-              className="group flex items-center gap-4 rounded-2xl transition-all duration-300 relative overflow-hidden text-blue-100/70 hover:bg-amber-400 hover:text-black"
-              style={{ padding: '1rem 1.5rem' }}
-            >
-              <span className="material-symbols-outlined text-xl transition-transform duration-500 group-hover:-translate-x-1">arrow_back_ios</span>
-              <span className="font-bold" style={{ fontSize: '1.0625rem', lineHeight: '1.6rem' }}>Hệ thống chung</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-            </NavLink>
-          </div>
+
         </nav>
 
         {/* User & Action area */}
@@ -103,7 +103,7 @@ const SalesSidebar = ({ isOpen, onClose }) => {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-white font-black tracking-tight truncate" style={{ fontSize: '0.9375rem', lineHeight: '1.4rem' }}>{fullName}</p>
-                <p className="text-blue-200/50 truncate" style={{ fontSize: '0.8125rem', lineHeight: '1.1rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05rem' }}>{user.roleName || 'Nhân viên Sales'}</p>
+                <p className="text-blue-200/50 truncate" style={{ fontSize: '0.8125rem', lineHeight: '1.1rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05rem' }}>{user.roleName || getRoleName(user.roleID)}</p>
               </div>
             </div>
             

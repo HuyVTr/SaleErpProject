@@ -196,9 +196,20 @@ const Header = ({ onToggleSidebar, toggleBreakpoint = 'lg' }) => {
     navigate(path);
   };
 
+  const getRoleName = (roleID) => {
+    switch (Number(roleID)) {
+      case 1: return 'Kế toán';
+      case 2: return 'Nhân viên Sales';
+      case 3: return 'Quản trị viên';
+      case 4: return 'Nhân viên kho';
+      case 5: return 'Super Admin';
+      default: return 'Nhân viên';
+    }
+  };
+
   // Giá trị mặc định nếu chưa load được user hoặc chưa đăng nhập
   const displayName = user ? `${user.lastName} ${user.firstName}` : 'Admin User';
-  const displayRole = user ? user.roleName : 'Quản trị viên';
+  const displayRole = user ? (user.roleName || getRoleName(user.roleID)) : 'Quản trị viên';
   const avatarInitials = user ? getInitials(user.firstName, user.lastName) : 'AU';
   const avatarGradient = user ? getAvatarGradient(user.firstName, user.lastName) : 'from-indigo-500 to-blue-600';
 

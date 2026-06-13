@@ -11,7 +11,10 @@ const api = axios.create({
 // Request Interceptor: tự động thêm Bearer Token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token');
+    if (config.url && config.url.startsWith('/api')) {
+      config.url = config.url.replace(/^\/api/, '');
+    }
+    const token = localStorage.getItem('access_token') || localStorage.getItem('token') || localStorage.getItem('auth_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -26,6 +29,8 @@ api.interceptors.response.use(
   async (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('access_token');
+      localStorage.removeItem('token');
+      localStorage.removeItem('auth_token');
       window.location.href = '/login';
     }
     return Promise.reject(error);

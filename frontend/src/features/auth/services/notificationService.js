@@ -2,7 +2,7 @@ import axios from 'axios';
 import dbData from '../../../../db.json';
 import authService from './authService';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
 const apiClient = axios.create({
@@ -10,6 +10,17 @@ const apiClient = axios.create({
   timeout: 3000,
   headers: { 'Content-Type': 'application/json' },
 });
+
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('access_token') || localStorage.getItem('token') || localStorage.getItem('auth_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 const filterNotificationsByRole = (notifications, userRole) => {
   if (!Array.isArray(notifications)) return [];
@@ -47,7 +58,7 @@ export const notificationService = {
     } else {
       try {
         // Backend sẽ tự động filter dựa trên JWT user role
-        const response = await apiClient.get('/api/notifications');
+        const response = await apiClient.get('/notifications');
         return response.data;
       } catch (error) {
         console.error('Error fetching notifications:', error);
@@ -62,7 +73,7 @@ export const notificationService = {
       try {
         const user = await authService.getMe();
         const userRole = user?.roleID || 5;
-
+ 
         const stored = localStorage.getItem('app_notifications');
         const allNotifications = stored ? JSON.parse(stored) : dbData.notifications || [];
         const filtered = filterNotificationsByRole(allNotifications, userRole);
@@ -72,7 +83,7 @@ export const notificationService = {
       }
     } else {
       try {
-        const response = await apiClient.get('/api/notifications/unread-count');
+        const response = await apiClient.get('/notifications/unread-count');
         return response.data.count || 0;
       } catch (error) {
         console.error('Error fetching unread count:', error);
@@ -97,7 +108,7 @@ export const notificationService = {
       }
     } else {
       try {
-        const response = await apiClient.patch(`/api/notifications/${id}/read`);
+        const response = await apiClient.patch(`/notifications/${id}/read`);
         return response.data;
       } catch (error) {
         console.error('Error marking notification as read:', error);
@@ -120,7 +131,7 @@ export const notificationService = {
       }
     } else {
       try {
-        const response = await apiClient.patch('/api/notifications/read-all');
+        const response = await apiClient.patch('/notifications/read-all');
         return response.data;
       } catch (error) {
         console.error('Error marking all notifications as read:', error);

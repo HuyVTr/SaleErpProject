@@ -229,7 +229,7 @@ const OrderManagement = () => {
           date: q.date,
           value: q.totalAmount || 0,
           status: q.quotationStatus || q.status || 'PENDING',
-          avatar: q.customerName.substring(0, 2).toUpperCase()
+          avatar: String(q.customerName || 'KH').substring(0, 2).toUpperCase()
         }));
       setQuotationList(mappedQuotes);
     } catch (err) {
@@ -253,7 +253,7 @@ const OrderManagement = () => {
         id: order.displayID,
         customer: order.customerName,
         phone: order.customerPhone || 'N/A',
-        avatar: order.customerName.substring(0, 2).toUpperCase(),
+        avatar: String(order.customerName || 'KH').substring(0, 2).toUpperCase(),
         date: order.date || 'N/A',
         total: order.totalAmount,
         rawStatus: order.orderStatus,
@@ -373,7 +373,7 @@ const OrderManagement = () => {
 
     const calculateStatsForList = (list) => {
       const valid = list.filter(o => o.rawStatus !== 'CANCELLED');
-      const revenue = valid.reduce((sum, o) => sum + (o.total || o.totalAmount || 0), 0);
+      const revenue = valid.reduce((sum, o) => sum + (Number(o.total) || Number(o.totalAmount) || 0), 0);
       const total = list.length;
       const pending = list.filter(o => o.rawStatus === 'PENDING').length;
       const shipping = list.filter(o => o.rawStatus === 'SHIPPING').length;
@@ -424,9 +424,9 @@ const OrderManagement = () => {
     const result = filteredByTimeOrders.filter(order => {
       const matchesTab = activeTab === 'Tất cả' || order.status === activeTab.toUpperCase();
       const matchesSearch = 
-        order.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        order.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        order.phone.includes(searchQuery);
+        String(order.id || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+        String(order.customer || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        String(order.phone || '').includes(searchQuery);
       return matchesTab && matchesSearch;
     });
 

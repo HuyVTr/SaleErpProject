@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
 const apiClient = axios.create({
@@ -8,6 +8,20 @@ const apiClient = axios.create({
   timeout: 3000,
   headers: { 'Content-Type': 'application/json' },
 });
+
+apiClient.interceptors.request.use(
+  (config) => {
+    if (config.url && config.url.startsWith('/api')) {
+      config.url = config.url.replace(/^\/api/, '');
+    }
+    const token = localStorage.getItem('access_token') || localStorage.getItem('token') || localStorage.getItem('auth_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 // Mock users list with @gmail.com to satisfy browser email validation
 const mockUsers = [
@@ -29,6 +43,7 @@ export const authService = {
       
       if (user && password === '123456') {
         // Set tokens for both patterns found in the project
+        localStorage.setItem('access_token', 'mock_jwt_token_123');
         localStorage.setItem('auth_token', 'mock_jwt_token_123');
         localStorage.setItem('token', 'mock_jwt_token_123');
         
@@ -41,11 +56,12 @@ export const authService = {
       return { success: false, message: 'Tài khoản hoặc mật khẩu không đúng' };
     } else {
       try {
-        const response = await apiClient.post('/api/auth/login', { email, password });
+        const response = await apiClient.post('/auth/login', { email, password });
         const data = response.data;
         
         if (data.success) {
           // Lưu token và user vào localStorage cho cả 2 kiểu đặt tên cũ và mới trong dự án
+          localStorage.setItem('access_token', data.token);
           localStorage.setItem('auth_token', data.token);
           localStorage.setItem('token', data.token);
           localStorage.setItem('current_user', JSON.stringify(data.user));
@@ -60,6 +76,7 @@ export const authService = {
   },
 
   logout: async () => {
+    localStorage.removeItem('access_token');
     localStorage.removeItem('auth_token');
     localStorage.removeItem('token');
     localStorage.removeItem('current_user');
@@ -73,8 +90,9 @@ export const authService = {
       return user ? JSON.parse(user) : null;
     } else {
       try {
-        const response = await apiClient.get('/api/auth/me');
-        return response.data;
+        const response = await apiClient.get('/auth/me');
+        // BE trả về { success: true, user: safeUser }, cần lấy thuộc tính user
+        return response.data?.user || response.data;
       } catch (error) {
         return null;
       }

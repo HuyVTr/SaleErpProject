@@ -81,8 +81,8 @@ const adminService = {
 
 			return Array.from(productMap.values());
 		}
-		const response = await api.get('/admin/products');
-		return response.data;
+		const response = await api.get('/products');
+		return response.data?.data || response.data || [];
 	},
 
 	createProduct: async (product) => {
@@ -101,7 +101,7 @@ const adminService = {
 			setLocal(KEY_PRODUCTS, [newProd, ...local]);
 			return newProd;
 		}
-		const response = await api.post('/admin/products', product);
+		const response = await api.post('/products', product);
 		return response.data;
 	},
 
@@ -126,7 +126,7 @@ const adminService = {
 			setLocal(KEY_PRODUCTS, updated);
 			return { success: true };
 		}
-		const response = await api.put(`/admin/products/${productID}`, data);
+		const response = await api.put(`/products/${productID}`, data);
 		return response.data;
 	},
 
@@ -144,7 +144,7 @@ const adminService = {
 			}
 			return { success: true };
 		}
-		const response = await api.delete(`/admin/products/${productID}`);
+		const response = await api.delete(`/products/${productID}`);
 		return response.data;
 	},
 
@@ -158,7 +158,7 @@ const adminService = {
 			local.forEach(c => map.set(String(c.categoryID || c.id), c));
 			return Array.from(map.values());
 		}
-		const response = await api.get('/admin/categories');
+		const response = await api.get('/categories');
 		return response.data;
 	},
 
@@ -171,7 +171,7 @@ const adminService = {
 			setLocal(KEY_CATEGORIES, [newCat, ...local]);
 			return newCat;
 		}
-		const response = await api.post('/admin/categories', category);
+		const response = await api.post('/categories', category);
 		return response.data;
 	},
 
@@ -190,7 +190,7 @@ const adminService = {
 			setLocal(KEY_CATEGORIES, updated);
 			return { success: true };
 		}
-		const response = await api.put(`/admin/categories/${categoryID}`, data);
+		const response = await api.put(`/categories/${categoryID}`, data);
 		return response.data;
 	},
 
@@ -201,7 +201,7 @@ const adminService = {
 			setLocal(KEY_CATEGORIES, filtered);
 			return { success: true };
 		}
-		const response = await api.delete(`/admin/categories/${categoryID}`);
+		const response = await api.delete(`/categories/${categoryID}`);
 		return response.data;
 	},
 
@@ -215,7 +215,7 @@ const adminService = {
 			local.forEach(u => map.set(String(u.userID || u.id), u));
 			return Array.from(map.values());
 		}
-		const response = await api.get('/admin/staffs');
+		const response = await api.get('/users');
 		return response.data;
 	},
 
@@ -228,7 +228,7 @@ const adminService = {
 			setLocal(KEY_STAFFS, [newStaff, ...local]);
 			return newStaff;
 		}
-		const response = await api.post('/admin/staffs', staff);
+		const response = await api.post('/users', staff);
 		return response.data;
 	},
 
@@ -247,7 +247,7 @@ const adminService = {
 			setLocal(KEY_STAFFS, updated);
 			return { success: true };
 		}
-		const response = await api.put(`/admin/staffs/${staffID}`, data);
+		const response = await api.put(`/users/${staffID}`, data);
 		return response.data;
 	},
 
@@ -258,7 +258,7 @@ const adminService = {
 			setLocal(KEY_STAFFS, filtered);
 			return { success: true };
 		}
-		const response = await api.delete(`/admin/staffs/${staffID}`);
+		const response = await api.delete(`/users/${staffID}`);
 		return response.data;
 	},
 
@@ -272,7 +272,7 @@ const adminService = {
 			local.forEach(p => map.set(String(p.id || p.listID), p));
 			return Array.from(map.values());
 		}
-		const response = await api.get('/admin/price-lists');
+		const response = await api.get('/price-lists');
 		return response.data;
 	},
 
@@ -285,7 +285,7 @@ const adminService = {
 			setLocal(KEY_PRICELISTS, [newList, ...local]);
 			return newList;
 		}
-		const response = await api.post('/admin/price-lists', payload);
+		const response = await api.post('/price-lists', payload);
 		return response.data;
 	},
 
@@ -304,7 +304,7 @@ const adminService = {
 			setLocal(KEY_PRICELISTS, updated);
 			return { success: true };
 		}
-		const response = await api.put(`/admin/price-lists/${id}`, data);
+		const response = await api.put(`/price-lists/${id}`, data);
 		return response.data;
 	},
 
@@ -322,7 +322,7 @@ const adminService = {
 			const all = store[priceListId] !== undefined ? store[priceListId] : apiData.filter(i => String(i.priceListId) === String(priceListId));
 			return all;
 		}
-		const response = await api.get(`/admin/price-lists/${priceListId}/items`);
+		const response = await api.get(`/price-lists/${priceListId}/items`);
 		return response.data;
 	},
 
@@ -334,7 +334,7 @@ const adminService = {
 			setLocal(KEY_PRICELIST_ITEMS, store);
 			return { success: true };
 		}
-		const response = await api.put(`/admin/price-lists/${priceListId}/items`, { items });
+		const response = await api.put(`/price-lists/${priceListId}/items`, { items });
 		return response.data;
 	},
 
@@ -355,7 +355,7 @@ const adminService = {
 			return Array.from(customerMap.values());
 		}
 		const response = await api.get('/customers');
-		return response.data;
+		return response.data?.data || response.data || [];
 	},
 
 	// Gán/bỏ gán bảng giá cho một khách hàng

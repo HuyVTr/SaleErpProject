@@ -16,9 +16,10 @@ const LoginPage = () => {
         1: '/accounting',
         2: '/sales',
         3: '/admin',
-        4: '/warehouse'
+        4: '/warehouse',
+        5: '/admin'
       }
-      const redirectPath = roleRedirects[result.user.roleID] || '/home'
+      const redirectPath = roleRedirects[result.user.roleID] || '/login'
       navigate(redirectPath)
     } else {
       setError(result.message)

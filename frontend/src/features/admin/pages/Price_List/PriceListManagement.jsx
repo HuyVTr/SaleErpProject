@@ -285,12 +285,12 @@ const PriceListManagement = () => {
       const arr = Array.isArray(res) ? res : [];
       setPriceLists(arr.map(p => {
         const rawID = p.id || p.listID || p.priceListID || p.code;
-        const formattedID = isNaN(rawID) ? String(rawID) : `BG-${String(rawID).padStart(3, '0')}`;
+        const formattedID = isNaN(rawID) ? String(rawID || '') : `BG-${String(rawID).padStart(3, '0')}`;
         return {
-          id: formattedID,
+          id: formattedID || '',
           rawID,
-          name: p.name || p.title, 
-          effectiveDate: p.effectiveDate || p.startDate, 
+          name: p.name || p.title || '', 
+          effectiveDate: p.effectiveDate || p.startDate || '', 
           status: p.status || 'Tạm dừng', 
           type: p.type || p.listType || 'Bán sỉ', 
           itemsCount: p.itemsCount || p.count || 0, 
@@ -364,9 +364,11 @@ const PriceListManagement = () => {
 
   const filteredLists = useMemo(() => {
     return priceLists.filter((item) => {
+      const nameStr = String(item?.name || '');
+      const idStr = String(item?.id || '');
       const matchesSearch =
-        item.name.toLowerCase().includes(search.toLowerCase()) ||
-        item.id.toLowerCase().includes(search.toLowerCase());
+        nameStr.toLowerCase().includes(search.toLowerCase()) ||
+        idStr.toLowerCase().includes(search.toLowerCase());
       const matchesStatus = statusFilter === 'Tất cả' || item.status === statusFilter;
       const matchesTime = matchesTimeframe(item.effectiveDate);
       return matchesSearch && matchesStatus && matchesTime;

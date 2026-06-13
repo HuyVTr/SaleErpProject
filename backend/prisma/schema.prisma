@@ -1,0 +1,420 @@
+// Prisma schema cho hệ thống bán hàng Hola Group
+// Tài liệu: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 1. Roles
+model Role {
+  roleID   Int    @id @default(autoincrement())
+  roleName String @unique
+  users    User[]
+}
+
+// 2. Groups
+model Group {
+  groupID Int      @id @default(autoincrement())
+  name    String
+  members Member[]
+}
+
+// 3. Users
+model User {
+  userID      Int       @id @default(autoincrement())
+  lastName    String
+  firstName   String
+  dateOfBirth DateTime?
+  phoneNumber String
+  email       String    @unique
+  password    String    // mật khẩu đã mã hóa
+  address     String?
+  dept        String?
+  roleID      Int
+  role        Role      @relation(fields: [roleID], references: [roleID], onUpdate: Cascade, onDelete: Restrict)
+
+  members                Member[]
+  tasks                  Task[]
+  leads                  Lead[]
+  activities             Activity[]
+  customerRequests       CustomerRequest[]
+  assignedOpportunities  Opportunity[]     @relation("AssignedUser")
+  orders                 Order[]
+  quotations             Quotation[]
+  invoices               Invoice[]
+  deliveryHistories      DeliveryStatusHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 4. Members
+model Member {
+  memberID Int   @id @default(autoincrement())
+  userID   Int
+  user     User  @relation(fields: [userID], references: [userID], onUpdate: Cascade, onDelete: Cascade)
+  groupID  Int
+  group    Group @relation(fields: [groupID], references: [groupID], onUpdate: Cascade, onDelete: Cascade)
+}
+
+// 5. Tasks
+model Task {
+  taskID      Int      @id @default(autoincrement())
+  title       String
+  description String?
+  priority    String
+  status      String
+  createAt    DateTime @default(now())
+  userID      Int
+  user        User     @relation(fields: [userID], references: [userID], onUpdate: Cascade, onDelete: Restrict)
+
+  customers     Customer[]
+  opportunities Opportunity[]
+}
+
+// 6. Leads
+model Lead {
+  leadID   Int     @id @default(autoincrement())
+  fullName String
+  email    String?
+  phone    String?
+  company  String?
+  source   String?
+  status   String
+  userID   Int
+  user     User    @relation(fields: [userID], references: [userID], onUpdate: Cascade, onDelete: Restrict)
+}
+
+// 7. Activities
+model Activity {
+  activityID   Int      @id @default(autoincrement())
+  relatedType  String   // 'Order' | 'Quotation' | 'Product' | 'Customer'
+  relatedID    Int
+  activityType String
+  description  String?
+  status       String
+  activityTime DateTime
+  createdAt    DateTime @default(now())
+  userID       Int?
+  user         User?    @relation(fields: [userID], references: [userID], onUpdate: Cascade, onDelete: SetNull)
+
+  @@index([relatedType, relatedID])
+}
+
+// 8. Customers
+model Customer {
+  customerID  Int     @id @default(autoincrement())
+  firstName   String
+  lastName    String
+  address     String?
+  phoneNumber String?
+  email       String?
+  companyName String?
+  status      String?
+  taskID      Int?
+  task        Task?   @relation(fields: [taskID], references: [taskID], onUpdate: Cascade, onDelete: SetNull)
+
+  customerRequests CustomerRequest[]
+  contracts        Contract[]
+  opportunities    Opportunity[]
+  orders           Order[]
+  quotations       Quotation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 9. CustomerRequests
+model CustomerRequest {
+  requestID  Int      @id @default(autoincrement())
+  title      String?
+  content    String?
+  priority   String?
+  status     String?
+  customerID Int
+  customer   Customer @relation(fields: [customerID], references: [customerID], onUpdate: Cascade, onDelete: Cascade)
+  userID     Int
+  user       User     @relation(fields: [userID], references: [userID], onUpdate: Cascade, onDelete: Restrict)
+}
+
+// 10. Contracts
+model Contract {
+  contractID   Int       @id @default(autoincrement())
+  contractCode String
+  signedDate   DateTime?
+  priority     String?
+  status       String
+  customerID   Int
+  customer     Customer  @relation(fields: [customerID], references: [customerID], onUpdate: Cascade, onDelete: Cascade)
+}
+
+// 11. Opportunities
+model Opportunity {
+  opportunityID Int       @id @default(autoincrement())
+  name          String
+  stage         String
+  expected_close DateTime?
+  priority      Int?
+  value         Decimal?  @db.Decimal(19, 2)
+  customerID    Int
+  customer      Customer  @relation(fields: [customerID], references: [customerID], onUpdate: Cascade, onDelete: Cascade)
+  assignedTo    Int?
+  assignedUser  User?     @relation("AssignedUser", fields: [assignedTo], references: [userID], onUpdate: Cascade, onDelete: SetNull)
+  taskID        Int?
+  task          Task?     @relation(fields: [taskID], references: [taskID], onUpdate: Cascade, onDelete: SetNull)
+
+  orders     Order[]
+  quotations Quotation[]
+}
+
+// 12. Orders
+model Order {
+  orderID        Int           @id @default(autoincrement())
+  paymentTerm    String?
+  paymentMethod  PaymentMethod @default(CASH)
+  orderStatus    OrderStatus   @default(PENDING)
+  orderDate      DateTime?     @default(now())
+  deliveryDate   DateTime?
+  customerID     Int
+  customer       Customer      @relation(fields: [customerID], references: [customerID], onUpdate: Cascade, onDelete: Restrict)
+  opportunityID  Int?
+  opportunity    Opportunity?  @relation(fields: [opportunityID], references: [opportunityID], onUpdate: Cascade, onDelete: SetNull)
+  userID         Int
+  user           User          @relation(fields: [userID], references: [userID], onUpdate: Cascade, onDelete: Restrict)
+  totalAmount    Decimal       @db.Decimal(19, 2) @default(0)
+  taxAmount      Decimal       @db.Decimal(19, 2) @default(0)
+  discountAmount Decimal       @db.Decimal(19, 2) @default(0)
+  paidAmount     Decimal       @db.Decimal(19, 2) @default(0)
+
+  items             OrderItem[]
+  invoices          Invoice[]
+  deliveryHistories DeliveryStatusHistory[]
+  quotations        Quotation[]
+}
+
+enum OrderStatus {
+  PENDING
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  TRANSFER
+}
+
+// 13. Quotations
+model Quotation {
+  quotationID     Int             @id @default(autoincrement())
+  quotationDate   DateTime        @default(now())
+  expiration      DateTime?
+  paymentTerm     String?
+  paymentMethod   String?
+  quotationStatus QuotationStatus @default(PENDING)
+  customerID      Int
+  customer        Customer        @relation(fields: [customerID], references: [customerID], onUpdate: Cascade, onDelete: Restrict)
+  orderID         Int?
+  order           Order?          @relation(fields: [orderID], references: [orderID], onUpdate: Cascade, onDelete: SetNull)
+  userID          Int
+  user            User            @relation(fields: [userID], references: [userID], onUpdate: Cascade, onDelete: Restrict)
+  opportunityID   Int?
+  opportunity     Opportunity?    @relation(fields: [opportunityID], references: [opportunityID], onUpdate: Cascade, onDelete: SetNull)
+  totalAmount     Decimal         @db.Decimal(19, 2) @default(0)
+
+  items QuotationItem[]
+}
+
+enum QuotationStatus {
+  PENDING
+  SENT
+  APPROVED
+  REJECTED
+}
+
+// 14. PriceLists
+model PriceList {
+  priceListID   Int             @id @default(autoincrement())
+  priceListName String
+  type          String          // Bán lẻ, Bán sỉ, Khuyến mãi, Nội bộ
+  effectiveDate DateTime
+  status        String          // Kích hoạt, Tạm dừng
+  description   String?
+  items         PriceListItem[]
+}
+
+// 15. PriceListItems
+model PriceListItem {
+  priceListItemID Int       @id @default(autoincrement())
+  applyTo         String
+  minQTY          Int       @default(1)
+  priceType       String
+  discount        Decimal?  @db.Decimal(19, 2)
+  fixedPrice      Decimal?  @db.Decimal(19, 2)
+  basePrice       Decimal?  @db.Decimal(19, 2)
+  roundOffTo      Decimal?  @db.Decimal(19, 2)
+  extraFee        Decimal?  @db.Decimal(19, 2)
+  priceListID     Int
+  priceList       PriceList @relation(fields: [priceListID], references: [priceListID], onUpdate: Cascade, onDelete: Cascade)
+
+  categories Categories[]
+  products   Product[]
+}
+
+// 16. Categories
+model Categories {
+  categoryID       Int         @id @default(autoincrement())
+  categoryName     String
+  icon             String?     @default("package_2")
+  parentCategoryID Int?
+  parent           Categories?  @relation("CategoryTree", fields: [parentCategoryID], references: [categoryID], onUpdate: Cascade, onDelete: SetNull)
+  children         Categories[] @relation("CategoryTree")
+  status           String      @default("Đang hoạt động")
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  priceListItemID  Int?
+  priceListItem    PriceListItem? @relation(fields: [priceListItemID], references: [priceListItemID], onUpdate: Cascade, onDelete: SetNull)
+
+  products Product[]
+}
+
+// 17. Products
+model Product {
+  productID       Int            @id @default(autoincrement())
+  productName     String
+  salePrice       Decimal        @db.Decimal(19, 2)
+  cost            Decimal?       @db.Decimal(19, 2)
+  unit            String
+  description     String?
+  status          String
+  imageURL        String?
+  stockQuantity   Int            @default(0)
+  categoryID      Int
+  category        Categories     @relation(fields: [categoryID], references: [categoryID], onUpdate: Cascade, onDelete: Restrict)
+  priceListItemID Int?
+  priceListItem   PriceListItem? @relation(fields: [priceListItemID], references: [priceListItemID], onUpdate: Cascade, onDelete: SetNull)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  orderItems     OrderItem[]
+  quotationItems QuotationItem[]
+  inventories    Inventory[]
+}
+
+// 18. OrderItems (Khóa chính phức hợp orderID & productID)
+model OrderItem {
+  orderID   Int
+  order     Order   @relation(fields: [orderID], references: [orderID], onUpdate: Cascade, onDelete: Cascade)
+  productID Int
+  product   Product @relation(fields: [productID], references: [productID], onUpdate: Cascade, onDelete: Restrict)
+  quantity  Int
+  unitPrice Decimal @db.Decimal(19, 2)
+  discount  Decimal @db.Decimal(19, 2) @default(0)
+
+  @@id([orderID, productID])
+}
+
+// 19. QuotationItems (Khóa chính phức hợp quotationID & productID)
+model QuotationItem {
+  quotationID Int
+  quotation   Quotation @relation(fields: [quotationID], references: [quotationID], onUpdate: Cascade, onDelete: Cascade)
+  productID   Int
+  product     Product   @relation(fields: [productID], references: [productID], onUpdate: Cascade, onDelete: Restrict)
+  quantity    Int
+  unitPrice   Decimal   @db.Decimal(19, 2)
+  discount    Decimal   @db.Decimal(19, 2) @default(0)
+
+  @@id([quotationID, productID])
+}
+
+// 20. Invoices
+model Invoice {
+  invoiceID   Int           @id @default(autoincrement())
+  invoiceDate DateTime      @default(now())
+  dueDate     DateTime?
+  totalAmount Decimal?      @db.Decimal(19, 2)
+  paidAmount  Decimal?      @db.Decimal(19, 2) @default(0)
+  status      String?
+  createAt    DateTime      @default(now())
+  orderID     Int
+  order       Order         @relation(fields: [orderID], references: [orderID], onUpdate: Cascade, onDelete: Restrict)
+  userID      Int
+  user        User          @relation(fields: [userID], references: [userID], onUpdate: Cascade, onDelete: Restrict)
+
+  payments Payment[]
+}
+
+// 21. Payments
+model Payment {
+  paymentID     Int           @id @default(autoincrement())
+  amount        Decimal       @db.Decimal(19, 2)
+  paymentMethod String?
+  paymentDate   DateTime      @default(now())
+  status        String?
+  invoiceID     Int
+  invoice       Invoice       @relation(fields: [invoiceID], references: [invoiceID], onUpdate: Cascade, onDelete: Cascade)
+}
+
+// 22. Warehouses
+model Warehouse {
+  warehouseID Int         @id @default(autoincrement())
+  name        String
+  address     String?     // Sửa lỗi chính tả "addres" thành "address" để chuẩn hơn nhưng nếu FE gọi addres ta cần cẩn thận
+  createAt    DateTime    @default(now())
+  inventories Inventory[]
+}
+
+// 23. Inventory
+model Inventory {
+  inventoryID Int       @id @default(autoincrement())
+  quantity    Int
+  updateAt    DateTime  @updatedAt
+  productID   Int
+  product     Product   @relation(fields: [productID], references: [productID], onUpdate: Cascade, onDelete: Cascade)
+  warehouseID Int
+  warehouse   Warehouse @relation(fields: [warehouseID], references: [warehouseID], onUpdate: Cascade, onDelete: Cascade)
+}
+
+// 24. DeliveryStatusHistory
+model DeliveryStatusHistory {
+  historyID Int      @id @default(autoincrement())
+  orderID   Int
+  order     Order    @relation(fields: [orderID], references: [orderID], onUpdate: Cascade, onDelete: Cascade)
+  status    String
+  note      String?
+  changedAt DateTime
+  userID    Int?
+  user      User?    @relation(fields: [userID], references: [userID], onUpdate: Cascade, onDelete: SetNull)
+}
+
+// 25. Báo cáo thuế quý (Thừa kế thêm cho hệ thống đang có)
+model QuarterlyReport {
+  reportID      Int      @id @default(autoincrement())
+  quarter       Int
+  year          Int
+  title         String
+  status        String   @default("DRAFT")
+  totalRevenue  Decimal  @db.Decimal(18, 2) @default(0)
+  vatOut        Decimal  @db.Decimal(18, 2) @default(0)
+  vatDeductible Decimal  @db.Decimal(18, 2) @default(0)
+  note          String?
+  breakdown     Json?    // mảng { label, value }
+  timeline      Json?    // mảng các bước duyệt
+  createdAt     DateTime @default(now())
+}
+
+// 26. Thông báo (Thừa kế thêm cho hệ thống đang có)
+model Notification {
+  id        Int      @id @default(autoincrement())
+  type      String   // order, warehouse, payment, system
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean  @default(false)
+  roleIds   Int[]    // null/rỗng = gửi cho tất cả
+  createdAt DateTime @default(now())
+}

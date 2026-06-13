@@ -207,7 +207,7 @@ const QuotationManagement = () => {
         date: q.date,
         value: q.totalAmount || 0,
         status: q.status || q.quotationStatus,
-        avatar: q.customerName.substring(0, 2).toUpperCase()
+        avatar: String(q.customerName || 'KH').substring(0, 2).toUpperCase()
       }));
 
       setQuotations(mappedQuotes);
@@ -332,7 +332,7 @@ const QuotationManagement = () => {
 
     const calculateStatsForList = (list) => {
       const valid = list.filter(q => q.status !== 'CANCELLED');
-      const value = valid.reduce((sum, q) => sum + (q.value || 0), 0);
+      const value = valid.reduce((sum, q) => sum + (Number(q.value) || 0), 0);
       const pending = list.filter(q => q.status === 'PENDING' || q.status === 'SENT').length;
       
       const approvedCount = list.filter(q => q.status === 'APPROVED').length;

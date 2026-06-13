@@ -157,47 +157,61 @@ const getCurrentUser = () => {
 // ─── SALES SERVICE LOGIC ───────────────────────────────────────────────────
 
 const salesService = {
-  // Lấy danh sách khách hàng
   getCustomers: async () => {
-    if (USE_MOCK) {
-      const local = getLocalCustomers();
-      const apiData = dbData.customers || [];
-      const deletedIds = JSON.parse(localStorage.getItem('deleted_customer_ids') || '[]');
-      const deletedSet = new Set(deletedIds.map(Number));
-
-      // Dùng Number() làm key thống nhất để tránh conflict giữa string "1" và number 1
-      const customerMap = new Map();
-      apiData.forEach(c => {
-        if (!deletedSet.has(Number(c.customerID))) {
-          customerMap.set(Number(c.customerID), c);
-        }
-      });
-      
-      // Các khách hàng ở local (added_customers) chắc chắn đang kích hoạt (vì khi xóa đã bị lọc ra khỏi local)
-      // Do đó không cần check qua deletedSet, giúp hiển thị ngay cả khi có xung đột ID cũ.
-      local.forEach(c => {
-        customerMap.set(Number(c.customerID), c);
-      });
-
-      // Tự động dọn dẹp các ID bị xung đột trong danh sách đã xóa nếu có
-      const cleanDeletedIds = deletedIds.filter(id => !local.some(lc => Number(lc.customerID) === Number(id)));
-      if (cleanDeletedIds.length !== deletedIds.length) {
-        localStorage.setItem('deleted_customer_ids', JSON.stringify(cleanDeletedIds));
-      }
-
-      return Array.from(customerMap.values());
+    try {
+      const response = await api.get('/customers');
+      return response.data?.data || response.data || [];
+    } catch (e) {
+      console.warn("Failed to fetch customers from API, falling back to mock:", e);
     }
-    const response = await api.get('/customers');
-    return response.data;
+    const local = getLocalCustomers();
+    const apiData = dbData.customers || [];
+    const deletedIds = JSON.parse(localStorage.getItem('deleted_customer_ids') || '[]');
+    const deletedSet = new Set(deletedIds.map(Number));
+
+    const customerMap = new Map();
+    apiData.forEach(c => {
+      if (!deletedSet.has(Number(c.customerID))) {
+        customerMap.set(Number(c.customerID), c);
+      }
+    });
+    
+    local.forEach(c => {
+      customerMap.set(Number(c.customerID), c);
+    });
+
+    const cleanDeletedIds = deletedIds.filter(id => !local.some(lc => Number(lc.customerID) === Number(id)));
+    if (cleanDeletedIds.length !== deletedIds.length) {
+      localStorage.setItem('deleted_customer_ids', JSON.stringify(cleanDeletedIds));
+    }
+
+    return Array.from(customerMap.values());
   },
 
-  // Lấy danh sách đơn hàng (Lọc theo nhân viên nếu có userID và theo thời gian)
   getOrders: async (userID, timeframe, options = {}) => {
-    if (USE_MOCK) {
-      const currentUser = getCurrentUser();
-      const activeUserID = userID || currentUser?.userID;
+    if (!USE_MOCK) {
+      try {
+        const response = await api.get('/orders', { params: { userID, timeframe, ...options } });
+        const data = response.data?.data || response.data || [];
+        const customers = await salesService.getCustomers();
+        return data.map(o => {
+          const customer = customers.find(c => c.customerID === o.customerID) || o.customer;
+          return {
+            ...o,
+            displayID: `ORD-${o.orderID.toString().padStart(3, '0')}`,
+            customerName: customer ? (customer.companyName || `${customer.lastName} ${customer.firstName}`) : (o.customerName || 'Khách hàng lẻ'),
+            customerPhone: customer?.phoneNumber || o.customerPhone || 'N/A',
+            date: o.orderDate || o.date ? new Date(o.orderDate || o.date).toLocaleDateString('vi-VN') : 'N/A'
+          };
+        });
+      } catch (e) {
+        console.warn("Failed to fetch orders from API, falling back to mock:", e);
+      }
+    }
+    const currentUser = getCurrentUser();
+    const activeUserID = userID || currentUser?.userID;
 
-      const localOrders = getLocalOrders();
+    const localOrders = getLocalOrders();
       const apiOrders = dbData.orders || [];
       const allInvoices = getAllCurrentInvoices();
       const customers = await salesService.getCustomers();
@@ -333,16 +347,19 @@ const salesService = {
         const idB = Number(b.orderID) || 0;
         return idB - idA;
       });
-    }
-    const response = await api.get('/api/orders', { params: { userID, timeframe, ...options } });
-    return response.data;
   },
 
-  // Lấy danh sách sản phẩm
   getProducts: async () => {
-    if (USE_MOCK) {
-      const local = getLocalProducts();
-      const apiData = dbData.products || [];
+    if (!USE_MOCK) {
+      try {
+        const response = await api.get('/products');
+        return response.data?.data || response.data || [];
+      } catch (e) {
+        console.warn("Failed to fetch products from API, falling back to mock:", e);
+      }
+    }
+    const local = getLocalProducts();
+    const apiData = dbData.products || [];
       const deletedIds = getDeletedProductIds();
       const deletedSet = new Set(deletedIds.map(Number));
 
@@ -358,9 +375,6 @@ const salesService = {
       });
 
       return Array.from(productMap.values());
-    }
-    const response = await api.get('/products');
-    return response.data;
   },
 
   // Tạo sản phẩm mới
@@ -445,13 +459,31 @@ const salesService = {
     }
   },
 
-  // Lấy danh sách báo giá
   getQuotations: async (userID, timeframe, options = {}) => {
-    if (USE_MOCK) {
-      const currentUser = getCurrentUser();
-      const activeUserID = userID || currentUser?.userID;
-      const localQuotes = JSON.parse(localStorage.getItem('added_quotations') || '[]');
-      const apiQuotes = dbData.quotations || [];
+    if (!USE_MOCK) {
+      try {
+        const response = await api.get('/quotations', { params: { userID, timeframe, ...options } });
+        const data = response.data?.data || response.data || [];
+        const customers = await salesService.getCustomers();
+        return data.map(q => {
+          const customer = customers.find(c => c.customerID === q.customerID) || q.customer;
+          return {
+            ...q,
+            displayID: `QUO-${q.quotationID.toString().padStart(3, '0')}`,
+            customerName: customer ? (customer.companyName || `${customer.lastName} ${customer.firstName}`) : 'Khách hàng lẻ',
+            customerEmail: customer ? customer.email : 'N/A',
+            customerGroup: customer ? (customer.status === 'ACTIVE' ? 'VIP MEMBER' : 'STANDARD') : 'STANDARD',
+            date: q.createAt || q.quotationDate ? new Date(q.createAt || q.quotationDate).toLocaleDateString('vi-VN') : 'N/A'
+          };
+        });
+      } catch (e) {
+        console.warn("Failed to fetch quotations from API, falling back to mock:", e);
+      }
+    }
+    const currentUser = getCurrentUser();
+    const activeUserID = userID || currentUser?.userID;
+    const localQuotes = JSON.parse(localStorage.getItem('added_quotations') || '[]');
+    const apiQuotes = dbData.quotations || [];
       const localQuoteIds = new Set(localQuotes.map(q => Number(q.quotationID)));
       const allQuotes = [...localQuotes, ...apiQuotes.filter(q => !localQuoteIds.has(Number(q.quotationID)))];
       const customers = await salesService.getCustomers();
@@ -508,16 +540,19 @@ const salesService = {
         }
         return b.quotationID - a.quotationID;
       });
-    }
-    const response = await api.get('/api/quotations', { params: { userID, timeframe, ...options } });
-    return response.data;
   },
 
-  // Lấy thống kê Dashboard (Lọc theo nhân viên và thời gian)
   getDashboardStats: async (userID, timeframe, options = {}) => {
-    if (USE_MOCK) {
-      const currentUser = getCurrentUser();
-      const activeUserID = userID || currentUser?.userID;
+    if (!USE_MOCK) {
+      try {
+        const response = await api.get('/sales/dashboard/stats', { params: { userID, timeframe, ...options } });
+        return response.data?.data || response.data;
+      } catch (e) {
+        console.warn("Failed to fetch dashboard stats from API, falling back to mock:", e);
+      }
+    }
+    const currentUser = getCurrentUser();
+    const activeUserID = userID || currentUser?.userID;
 
       const allOrders = [...(dbData.orders || []), ...getLocalOrders()];
 
@@ -788,9 +823,6 @@ const salesService = {
         targetRevenue: 1000000000,
         revenueChart
       };
-    }
-    const response = await api.get('/api/sales/dashboard/stats', { params: { userID, timeframe, ...options } });
-    return response.data;
   },
 
   // Tạo đơn hàng mới
@@ -834,7 +866,7 @@ const salesService = {
 
       return newOrder;
     }
-    const response = await api.post('/api/orders', orderData);
+    const response = await api.post('/orders', orderData);
     return response.data;
   },
 
@@ -861,7 +893,7 @@ const salesService = {
       }
       return { success: true };
     }
-    const response = await api.put(`/api/orders/${orderID}/status`, { status });
+    const response = await api.put(`/orders/${orderID}/status`, { status });
     return response.data;
   },
 
@@ -885,7 +917,7 @@ const salesService = {
       localStorage.setItem('added_quotations', JSON.stringify([newQuotation, ...local]));
       return newQuotation;
     }
-    const response = await api.post('/api/quotations', quotationData);
+    const response = await api.post('/quotations', quotationData);
     return response.data;
   },
 
@@ -912,7 +944,7 @@ const salesService = {
       }
       return { success: true };
     }
-    const response = await api.put(`/api/quotations/${quotationID}/status`, { status });
+    const response = await api.put(`/quotations/${quotationID}/status`, { status });
     return response.data;
   },
 
@@ -987,21 +1019,31 @@ const salesService = {
 
   // Lấy danh sách hóa đơn
   getInvoices: async () => {
-    if (USE_MOCK) return getAllCurrentInvoices();
-    const response = await api.get('/api/invoices');
-    return response.data;
+    if (!USE_MOCK) {
+      try {
+        const response = await api.get('/invoices');
+        return response.data?.data || response.data || [];
+      } catch (e) {
+        console.warn("Failed to fetch invoices from API, falling back to mock:", e);
+      }
+    }
+    return getAllCurrentInvoices();
   },
 
   // Lấy danh sách thanh toán
   getPayments: async () => {
-    if (USE_MOCK) {
-      const local = JSON.parse(localStorage.getItem('added_payments') || '[]');
-      const apiData = dbData.payments || [];
-      const localIds = new Set(local.map(p => p.paymentID));
-      return [...local, ...apiData.filter(p => !localIds.has(p.paymentID))];
+    if (!USE_MOCK) {
+      try {
+        const response = await api.get('/payments');
+        return response.data?.data || response.data || [];
+      } catch (e) {
+        console.warn("Failed to fetch payments from API, falling back to mock:", e);
+      }
     }
-    const response = await api.get('/api/payments');
-    return response.data;
+    const local = JSON.parse(localStorage.getItem('added_payments') || '[]');
+    const apiData = dbData.payments || [];
+    const localIds = new Set(local.map(p => p.paymentID));
+    return [...local, ...apiData.filter(p => !localIds.has(p.paymentID))];
   },
 
   // ─── USER HELPER METHODS ─────────────────────────────────────────────────
@@ -1087,8 +1129,8 @@ const salesService = {
 
       return list.sort((a, b) => b.timestamp - a.timestamp);
     }
-    const response = await api.get(`/api/orders/${orderID}/activities`);
-    return response.data;
+    const response = await api.get(`/orders/${orderID}/activities`);
+    return response.data?.data || response.data || [];
   },
 
   // Lấy lịch sử hoạt động của Báo giá
@@ -1134,8 +1176,8 @@ const salesService = {
 
       return list.sort((a, b) => b.timestamp - a.timestamp);
     }
-    const response = await api.get(`/api/quotations/${quotationID}/activities`);
-    return response.data;
+    const response = await api.get(`/quotations/${quotationID}/activities`);
+    return response.data?.data || response.data || [];
   },
 
   // Lấy lịch sử hoạt động của Sản phẩm
@@ -1195,8 +1237,8 @@ const salesService = {
 
       return list.sort((a, b) => b.timestamp - a.timestamp);
     }
-    const response = await api.get(`/api/products/${productID}/activities`);
-    return response.data;
+    const response = await api.get(`/products/${productID}/activities`);
+    return response.data?.data || response.data || [];
   },
 
   // Lấy lịch sử hoạt động của Khách hàng
@@ -1261,8 +1303,8 @@ const salesService = {
 
       return list.sort((a, b) => b.timestamp - a.timestamp);
     }
-    const response = await api.get(`/api/customers/${customerID}/activities`);
-    return response.data;
+    const response = await api.get(`/customers/${customerID}/activities`);
+    return response.data?.data || response.data || [];
   }
 };
 
