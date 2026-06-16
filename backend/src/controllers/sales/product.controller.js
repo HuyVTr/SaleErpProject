@@ -6,24 +6,53 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 export const productSchema = z.object({
   productName: z.string().min(1, "Tên sản phẩm bắt buộc"),
   salePrice: z.number().nonnegative("Giá phải >= 0"),
+  cost: z.number().nonnegative().optional().nullable(),
   unit: z.string().optional(),
-  status: z.enum(["ACTIVE", "INACTIVE"]).optional(),
+  description: z.string().optional().nullable(),
+  imageURL: z.string().optional().nullable(),
+  status: z.string().optional(),
   stockQuantity: z.number().int().nonnegative().optional(),
-  categoryID: z.number().int().optional().nullable(),
+  categoryID: z.number().int("Category ID phải là số nguyên"),
 });
 
-// GET /api/products?search=&categoryID=
+// GET /api/products?search=&categoryID=&page=&limit=
 export const getProducts = asyncHandler(async (req, res) => {
-  const { search, categoryID } = req.query;
-  const products = await prisma.product.findMany({
-    where: {
-      ...(search && { productName: { contains: search, mode: "insensitive" } }),
-      ...(categoryID && { categoryID: Number(categoryID) }),
-    },
-    include: { category: true },
-    orderBy: { productID: "asc" },
+  const { search, categoryID, page: pageQuery, limit: limitQuery } = req.query;
+
+  const where = {
+    ...(search && { productName: { contains: search, mode: "insensitive" } }),
+    ...(categoryID && { categoryID: Number(categoryID) }),
+  };
+
+  // Nếu không truyền page/limit, giữ hành vi cũ: trả toàn bộ danh sách
+  if (!pageQuery && !limitQuery) {
+    const products = await prisma.product.findMany({
+      where,
+      include: { category: true },
+      orderBy: { productID: "asc" },
+    });
+    return res.json({ success: true, data: products });
+  }
+
+  const page = Math.max(1, Number(pageQuery) || 1);
+  const limit = Math.max(1, Number(limitQuery) || 20);
+
+  const [products, total] = await Promise.all([
+    prisma.product.findMany({
+      where,
+      include: { category: true },
+      orderBy: { productID: "asc" },
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+    prisma.product.count({ where }),
+  ]);
+
+  res.json({
+    success: true,
+    data: products,
+    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
   });
-  res.json({ success: true, data: products });
 });
 
 // GET /api/products/:id

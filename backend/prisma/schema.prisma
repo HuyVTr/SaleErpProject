@@ -118,6 +118,8 @@ model Customer {
   status      String?
   taskID      Int?
   task        Task?   @relation(fields: [taskID], references: [taskID], onUpdate: Cascade, onDelete: SetNull)
+  priceListId Int?
+  priceList   PriceList? @relation(fields: [priceListId], references: [priceListID], onUpdate: Cascade, onDelete: SetNull)
 
   customerRequests CustomerRequest[]
   contracts        Contract[]
@@ -199,7 +201,10 @@ model Order {
 
 enum OrderStatus {
   PENDING
+  CONFIRMED
+  SHIPPING
   DELIVERED
+  FAILED
   CANCELLED
 }
 
@@ -245,6 +250,7 @@ model PriceList {
   status        String          // Kích hoạt, Tạm dừng
   description   String?
   items         PriceListItem[]
+  customers     Customer[]
 }
 
 // 15. PriceListItems
@@ -344,6 +350,7 @@ model Invoice {
   order       Order         @relation(fields: [orderID], references: [orderID], onUpdate: Cascade, onDelete: Restrict)
   userID      Int
   user        User          @relation(fields: [userID], references: [userID], onUpdate: Cascade, onDelete: Restrict)
+  lastReminderDate DateTime?
 
   payments Payment[]
 }

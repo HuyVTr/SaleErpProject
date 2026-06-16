@@ -21,13 +21,52 @@ export const orderSchema = z.object({
     .min(1, "Đơn hàng phải có ít nhất 1 sản phẩm"),
 });
 
-// GET /api/orders
+// GET /api/orders?page=&limit=&search=&status=
 export const getOrders = asyncHandler(async (req, res) => {
-  const orders = await prisma.order.findMany({
-    include: { customer: true, user: true, items: { include: { product: true } } },
-    orderBy: { orderID: "desc" },
+  const { search, status, page: pageQuery, limit: limitQuery } = req.query;
+
+  const where = {
+    ...(status && { orderStatus: status }),
+    ...(search && {
+      customer: {
+        OR: [
+          { firstName: { contains: search, mode: "insensitive" } },
+          { lastName: { contains: search, mode: "insensitive" } },
+          { companyName: { contains: search, mode: "insensitive" } },
+        ],
+      },
+    }),
+  };
+
+  // Nếu không truyền page/limit, giữ hành vi cũ: trả toàn bộ danh sách
+  if (!pageQuery && !limitQuery) {
+    const orders = await prisma.order.findMany({
+      where,
+      include: { customer: true, user: true, items: { include: { product: true } } },
+      orderBy: { orderID: "desc" },
+    });
+    return res.json({ success: true, data: orders });
+  }
+
+  const page = Math.max(1, Number(pageQuery) || 1);
+  const limit = Math.max(1, Number(limitQuery) || 20);
+
+  const [orders, total] = await Promise.all([
+    prisma.order.findMany({
+      where,
+      include: { customer: true, user: true, items: { include: { product: true } } },
+      orderBy: { orderID: "desc" },
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+    prisma.order.count({ where }),
+  ]);
+
+  res.json({
+    success: true,
+    data: orders,
+    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
   });
-  res.json({ success: true, data: orders });
 });
 
 // GET /api/orders/:id
@@ -107,6 +146,10 @@ export const createOrder = asyncHandler(async (req, res) => {
 // PUT /api/orders/:id/status
 export const updateOrderStatus = asyncHandler(async (req, res) => {
   const { status } = req.body;
+  const VALID_ORDER_STATUS = ["PENDING", "CONFIRMED", "SHIPPING", "DELIVERED", "FAILED", "CANCELLED"];
+  if (!VALID_ORDER_STATUS.includes(status)) {
+    throw new ApiError(400, `Trạng thái đơn hàng không hợp lệ: ${status}`);
+  }
   const order = await prisma.order.update({
     where: { orderID: Number(req.params.id) },
     data: { orderStatus: status },

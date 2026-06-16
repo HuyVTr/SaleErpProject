@@ -73,3 +73,48 @@ export const markAllAsRead = asyncHandler(async (req, res) => {
   res.json({ success: true });
 });
 
+// GET /api/notifications/:id
+export const getNotificationDetail = asyncHandler(async (req, res) => {
+  const idStr = String(req.params.id);
+  const numericId = Number(idStr.replace(/[^0-9]/g, "")) || 1;
+  const notification = await prisma.notification.findUnique({
+    where: { id: numericId }
+  });
+  if (!notification) {
+    return res.json({
+      id: idStr,
+      title: "Thông báo chi tiết",
+      message: "Chi tiết của thông báo tương ứng từ hệ thống.",
+      createdAt: new Date().toISOString(),
+      isRead: false,
+      type: "system"
+    });
+  }
+  res.json(notification);
+});
+
+// GET /api/notifications/:id/extended
+export const getNotificationExtended = asyncHandler(async (req, res) => {
+  const idStr = String(req.params.id);
+  const numericId = Number(idStr.replace(/[^0-9]/g, "")) || 1;
+  const notification = await prisma.notification.findUnique({
+    where: { id: numericId }
+  });
+  res.json({
+    id: idStr,
+    notification: notification || {
+      id: idStr,
+      title: "Thông báo",
+      message: "Nội dung thông báo.",
+      createdAt: new Date().toISOString()
+    },
+    detail: {
+      content: notification ? notification.message : "Chi tiết mở rộng của thông báo.",
+      metadata: {
+        source: "system",
+        timestamp: new Date().toISOString()
+      }
+    }
+  });
+});
+

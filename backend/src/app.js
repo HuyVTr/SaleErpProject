@@ -1,10 +1,14 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
 import { env } from "./config/env.js";
 import routes from "./routes/index.js";
 import { notFound, errorHandler } from "./middlewares/errorHandler.js";
 
 const app = express();
+
+// helmet: tự động thêm các HTTP header bảo mật (chống clickjacking, sniffing MIME...)
+app.use(helmet());
 
 app.use(cors({
   origin: (origin, callback) => {

@@ -10,7 +10,8 @@ export const customerSchema = z.object({
   address: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
   email: z.string().email("Email không hợp lệ").optional().nullable(),
-  status: z.enum(["ACTIVE", "INACTIVE"]).optional(),
+  status: z.string().optional(),
+  priceListId: z.number().int().optional().nullable(),
 });
 
 // GET /api/customers?search=
@@ -42,14 +43,26 @@ export const getCustomer = asyncHandler(async (req, res) => {
 });
 
 export const createCustomer = asyncHandler(async (req, res) => {
+  try {
+    await prisma.$executeRawUnsafe(
+      `SELECT setval(pg_get_serial_sequence('"Customer"', 'customerID'), coalesce(max("customerID"), 1)) FROM "Customer";`
+    );
+  } catch (seqErr) {
+    console.error("Không thể đồng bộ sequence cho Customer:", seqErr);
+  }
+
   const customer = await prisma.customer.create({ data: req.body });
   res.status(201).json({ success: true, data: customer });
 });
 
 export const updateCustomer = asyncHandler(async (req, res) => {
+  const data = { ...req.body };
+  if (data.priceListId !== undefined) {
+    data.priceListId = data.priceListId === null ? null : Number(data.priceListId);
+  }
   const customer = await prisma.customer.update({
     where: { customerID: Number(req.params.id) },
-    data: req.body,
+    data,
   });
   res.json({ success: true, data: customer });
 });

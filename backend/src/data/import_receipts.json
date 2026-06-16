@@ -1,0 +1,87 @@
+[
+  {
+    "receiptId": "NK-003",
+    "id": "NK-003",
+    "supplier": "aaaaa",
+    "date": "2026-06-15T12:13:43.219Z",
+    "status": "COMPLETED",
+    "createdBy": "Lê Văn Kho",
+    "totalValue": 18600000,
+    "notes": "",
+    "items": [
+      {
+        "productId": 3,
+        "productName": "Bồn cầu thông minh Hizo-X1",
+        "quantity": 3,
+        "unitPrice": 2000000,
+        "unit": "Cái"
+      },
+      {
+        "productId": 3,
+        "productName": "Bồn cầu thông minh Hizo-X1",
+        "quantity": 2,
+        "unitPrice": 2000000,
+        "unit": "Cái"
+      },
+      {
+        "productId": 11,
+        "productName": "Gỗ nhựa ngoài trời lót ban công",
+        "quantity": 4,
+        "unitPrice": 650000,
+        "unit": "Cái"
+      },
+      {
+        "productId": 8,
+        "productName": "Sàn gỗ tự nhiên Gõ Đỏ",
+        "quantity": 5,
+        "unitPrice": 1200000,
+        "unit": "Cái"
+      }
+    ]
+  },
+  {
+    "receiptId": "NK-002",
+    "id": "NK-002",
+    "supplier": "aaaaa",
+    "date": "2026-06-15T11:07:19.758Z",
+    "status": "COMPLETED",
+    "createdBy": "Lê Văn Kho",
+    "totalValue": 2900000,
+    "notes": "",
+    "items": [
+      {
+        "productId": 3,
+        "productName": "Bồn cầu thông minh Hizo-X1",
+        "quantity": 1,
+        "unitPrice": 2000000,
+        "unit": "Cái"
+      },
+      {
+        "productId": 2,
+        "productName": "Đá hoa cương đen Huế",
+        "quantity": 2,
+        "unitPrice": 450000,
+        "unit": "Cái"
+      }
+    ]
+  },
+  {
+    "receiptId": "NK-001",
+    "id": "NK-001",
+    "supplier": "ab",
+    "date": "2026-06-15T11:07:10.075Z",
+    "status": "COMPLETED",
+    "createdBy": "Lê Văn Kho",
+    "totalValue": 5400000,
+    "notes": "a",
+    "items": [
+      {
+        "productId": 2,
+        "productName": "Đá hoa cương đen Huế",
+        "quantity": 12,
+        "unitPrice": 450000,
+        "unit": "Cái"
+      }
+    ]
+  }
+]

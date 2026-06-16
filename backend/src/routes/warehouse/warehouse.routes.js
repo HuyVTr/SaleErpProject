@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   getImportReceipts,
   createImportReceipt,
+  revertImportReceipt,
   getDeliveryHistory,
   createDeliveryHistory,
 } from "../../controllers/warehouse/warehouse.controller.js";
@@ -12,6 +13,7 @@ const router = Router();
 // Chỉ Nhân viên kho (4) mới được quản lý kho
 router.get("/warehouse/imports", protect, authorize(4), getImportReceipts);
 router.post("/warehouse/imports", protect, authorize(4), createImportReceipt);
+router.post("/warehouse/imports/:receiptId/revert", protect, authorize(4), revertImportReceipt);
 
 // Lấy lịch sử giao nhận đơn hàng & cập nhật trạng thái đơn hàng
 router.get("/warehouse/delivery-history/:orderID", protect, authorize(4), getDeliveryHistory);

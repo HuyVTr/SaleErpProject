@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { z } from "zod";
 import {
   getCustomers,
   getCustomer,
@@ -19,9 +20,10 @@ router.get("/:id", protect, authorize(1, 2, 3, 5), getCustomer);
 router.get("/:id/history", protect, authorize(1, 2, 3, 5), getCustomerHistory);
 router.get("/:id/activities", protect, authorize(1, 2, 3, 5), getCustomerHistory);
 
-// Chỉ Sales (2) mới được thêm mới, cập nhật hoặc xóa khách hàng
+// Chỉ Sales (2) mới được thêm mới hoặc xóa khách hàng
 router.post("/", protect, authorize(2), validate(customerSchema), createCustomer);
-router.put("/:id", protect, authorize(2), validate(customerSchema), updateCustomer);
+// Cập nhật khách hàng: cho phép cả Sales (2) và Admin (3, 5) để Admin gán bảng giá
+router.put("/:id", protect, authorize(2, 3, 5), validate(customerSchema.partial().extend({ priceListId: z.number().int().optional().nullable() })), updateCustomer);
 router.delete("/:id", protect, authorize(2), deleteCustomer);
 
 export default router;

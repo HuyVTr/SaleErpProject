@@ -260,6 +260,35 @@ async function main() {
     });
   }
 
+  // Đồng bộ lại tất cả sequence của các bảng để tránh lỗi 409 Conflict khi tạo mới
+  console.log("🔄 Đồng bộ sequence ID cho các bảng...");
+  const sequences = [
+    { table: 'Customer', id: 'customerID' },
+    { table: 'Product', id: 'productID' },
+    { table: 'Order', id: 'orderID' },
+    { table: 'Quotation', id: 'quotationID' },
+    { table: 'Invoice', id: 'invoiceID' },
+    { table: 'Payment', id: 'paymentID' },
+    { table: 'PriceList', id: 'priceListID' },
+    { table: 'PriceListItem', id: 'priceListItemID' },
+    { table: 'QuarterlyReport', id: 'reportID' },
+    { table: 'Notification', id: 'id' },
+    { table: 'Categories', id: 'categoryID' },
+    { table: 'Role', id: 'roleID' },
+    { table: 'User', id: 'userID' }
+  ];
+
+  for (const seq of sequences) {
+    try {
+      await prisma.$executeRawUnsafe(
+        `SELECT setval(pg_get_serial_sequence('"${seq.table}"', '${seq.id}'), coalesce(max("${seq.id}"), 1)) FROM "${seq.table}";`
+      );
+    } catch (err) {
+      // Bỏ qua lỗi nếu bảng hoặc sequence đó không tồn tại/không dùng serial tự tăng
+    }
+  }
+  console.log("✅ Đồng bộ sequence hoàn tất!");
+
   console.log("✅ Nạp dữ liệu hoàn tất! Mật khẩu mọi tài khoản: 123456");
 }
 

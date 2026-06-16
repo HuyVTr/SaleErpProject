@@ -78,3 +78,23 @@ export const createInvoice = asyncHandler(async (req, res) => {
   res.status(201).json({ success: true, data: invoice });
 });
 
+// PUT /api/invoices/:id/status
+export const updateInvoiceStatus = asyncHandler(async (req, res) => {
+  const { status } = req.body;
+  const invoice = await prisma.invoice.update({
+    where: { invoiceID: Number(req.params.id) },
+    data: { status }
+  });
+  res.json({ success: true, data: invoice });
+});
+
+// PUT /api/invoices/:id/costs
+export const updateInvoiceCosts = asyncHandler(async (req, res) => {
+  const { totalAmount } = req.body;
+  const invoice = await prisma.invoice.update({
+    where: { invoiceID: Number(req.params.id) },
+    data: { totalAmount: Number(totalAmount) }
+  });
+  res.json({ success: true, data: invoice });
+});
+

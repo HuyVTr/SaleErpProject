@@ -34,7 +34,7 @@ export const getDebtReport = asyncHandler(async (req, res) => {
   // Lấy các hóa đơn chưa thanh toán hoặc thanh toán một phần
   const invoices = await prisma.invoice.findMany({
     where: {
-      status: { in: ["PENDING", "PARTIAL", "OVERDUE"] }
+      status: { in: ["PENDING", "PARTIAL"] }
     },
     include: {
       order: {
@@ -43,9 +43,11 @@ export const getDebtReport = asyncHandler(async (req, res) => {
     }
   });
 
+  const today = new Date();
   const debtList = invoices.map(inv => {
     const total = Number(inv.totalAmount || 0);
     const paid = Number(inv.paidAmount || 0);
+    const isOverdue = inv.dueDate && new Date(inv.dueDate) < today && paid < total;
     return {
       invoiceID: inv.invoiceID,
       customerName: `${inv.order.customer.lastName} ${inv.order.customer.firstName}`,
@@ -54,7 +56,10 @@ export const getDebtReport = asyncHandler(async (req, res) => {
       paidAmount: paid,
       debtAmount: total - paid,
       dueDate: inv.dueDate,
-      status: inv.status,
+      status: isOverdue ? "OVERDUE" : inv.status,
+      lastReminderDate: inv.lastReminderDate 
+        ? new Date(inv.lastReminderDate).toLocaleDateString('vi-VN') 
+        : null,
     };
   });
 
@@ -255,7 +260,7 @@ export const getDashboardStats = asyncHandler(async (req, res) => {
 export const getSalesPerformanceReport = asyncHandler(async (req, res) => {
   const { timeframe = 'monthly', filterYear, filterDate, selectedDay, filterWeek, filterYearsCount } = req.query;
 
-  // 1. Lấy tất cả nhân viên bán hàng (roleID: 2)
+  // 1. Lấy tất cả nhân viên bán hàng (roleID: 2) để hiển thị đầy đủ
   const salesUsers = await prisma.user.findMany({
     where: { roleID: 2 }
   });

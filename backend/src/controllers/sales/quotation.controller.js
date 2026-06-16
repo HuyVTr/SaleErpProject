@@ -95,6 +95,16 @@ export const convertQuotationToOrder = asyncHandler(async (req, res) => {
 
   // Tạo Đơn hàng từ Báo giá
   const order = await prisma.$transaction(async (tx) => {
+    // 1. Kiểm tra tồn kho từng sản phẩm
+    for (const item of quotation.items) {
+      const product = await tx.product.findUnique({ where: { productID: item.productID } });
+      if (!product) throw new ApiError(404, `Sản phẩm #${item.productID} không tồn tại`);
+      if (product.stockQuantity < item.quantity) {
+        throw new ApiError(400, `Sản phẩm '${product.productName}' không đủ tồn kho (còn ${product.stockQuantity})`);
+      }
+    }
+
+    // 2. Tạo đơn hàng
     const newOrder = await tx.order.create({
       data: {
         customerID: quotation.customerID,
@@ -111,6 +121,14 @@ export const convertQuotationToOrder = asyncHandler(async (req, res) => {
         }
       }
     });
+
+    // 3. Trừ tồn kho
+    for (const item of quotation.items) {
+      await tx.product.update({
+        where: { productID: item.productID },
+        data: { stockQuantity: { decrement: item.quantity } }
+      });
+    }
 
     // Cập nhật link báo giá trỏ tới đơn hàng vừa tạo
     await tx.quotation.update({
