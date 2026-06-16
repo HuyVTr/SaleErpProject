@@ -18,46 +18,18 @@ import {
 import salesService from '../../services/salesService';
 import dbData from '../../../../../db.json';
 import { useSwipeToClose } from './useSwipeToClose';
+import { formatVND, VNDDisplay } from '../../../../utils/formatVND';
 
 // --- HÀM ĐỊNH DẠNG NGÀY HOẠT ĐỘNG (chỉ hiển thị ngày, DB dùng kiểu DATE) ---
-const formatDate = (dateStr) => {
-  if (!dateStr) return "N/A";
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return "N/A";
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-  return `${day}/${month}/${year}`;
-};
 
-const ProductDetailDrawer = ({ open, onClose, product, basePath, navigate, onRefresh, onEdit, onDelete }) => {
+// Module Sales chỉ XEM chi tiết sản phẩm — không có thao tác sửa/xóa.
+const ProductDetailDrawer = ({ open, onClose, product }) => {
   const swipeHandlers = useSwipeToClose(onClose);
   const [tabValue, setTabValue] = useState(0);
   const [history, setHistory] = useState({ orders: [], invoices: [], orderItems: [] });
   const [activities, setActivities] = useState([]);
-  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
-
-  const showToastMsg = (message, type = 'success') => {
-    setToast({ show: true, message, type });
-    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
-  };
-
-  const handleDeleteProduct = async () => {
-    try {
-      await salesService.deleteProduct(product.productID);
-      showToastMsg("Đã xóa sản phẩm thành công!");
-      if (onRefresh) onRefresh();
-      setTimeout(() => {
-        onClose();
-      }, 1000);
-    } catch (e) {
-      console.error("Lỗi khi xóa sản phẩm:", e);
-      showToastMsg("Có lỗi xảy ra!", "error");
-    }
-  };
   const [loading, setLoading] = useState(false);
-  const [now, setNow] = useState(Date.now());
-  const [drawerOpenTime, setDrawerOpenTime] = useState(Date.now());
+  const [, setDrawerOpenTime] = useState(Date.now());
 
   // States cho tính năng tìm kiếm và lọc thời gian
   const [searchQuery, setSearchQuery] = useState('');
@@ -102,14 +74,13 @@ const ProductDetailDrawer = ({ open, onClose, product, basePath, navigate, onRef
     try {
       // 1. Lấy tất cả orders, invoices
       const allOrders = await salesService.getOrders(null, 'all', { ignoreUserFilter: true });
-      const allInvoices = await salesService.getInvoices();
       
       // 2. Lấy tất cả order items từ local storage và mock db
       const localOrderItems = (() => {
         try {
           const raw = localStorage.getItem('added_order_items');
           return raw ? JSON.parse(raw) : [];
-        } catch (e) { return []; }
+        } catch { return []; }
       })();
       const apiOrderItems = dbData.orderItems || [];
       const allOrderItems = [...localOrderItems, ...apiOrderItems];
@@ -119,7 +90,7 @@ const ProductDetailDrawer = ({ open, onClose, product, basePath, navigate, onRef
       
       // 4. Lọc ra các orders và invoices liên quan
       const productOrders = allOrders.filter(o => productOrderItems.some(oi => Number(oi.orderID) === Number(o.orderID)));
-      const productInvoices = allInvoices.filter(inv => productOrders.some(o => Number(o.orderID) === Number(inv.orderID)));
+      const productInvoices = [];
 
       setHistory({
         orders: productOrders,
@@ -195,7 +166,7 @@ const ProductDetailDrawer = ({ open, onClose, product, basePath, navigate, onRef
 
   const formatCurrency = (val, customColorClass = 'text-[#00288E]') => {
     if (val === undefined || val === null) return "0 VND";
-    const formatted = new Intl.NumberFormat('vi-VN').format(val);
+    const formatted = formatVND(val, false);
     return (
       <span className="inline-flex items-baseline gap-0.5 font-inter">
         <span className={`font-black ${customColorClass}`}>{formatted}</span>
@@ -276,7 +247,7 @@ const ProductDetailDrawer = ({ open, onClose, product, basePath, navigate, onRef
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 font-inter bg-slate-50 border-slate-200 text-slate-600">
                   <span className="material-symbols-outlined text-[14px]">category</span>
                   <span className="text-[9px] font-black uppercase tracking-wider">
-                    {product.category}
+                    {typeof product.category === 'object' ? (product.category.categoryName || product.category.name || 'Khác') : (product.category || 'Khác')}
                   </span>
                 </div>
               </Box>
@@ -358,7 +329,9 @@ const ProductDetailDrawer = ({ open, onClose, product, basePath, navigate, onRef
                   </div>
                   <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                     <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-inter">Phân loại</span>
-                    <span className="text-xs font-black text-slate-800 font-inter">{product.category}</span>
+                    <span className="text-xs font-black text-slate-800 font-inter">
+                      {typeof product.category === 'object' ? (product.category.categoryName || product.category.name || 'Khác') : (product.category || 'Khác')}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                     <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-inter">Đơn vị tính</span>
@@ -769,56 +742,16 @@ const ProductDetailDrawer = ({ open, onClose, product, basePath, navigate, onRef
         </Box>
       </Box>
 
-      {/* Footer Actions */}
+      {/* Footer Actions — chỉ có nút Đóng (Sales chỉ xem) */}
       <div className="p-6 bg-white border-t border-slate-200 flex gap-4 shrink-0 font-inter">
-        {(onEdit || onDelete) ? (
-          <>
-            {onEdit && (
-              <button
-                onClick={() => onEdit(product)}
-                className="flex-1 flex items-center justify-center gap-2 bg-[#00288E] border-2 border-[#00288E] hover:bg-[#001D6E] hover:border-[#001D6E] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 active:scale-95 cursor-pointer shadow-md shadow-blue-900/10"
-              >
-                <span className="material-symbols-outlined text-sm">edit</span>
-                Sửa
-              </button>
-            )}
-            {onDelete && (
-              <button
-                onClick={() => onDelete(product)}
-                className="flex-1 flex items-center justify-center gap-2 bg-white border-2 border-rose-300 hover:bg-rose-50/50 text-rose-600 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 active:scale-95 cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-sm">delete</span>
-                Xóa
-              </button>
-            )}
-            <button
-              onClick={onClose}
-              className="flex-1 flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 border-2 border-slate-300 active:scale-95 cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-sm">close</span>
-              Đóng
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={onClose}
-            className="w-full flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 border-2 border-slate-300 active:scale-95 cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-sm">close</span>
-            Đóng
-          </button>
-        )}
+        <button
+          onClick={onClose}
+          className="w-full flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 border-2 border-slate-300 active:scale-95 cursor-pointer"
+        >
+          <span className="material-symbols-outlined text-sm">close</span>
+          Đóng
+        </button>
       </div>
-
-      {/* Toast Alert */}
-      {toast.show && (
-        <div className="fixed top-6 right-6 z-[9999] flex items-center gap-3 bg-slate-900 text-white px-5 py-4 rounded-xl shadow-2xl animate-in slide-in-from-top-4 duration-300 font-inter">
-          <span className={`material-symbols-outlined ${toast.type === 'error' ? 'text-rose-500' : 'text-emerald-500'}`}>
-            {toast.type === 'error' ? 'error' : 'check_circle'}
-          </span>
-          <p className="text-xs font-black uppercase tracking-wider">{toast.message}</p>
-        </div>
-      )}
       </div>
     </Drawer>
   );

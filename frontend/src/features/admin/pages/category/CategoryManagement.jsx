@@ -107,7 +107,6 @@ const CategoryManagement = () => {
 
   const getTimeframeText = () => {
     if (timeframe === 'daily') {
-      const [y, m] = filterDate.split('-').map(Number);
       return `ngày {selectedDay}/{m}/{y}`;
     }
     if (timeframe === 'weekly') {

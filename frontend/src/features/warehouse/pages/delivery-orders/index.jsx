@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import warehouseService, { formatCurrency, formatDate, STATUS_LABELS } from '../../services/warehouseService';
+import warehouseService, { formatDate, STATUS_LABELS } from '../../services/warehouseService';
+import { VNDDisplay } from '../../../../utils/formatVND';
 
 const getDaysInMonth = (year, month) => new Date(year, month, 0).getDate();
 const getFirstDayOfMonth = (year, month) => {
@@ -694,7 +695,7 @@ const DeliveryOrders = () => {
                       </td>
                       <td className="p-4 sm:p-6" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
                         <span className="font-bold text-slate-900 tabular-nums whitespace-nowrap" style={{ fontSize: 'clamp(10px, 0.9vw, 13px)' }}>
-                          {formatCurrency(order.totalAmount)}
+                          <VNDDisplay value={order.totalAmount} />
                         </span>
                       </td>
                       <td className="p-4 sm:p-6 text-center" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
@@ -786,9 +787,9 @@ const DeliveryOrders = () => {
                       </div>
                       <div className="text-right bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100/50">
                         <p className="text-[8px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Tổng tiền</p>
-                        <p className="text-xs font-black text-slate-900 tabular-nums">
-                          {formatCurrency(order.totalAmount)}
-                        </p>
+                        <div className="text-xs font-black text-slate-900 tabular-nums">
+                          <VNDDisplay value={order.totalAmount} />
+                        </div>
                       </div>
                     </div>
                   </Link>

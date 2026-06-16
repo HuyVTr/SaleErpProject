@@ -16,19 +16,14 @@
 
 import dbData from '../../../../db.json';
 
-const getCurrentUser = () => {
-  try {
-    const raw = localStorage.getItem('current_user') || localStorage.getItem('user');
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
-};
 
 // ============================================================
 // FORMAT HELPERS
 // ============================================================
 export const formatCurrency = (value) => {
-  if (value === undefined || value === null) return '0 ₫';
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+  if (value === undefined || value === null) return '0 VND';
+  const formatted = new Intl.NumberFormat('vi-VN').format(value);
+  return `${formatted} VND`;
 };
 
 export const formatDate = (dateStr) => {
@@ -48,9 +43,6 @@ const getLocalOrders = () => {
   } catch { return []; }
 };
 
-const saveLocalOrders = (orders) => {
-  localStorage.setItem('added_orders', JSON.stringify(orders));
-};
 
 const getLocalProducts = () => {
   try {
@@ -59,16 +51,7 @@ const getLocalProducts = () => {
   } catch { return []; }
 };
 
-const saveLocalProducts = (products) => {
-  localStorage.setItem('added_products', JSON.stringify(products));
-};
 
-const getLocalCustomers = () => {
-  try {
-    const raw = localStorage.getItem('added_customers');
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
-};
 
 const getLocalImportHistory = () => {
   try {
@@ -77,38 +60,13 @@ const getLocalImportHistory = () => {
   } catch { return []; }
 };
 
-const saveLocalImportHistory = (history) => {
-  localStorage.setItem('wh_import_history', JSON.stringify(history));
-};
 
 // ============================================================
 // DELIVERY NOTE HELPERS (lưu ghi chú giao hàng riêng)
 // ============================================================
-const getDeliveryNotes = () => {
-  try {
-    const raw = localStorage.getItem('wh_delivery_notes');
-    return raw ? JSON.parse(raw) : {};
-  } catch { return {}; }
-};
 
-const saveDeliveryNote = (orderID, note) => {
-  const notes = getDeliveryNotes();
-  notes[String(orderID)] = note;
-  localStorage.setItem('wh_delivery_notes', JSON.stringify(notes));
-};
 
-const getDeliveryStatusHistory = () => {
-  try {
-    const raw = localStorage.getItem('wh_delivery_status_history');
-    return raw ? JSON.parse(raw) : {};
-  } catch { return {}; }
-};
 
-const saveDeliveryStatusHistory = (orderID, history) => {
-  const all = getDeliveryStatusHistory();
-  all[String(orderID)] = history;
-  localStorage.setItem('wh_delivery_status_history', JSON.stringify(all));
-};
 
 // Sinh số giả ngẫu nhiên CỐ ĐỊNH theo seed (cùng orderID luôn ra cùng kết quả) → mốc
 // thời gian không nhảy mỗi lần render, nhưng mỗi đơn lại có giờ-phút riêng (không trùng nhau).
@@ -207,26 +165,6 @@ const getAllProducts = () => {
   return Array.from(productMap.values());
 };
 
-const getAllCustomers = () => {
-  const local = getLocalCustomers();
-  const apiData = dbData.customers || [];
-  const deletedIds = new Set(
-    JSON.parse(localStorage.getItem('deleted_customer_ids') || '[]').map(Number)
-  );
-  const map = new Map();
-  apiData.forEach(c => {
-    if (!deletedIds.has(Number(c.customerID))) map.set(Number(c.customerID), c);
-  });
-  local.forEach(c => map.set(Number(c.customerID), c));
-  return Array.from(map.values());
-};
-
-const getCustomerName = (customerID) => {
-  const customers = getAllCustomers();
-  const c = customers.find(c => Number(c.customerID) === Number(customerID));
-  if (!c) return 'Khách hàng';
-  return c.companyName || `${c.lastName || ''} ${c.firstName || ''}`.trim() || 'Khách hàng';
-};
 
 const formatOrderID = (id) => {
   if (!id) return 'N/A';
@@ -343,7 +281,7 @@ const warehouseService = {
         : 'Khách hàng',
       totalAmount: Number(order.totalAmount) * 1.1,
       deliveryNote: order.deliveryNote || '',
-      statusHistory: statusHistory.length > 0 ? statusHistory.map((h, idx) => ({
+      statusHistory: statusHistory.length > 0 ? statusHistory.map((h) => ({
         historyID: h.historyID,
         orderID: h.orderID,
         status: h.status,
@@ -424,12 +362,29 @@ const warehouseService = {
   // ─── IMPORT HISTORY (3.3) ───────────────────────────────────
   getImportHistory: async () => {
     const response = await api.get('/warehouse/imports');
-    return response.data || [];
+    const list = response.data || [];
+    return list.map(r => ({
+      ...r,
+      id: r.id ?? r.receiptId,
+      totalValue: Number(r.totalValue) || 0,
+      createdBy: r.createdBy || 'Hệ thống',
+      status: (r.status || '').toUpperCase() === 'REVERTED' ? 'cancelled' : 'completed',
+    }));
   },
 
   createImportReceipt: async (receipt) => {
     const response = await api.post('/warehouse/imports', receipt);
-    return response.data?.data || response.data;
+    const r = response.data?.data || response.data;
+    if (r) {
+      return {
+        ...r,
+        id: r.id ?? r.receiptId,
+        totalValue: Number(r.totalValue) || 0,
+        createdBy: r.createdBy || 'Hệ thống',
+        status: (r.status || '').toUpperCase() === 'REVERTED' ? 'cancelled' : 'completed',
+      };
+    }
+    return r;
   },
 
   revertImportReceipt: async (receiptId) => {

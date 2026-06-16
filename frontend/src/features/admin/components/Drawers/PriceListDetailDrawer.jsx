@@ -11,6 +11,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import adminService from '../../services/adminService';
 import { useSwipeToClose } from '../../../sales/components/Drawers/useSwipeToClose';
+import { formatVND, VNDDisplay, CURRENCY_CLASS_SECONDARY } from '../../../../utils/formatVND';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '---';
@@ -22,16 +23,6 @@ const formatDate = (dateStr) => {
   return `${day}/${month}/${year}`;
 };
 
-const formatCurrency = (val, customColorClass = 'text-[#00288E]') => {
-  if (val === undefined || val === null) return '0 VND';
-  const formatted = new Intl.NumberFormat('vi-VN').format(val);
-  return (
-    <span className="inline-flex items-baseline gap-0.5 font-inter">
-      <span className={`font-black ${customColorClass}`}>{formatted}</span>
-      <span className="text-[10px] font-black uppercase tracking-tighter text-slate-400 ml-0.5">VND</span>
-    </span>
-  );
-};
 
 const getStatusStyle = (status) => {
   switch (status) {
@@ -132,7 +123,7 @@ const PriceListDetailDrawer = ({ open, onClose, priceList, onDeactivate, onReact
         const prodName = prod ? (prod.productName || prod.name) : `Sản phẩm #${item.productID}`;
         return {
           title: `Thiết lập giá sản phẩm`,
-          desc: `Cập nhật giá bán thành ${item.price.toLocaleString('vi-VN')} VND cho sản phẩm: ${prodName}`,
+          desc: `Cập nhật giá bán thành ${formatVND(item.price || 0)} cho sản phẩm: ${prodName}`,
           time: formatDate(priceList.effectiveDate),
           user: 'Quản trị viên',
           color: 'bg-blue-500',
@@ -406,14 +397,14 @@ const PriceListDetailDrawer = ({ open, onClose, priceList, onDeactivate, onReact
                             <div className="min-w-0 flex-1">
                               <p className="text-xs font-black text-slate-800 truncate font-inter" title={p.name}>{p.name}</p>
                               <div className="flex items-center gap-2 mt-0.5">
-                                <span className="text-[9px] font-bold text-slate-400 uppercase font-inter">Chuẩn: {formatCurrency(p.standardPrice, 'text-slate-400 text-[10px]')}</span>
+                                <span className="text-[9px] font-bold text-slate-400 uppercase font-inter">Chuẩn: <VNDDisplay value={p.standardPrice} className={CURRENCY_CLASS_SECONDARY} /></span>
                                 <div className="w-1 h-1 rounded-full bg-slate-300"></div>
                                 <span className="text-[9px] font-bold text-slate-400 font-inter">Tồn: {p.stock} {p.unit}</span>
                               </div>
                             </div>
                             <div className="shrink-0 text-right">
                               <p className="text-xs font-black text-[#00288E] font-inter">
-                                {formatCurrency(p.customPrice, 'text-xs text-[#00288E]')}
+                                <VNDDisplay value={p.customPrice} className={CURRENCY_CLASS_SECONDARY} />
                               </p>
                               <span className={`inline-block px-1.5 py-0.5 rounded-md border text-[8px] font-black uppercase tracking-wider mt-1 ${getStatusStyle(p.status)}`}>
                                 {p.status}

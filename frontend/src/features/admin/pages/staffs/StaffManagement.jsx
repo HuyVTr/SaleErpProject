@@ -12,39 +12,6 @@ const getResponsiveValueStyle = (val) => {
   return { fontSize: 'clamp(11px, 0.95vw, 14px)' };
 };
 
-const getISOWeekString = (date) => {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-  return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
-};
-
-const getISOWeek = (date) => {
-  const d = new Date(date);
-  if (isNaN(d.getTime())) return 0;
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() + 4 - (d.getDay() || 7));
-  const yearStart = new Date(d.getFullYear(), 0, 1);
-  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-};
-
-const monthNames = [
-  "Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6",
-  "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
-];
-
-const getWeekRange = (year, week) => {
-  const d = new Date(year, 0, 1);
-  const dayNum = d.getDay();
-  const diff = d.getDate() - dayNum + (dayNum === 0 ? -6 : 1);
-  const firstMonday = new Date(d.setDate(diff));
-  const start = new Date(firstMonday.getTime() + (week - 1) * 7 * 24 * 60 * 60 * 1000);
-  const end = new Date(start.getTime() + 6 * 24 * 60 * 60 * 1000);
-  return `${start.getDate()}/${start.getMonth() + 1} - ${end.getDate()}/${end.getMonth() + 1}`;
-};
-
 const getTooltipClasses = (idx) => {
   const leftAlign = "left-full top-0 ml-2.5 origin-top-left";
   const rightAlign = "right-full top-0 mr-2.5 origin-top-right";
@@ -65,7 +32,7 @@ const getArrowClasses = (idx) => {
   return leftArrow;
 };
 
-const GrowthBadge = ({ growth, type = 'number', currentValue, idx, activeTooltipIdx, setActiveTooltipIdx }) => {
+const GrowthBadge = ({ growth, currentValue, idx, activeTooltipIdx, setActiveTooltipIdx }) => {
   if (!growth) return null;
   const { percent, isUp, prevValue, label } = growth;
 
@@ -194,50 +161,26 @@ const StaffManagement = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
-  const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'desc' });
+  const [sortConfig] = useState({ key: 'id', direction: 'desc' });
   const [activeTooltipIdx, setActiveTooltipIdx] = useState(null);
   
   // Trạng thái dropdown bộ lọc
   const [isOpenFilterDropdown, setIsOpenFilterDropdown] = useState(false);
   const filterDropdownRef = React.useRef(null);
 
-  // Trạng thái dropdown thời gian giống hệt Admin Dashboard
-  const now = new Date();
-  const [timeframe, setTimeframe] = useState('monthly');
-  const [filterWeek, setFilterWeek] = useState(getISOWeekString(now));
-  const [filterYear, setFilterYear] = useState(now.getFullYear());
-  const [filterDate, setFilterDate] = useState(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
-  const [filterYearsCount, setFilterYearsCount] = useState(5);
-
-  const [isOpenTimeDropdown, setIsOpenTimeDropdown] = useState(false);
-  const [showYearPicker, setShowYearPicker] = useState(false);
-  const [showWeekPicker, setShowWeekPicker] = useState(false);
-  const [showYearsCountPicker, setShowYearsCountPicker] = useState(false);
-  const [yearRangeStart, setYearRangeStart] = useState(Math.floor(now.getFullYear() / 10) * 10 - 4);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [datePickerView, setDatePickerView] = useState('months');
-  const [dateTempYear, setDateTempYear] = useState(now.getFullYear());
-  const [dateYearRangeStart, setDateYearRangeStart] = useState(Math.floor(now.getFullYear() / 12) * 12);
+  // Trạng thái dropdown thời gian (chỉ còn các setter được dùng trong JSX)
+  const [, setIsOpenTimeDropdown] = useState(false);
+  const [, setShowYearPicker] = useState(false);
+  const [, setShowWeekPicker] = useState(false);
+  const [, setShowYearsCountPicker] = useState(false);
+  const [, setShowDatePicker] = useState(false);
+  const [, setDatePickerView] = useState('months');
 
   const timeDropdownRef = React.useRef(null);
   const yearPickerRef = React.useRef(null);
   const weekPickerRef = React.useRef(null);
   const yearsCountPickerRef = React.useRef(null);
   const datePickerRef = React.useRef(null);
-
-  const getTimeframeText = () => {
-    if (timeframe === 'daily') {
-      const [y, m] = filterDate.split('-').map(Number);
-      return `tháng ${m}/${y}`;
-    }
-    if (timeframe === 'weekly') {
-      const [y, w] = filterWeek.split('-W').map(Number);
-      return `tuần ${w}, ${y}`;
-    }
-    if (timeframe === 'monthly') return `12 tháng năm ${filterYear}`;
-    if (timeframe === 'yearly') return `${filterYearsCount} năm qua`;
-    return 'Toàn thời gian';
-  };
 
   // Phân trang
   const [currentPage, setCurrentPage] = useState(1);
@@ -251,14 +194,6 @@ const StaffManagement = () => {
   const ITEMS_PER_PAGE = 8;
 
   const roles = ['Admin', 'Sales', 'Warehouse', 'Accounting'];
-
-  const handleRoleChange = (id, newRole) => {
-    adminService.updateStaff(id, { role: newRole }).then(() => {
-      setStaffList(prev => prev.map(staff => String(staff.id) === String(id) ? { ...staff, role: newRole } : staff));
-    }).catch(err => {
-      console.error('Update staff role failed', err);
-    });
-  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -360,13 +295,6 @@ const StaffManagement = () => {
     return raw ? JSON.parse(raw) : null;
   }, []);
 
-  const isSuperAdmin = useMemo(() => {
-    if (!currentUser) return false;
-    const roleId = Number(currentUser.roleID);
-    const roleName = String(currentUser.role || currentUser.roleName || '').toLowerCase();
-    return roleId === 5 || roleName === 'super admin';
-  }, [currentUser]);
-
   const canEdit = (staff) => {
     if (!currentUser) return false;
     // Không tự thao tác với bản thân trong danh sách quản lý
@@ -446,19 +374,7 @@ const StaffManagement = () => {
     };
   }, [staffList]);
 
-  // Trạng thái xóa nhân viên
-  const handleDeleteStaff = async (staff) => {
-    if (window.confirm(`Bạn có chắc chắn muốn xóa nhân viên "${staff.name}" không?`)) {
-      try {
-        await adminService.deleteStaff(staff.id);
-        setStaffList(prev => prev.filter(s => s.id !== staff.id));
-        alert('Xóa nhân viên thành công!');
-      } catch (err) {
-        console.error('Delete staff failed', err);
-        alert('Xóa nhân viên thất bại. Vui lòng thử lại.');
-      }
-    }
-  };
+  // Lưu ý: KHÔNG có chức năng xóa nhân viên. Dùng khóa/mở khóa tài khoản để vô hiệu hóa nhân sự.
 
   return (
     <div className="font-inter flex flex-col w-full h-full bg-slate-50 animate-fade-in gap-4 md:gap-6 pb-6">
@@ -793,11 +709,14 @@ const StaffManagement = () => {
           )}
         </div>
 
-        {/* Phân trang thực tế */}
+        {/* Phân trang */}
         {totalPages > 1 && (
-          <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-500 bg-white shrink-0">
-            <span>Hiển thị {Math.min(filteredStaffs.length, (currentPage - 1) * ITEMS_PER_PAGE + 1)} - {Math.min(filteredStaffs.length, currentPage * ITEMS_PER_PAGE)} trên {filteredStaffs.length} nhân viên</span>
-            <div className="flex gap-1">
+          <div className="flex items-center justify-between border-t border-slate-100 pt-4 mt-4 shrink-0">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              Hiển thị {((currentPage - 1) * ITEMS_PER_PAGE) + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredStaffs.length)} trong tổng số {filteredStaffs.length} nhân sự
+            </span>
+            
+            <div className="flex items-center gap-1">
               <button 
                 type="button"
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
@@ -807,17 +726,16 @@ const StaffManagement = () => {
               >
                 <span className="material-symbols-outlined text-[16px]" aria-hidden="true">chevron_left</span>
               </button>
-              {[...Array(totalPages)].map((_, i) => (
-                <button 
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <button
                   key={i}
                   type="button"
                   onClick={() => setCurrentPage(i + 1)}
-                  className={`w-8 h-8 flex justify-center items-center rounded-lg border text-xs font-black focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:outline-none ${
-                    currentPage === i + 1 
-                      ? 'bg-[#00288E] text-white border-[#00288E]' 
-                      : 'border-slate-200 hover:bg-slate-50 text-slate-600'
-                  }`}
-                  aria-label={`Trang ${i + 1}`}
+                  className={`w-8 h-8 rounded-lg text-xs font-black transition-all ${
+                    currentPage === i + 1
+                      ? 'bg-[#00288E] text-white shadow-md shadow-blue-500/20'
+                      : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
+                  } focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:outline-none`}
                 >
                   {i + 1}
                 </button>
@@ -842,10 +760,6 @@ const StaffManagement = () => {
         onEdit={selectedStaff && canEdit(selectedStaff) ? (s) => {
           setDrawerOpen(false);
           navigate(`/admin/staffs/edit/${s.id}`);
-        } : undefined}
-        onDelete={selectedStaff && isSuperAdmin && String(currentUser?.userID) !== String(selectedStaff.id) ? (s) => {
-          setDrawerOpen(false);
-          handleDeleteStaff(s);
         } : undefined}
       />
     </div>

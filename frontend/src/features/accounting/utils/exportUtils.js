@@ -6,9 +6,8 @@ import * as XLSX from 'xlsx';
  * Xuất báo cáo PDF chuyên nghiệp (Không phải screenshot toàn màn hình)
  */
 export const exportToPDF = async (options) => {
-  const { 
-    elementId, 
-    filename = 'report.pdf', 
+  const {
+    filename = 'report.pdf',
     title = 'BÁO CÁO TÀI CHÍNH', 
     subtitle = '',
     charts = [] // Array of {id, label}

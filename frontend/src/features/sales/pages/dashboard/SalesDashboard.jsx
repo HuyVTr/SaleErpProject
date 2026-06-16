@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import salesService from '../../services/salesService';
 import RevenueChart from '../../components/Charts/RevenueChart';
 import DailyActivityGrid from '../../components/Charts/DailyActivityGrid';
 import OrderDetailDrawer from '../../components/Drawers/OrderDetailDrawer';
 import QuotationDetailDrawer from '../../components/Drawers/QuotationDetailDrawer';
+import { formatVND, VNDDisplay } from '../../../../utils/formatVND';
 
 const getResponsiveValueClass = (val, rawVal) => {
   let str = '';
@@ -28,6 +30,7 @@ const getResponsiveValueClass = (val, rawVal) => {
 };
 
 const SalesDashboard = () => {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [quotations, setQuotations] = useState([]);
   const [stats, setStats] = useState({
@@ -160,7 +163,7 @@ const SalesDashboard = () => {
       ]);
       setStats(statsRes);
       setOrders(ordersRes);
-      setQuotations(quotesRes.slice(0, 5));
+      setQuotations(quotesRes);
     } catch (error) {
       console.error("Lỗi khi tải dữ liệu dashboard:", error);
     } finally {
@@ -188,20 +191,8 @@ const SalesDashboard = () => {
 
   const formatCurrency = (val, isSmall = false, isStat = false, customColorClass = "", textSizeClass = "") => {
     if (val === undefined || val === null) return "0 VND";
-    
-    let cleanVal = val;
-    const isMobileOrIpad = typeof window !== 'undefined' && window.innerWidth < 1024;
-    if (isMobileOrIpad && (typeof val === 'number' || typeof val === 'string')) {
-      const rawDigits = String(val).replace(/[^0-9]/g, '');
-      if (rawDigits.length > 15) {
-        const truncated = rawDigits.slice(0, 15);
-        const isNegative = String(val).startsWith('-');
-        cleanVal = Number(truncated) * (isNegative ? -1 : 1);
-      }
-    }
+    const formatted = formatVND(val, false);
 
-    const formatted = typeof cleanVal === 'number' ? cleanVal.toLocaleString('vi-VN') : cleanVal.toString().replace(/[đ₫\sVND]/g, '').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
-    
     if (isStat) {
       return (
         <span className={`flex items-baseline gap-1.5 whitespace-nowrap ${customColorClass}`}>
@@ -728,7 +719,7 @@ const SalesDashboard = () => {
             <div className="xl:col-span-2 bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-300 flex flex-col hover:border-blue-500 hover:shadow-xl transition-[border-color,box-shadow] duration-300">
               <div className="p-3 sm:p-4 border-b border-slate-100 flex justify-between items-center shrink-0">
                 <h2 className="text-sm sm:text-base font-black text-slate-900 uppercase tracking-tight">Đơn hàng gần đây</h2>
-                <button className="text-[10px] sm:text-xs font-bold text-[#00288E] hover:underline uppercase tracking-wider" aria-label="Xem tất cả đơn hàng">Xem tất cả</button>
+                <button onClick={() => navigate('/sales/orders')} className="text-[10px] sm:text-xs font-bold text-[#00288E] hover:underline uppercase tracking-wider" aria-label="Xem tất cả đơn hàng">Xem tất cả</button>
               </div>
               <div className="overflow-x-auto overflow-y-auto max-h-[300px] sm:max-h-[350px] scrollbar-none">
                 {/* Desktop Table View */}
@@ -849,7 +840,7 @@ const SalesDashboard = () => {
             <div className="xl:col-span-1 bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-300 flex flex-col hover:border-blue-500 hover:shadow-xl transition-[border-color,box-shadow] duration-300">
               <div className="p-3 sm:p-4 border-b border-slate-100 flex justify-between items-center shrink-0">
                 <h2 className="text-sm sm:text-base font-black text-slate-900 uppercase tracking-tight">Báo giá mới</h2>
-                <button className="text-[10px] sm:text-xs font-bold text-[#00288E] hover:underline uppercase tracking-wider" aria-label="Xem tất cả báo giá">Tất cả</button>
+                <button onClick={() => navigate('/sales/quotations')} className="text-[10px] sm:text-xs font-bold text-[#00288E] hover:underline uppercase tracking-wider" aria-label="Xem tất cả báo giá">Tất cả</button>
               </div>
               <div className="overflow-y-auto max-h-[350px] scrollbar-none  ">
                 {/* Desktop Table View */}
@@ -878,9 +869,10 @@ const SalesDashboard = () => {
                             <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border uppercase tracking-tighter ${
                               quote.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
                               quote.status === 'SENT' ? 'bg-blue-50 text-blue-600 border-blue-100' : 
+                              (quote.status === 'REJECTED' || quote.status === 'CANCELLED') ? 'bg-red-50 text-red-600 border-red-100' :
                               'bg-orange-50 text-orange-600 border-orange-100'
                             }`}>
-                              {quote.status === 'APPROVED' ? 'Đã duyệt' : quote.status === 'SENT' ? 'Đã gửi' : 'Chờ duyệt'}
+                              {quote.status === 'APPROVED' ? 'Đã duyệt' : quote.status === 'SENT' ? 'Đã gửi' : (quote.status === 'REJECTED' || quote.status === 'CANCELLED') ? 'Từ chối' : 'Chờ duyệt'}
                             </span>
                           </div>
                           <div className="font-semibold text-slate-900 text-xs sm:text-sm whitespace-normal max-w-[40ch] lg:max-w-none break-words">{quote.customerName}</div>
@@ -896,7 +888,7 @@ const SalesDashboard = () => {
 
                 {/* Mobile Cards View - Limit to 5 */}
                 <div className="sm:hidden divide-y divide-slate-100">
-                  {quotations.slice(0, 5).map((quote) => (
+                  {quotations.map((quote) => (
                     <div 
                       key={quote.quotationID} 
                       onClick={() => handleViewQuotation(quote)} 
@@ -916,9 +908,10 @@ const SalesDashboard = () => {
                         <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border uppercase tracking-tighter ${
                           quote.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
                           quote.status === 'SENT' ? 'bg-blue-50 text-blue-600 border-blue-100' : 
+                          (quote.status === 'REJECTED' || quote.status === 'CANCELLED') ? 'bg-red-50 text-red-600 border-red-100' :
                           'bg-orange-50 text-orange-600 border-orange-100'
                         }`}>
-                          {quote.status === 'APPROVED' ? 'Đã duyệt' : quote.status === 'SENT' ? 'Đã gửi' : 'Chờ duyệt'}
+                          {quote.status === 'APPROVED' ? 'Đã duyệt' : quote.status === 'SENT' ? 'Đã gửi' : (quote.status === 'REJECTED' || quote.status === 'CANCELLED') ? 'Từ chối' : 'Chờ duyệt'}
                         </span>
                       </div>
                       <div>

@@ -1,49 +1,19 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import salesService from '../../services/salesService';
 import ProductDetailDrawer from '../../components/Drawers/ProductDetailDrawer';
+import { formatVND, VNDDisplay, CURRENCY_CLASS_PRIMARY } from '../../../../utils/formatVND';
 
 const formatCurrency = (val, isSmall = false, isStat = false) => {
   if (val === undefined || val === null) return "0 VND";
-  
-  let cleanVal = val;
-  const isMobileOrIpad = typeof window !== 'undefined' && window.innerWidth < 1024;
-  if (isMobileOrIpad && (typeof val === 'number' || typeof val === 'string')) {
-    const rawDigits = String(val).replace(/[^0-9]/g, '');
-    if (rawDigits.length > 15) {
-      const truncated = rawDigits.slice(0, 15);
-      const isNegative = String(val).startsWith('-');
-      cleanVal = Number(truncated) * (isNegative ? -1 : 1);
-    }
-  }
-
-  const formatted = typeof cleanVal === 'number' ? cleanVal.toLocaleString('vi-VN') : cleanVal.toString().replace(/[đ₫\sVND]/g, '').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
-  
-  if (isStat) {
-    return (
-      <span className="flex items-baseline gap-1.5 whitespace-nowrap">
-        <span className="font-black text-inherit">{formatted}</span>
-        <span className="font-black text-inherit uppercase tracking-tight">VND</span>
-      </span>
-    );
-  }
-
+  const formatted = formatVND(val, false);
+  const styleClass = isStat ? CURRENCY_CLASS_PRIMARY : (isSmall ? "font-bold text-slate-800" : "font-black text-slate-800");
   return (
-    <span className="flex items-baseline gap-1 whitespace-nowrap">
-      <span className={isSmall ? "font-bold text-slate-800" : "font-black text-slate-800"}>{formatted}</span>
-      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">VND</span>
+    <span className={`flex items-baseline gap-1 whitespace-nowrap ${isStat ? 'gap-1.5' : ''}`}>
+      <span className={styleClass}>{formatted}</span>
+      <span className={`text-[10px] font-bold uppercase tracking-tighter ${isStat ? 'text-inherit' : 'text-slate-400'}`}>VND</span>
     </span>
   );
-};
-
-const extractIdNumber = (idVal) => {
-  if (typeof idVal === 'number') return idVal;
-  if (!idVal) return 0;
-  const match = idVal.toString().match(/\d+/g);
-  if (match) {
-    return parseInt(match[match.length - 1], 10);
-  }
-  return 0;
 };
 
 const getResponsiveValueClass = (val, rawVal) => {
@@ -87,12 +57,26 @@ const ProductManagement = () => {
   const location = useLocation();
   const basePath = location.pathname.startsWith('/admin') ? '/admin' : '/sales';
   const [loading, setLoading] = useState(true);
-  const [products, setProducts] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Tất cả');
   const [categorySearchQuery, setCategorySearchQuery] = useState('');
   const [isOpenCategoryDropdown, setIsOpenCategoryDropdown] = useState(false);
+
+
+  // Load categories and all products on mount
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const categoriesData = await salesService.getCategories();
+        setCategories(categoriesData);
+      } catch (err) {
+        console.error("Lỗi khi tải danh mục:", err);
+      }
+    };
+    loadCategories();
+  }, []);
 
   const filteredCategoryOptions = useMemo(() => {
     const allOptions = ['Tất cả', ...categories.map(c => c.categoryName)];
@@ -129,58 +113,54 @@ const ProductManagement = () => {
     setSortConfig({ key, direction });
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [productsData, categoriesData] = await Promise.all([
-          salesService.getProducts(),
-          salesService.getCategories()
-        ]);
-        
-        setCategories(categoriesData);
+  const fetchAllData = useCallback(async (silent = false) => {
+    try {
+      if (!silent) setLoading(true);
+      const [productsData, categoriesData] = await Promise.all([
+        salesService.getProducts({ limit: 1000 }),
+        salesService.getCategories()
+      ]);
 
-        const mapped = productsData.map(p => {
-          const cat = categoriesData.find(c => c.categoryID === p.categoryID);
-          const stock = p.stockQuantity !== undefined 
-            ? p.stockQuantity 
-            : (p.stock !== undefined ? p.stock : [120, 0, 15, 340][Number(p.productID) % 4]);
-          
-          let displayStatus = 'Còn hàng';
-          if (p.status !== 'ACTIVE') {
-            displayStatus = 'Ngừng kinh doanh';
-          } else if (stock === 0) {
-            displayStatus = 'Hết hàng';
-          } else if (stock < 20) {
-            displayStatus = 'Sắp hết';
-          }
+      const mapped = productsData.map(p => {
+        const cat = categoriesData.find(c => c.categoryID === p.categoryID);
+        const stock = p.stockQuantity !== undefined
+          ? p.stockQuantity
+          : (p.stock !== undefined ? p.stock : [120, 0, 15, 340][Number(p.productID) % 4]);
 
-          return {
-            id: `PRD-${p.productID.toString().padStart(3, '0')}`,
-            productID: p.productID,
-            name: p.productName,
-            category: cat ? cat.categoryName : 'Khác',
-            price: p.salePrice,
-            stock,
-            unit: p.unit || 'cái',
-            status: displayStatus,
-            imageURL: p.imageURL || p.image || ''
-          };
-        });
-        setProducts(mapped);
-      } catch (err) {
-        console.error("Lỗi khi tải sản phẩm:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+        let displayStatus = 'Còn hàng';
+        if (p.status !== 'ACTIVE') {
+          displayStatus = 'Ngừng kinh doanh';
+        } else if (stock === 0) {
+          displayStatus = 'Hết hàng';
+        } else if (stock < 20) {
+          displayStatus = 'Sắp hết';
+        }
+
+        return {
+          id: `PRD-${p.productID.toString().padStart(3, '0')}`,
+          productID: p.productID,
+          name: p.productName,
+          category: cat ? cat.categoryName : 'Khác',
+          price: p.salePrice,
+          stock,
+          unit: p.unit || 'cái',
+          status: displayStatus,
+          imageURL: p.imageURL || p.image || ''
+        };
+      });
+
+      setAllProducts(mapped);
+    } catch (err) {
+      console.error("Lỗi khi tải dữ liệu sản phẩm:", err);
+    } finally {
+      if (!silent) setLoading(false);
+    }
   }, []);
 
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [targetProduct, setTargetProduct] = useState(null);
-  const [toast, setToast] = useState({ show: false, message: '', type: '' });
-  
+  useEffect(() => {
+    fetchAllData();
+  }, [fetchAllData]);
+
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [drawerProduct, setDrawerProduct] = useState(null);
 
@@ -189,75 +169,51 @@ const ProductManagement = () => {
     setIsDrawerOpen(true);
   };
 
-  const showToastMsg = (message, type = 'success') => {
-    setToast({ show: true, message, type });
-    setTimeout(() => setToast({ show: false, message: '', type: '' }), 3000);
-  };
-
-  const confirmDeleteProduct = async () => {
-    try {
-      setShowDeleteModal(false);
-      await salesService.deleteProduct(targetProduct.productID);
-      const updatedProducts = products.filter(p => p.productID !== targetProduct.productID);
-      setProducts(updatedProducts);
-      showToastMsg(`Đã xóa sản phẩm "${targetProduct.name}" thành công!`);
-    } catch (err) {
-      console.error("Lỗi khi xóa sản phẩm:", err);
-      showToastMsg("Có lỗi xảy ra khi xóa sản phẩm!", "error");
-    } finally {
-      setTargetProduct(null);
-    }
-  };
-
+  // Client-side filtering
   const filteredProducts = useMemo(() => {
-    const result = products.filter(p => {
-      const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           p.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           p.category.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCategory === 'Tất cả' || p.category === selectedCategory;
-      return matchesSearch && matchesCategory;
+    const q = searchQuery.trim().toLowerCase();
+    let result = allProducts.filter(p => {
+      const matchSearch = !q
+        || p.name.toLowerCase().includes(q)
+        || p.id.toLowerCase().includes(q)
+        || p.category.toLowerCase().includes(q);
+      const matchCategory = selectedCategory === 'Tất cả' || p.category === selectedCategory;
+      return matchSearch && matchCategory;
     });
 
     if (sortConfig.key) {
-      result.sort((a, b) => {
-        if (sortConfig.key === 'id') {
-          const idA = extractIdNumber(a.id);
-          const idB = extractIdNumber(b.id);
-          return sortConfig.direction === 'asc' ? idA - idB : idB - idA;
+      const { key, direction } = sortConfig;
+      result = [...result].sort((a, b) => {
+        let valA = a[key];
+        let valB = b[key];
+
+        if (typeof valA === 'string') {
+          valA = valA.toLowerCase();
+          valB = valB.toLowerCase();
         }
-        if (sortConfig.key === 'name') {
-          const comp = a.name.localeCompare(b.name, 'vi');
-          return sortConfig.direction === 'asc' ? comp : -comp;
-        }
-        if (sortConfig.key === 'category') {
-          const comp = a.category.localeCompare(b.category, 'vi');
-          return sortConfig.direction === 'asc' ? comp : -comp;
-        }
-        if (sortConfig.key === 'price') {
-          const priceA = Number(a.price) || 0;
-          const priceB = Number(b.price) || 0;
-          return sortConfig.direction === 'asc' ? priceA - priceB : priceB - priceA;
-        }
-        if (sortConfig.key === 'stock') {
-          const stockA = Number(a.stock) || 0;
-          const stockB = Number(b.stock) || 0;
-          return sortConfig.direction === 'asc' ? stockA - stockB : stockB - stockA;
-        }
+
+        if (valA < valB) return direction === 'asc' ? -1 : 1;
+        if (valA > valB) return direction === 'asc' ? 1 : -1;
         return 0;
       });
     }
     return result;
-  }, [products, searchQuery, selectedCategory, sortConfig]);
+  }, [allProducts, searchQuery, selectedCategory, sortConfig]);
 
-  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+  const totalPages = useMemo(() => {
+    return Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
+  }, [filteredProducts.length, ITEMS_PER_PAGE]);
+
   const paginatedProducts = useMemo(() => {
-    return filteredProducts.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-  }, [filteredProducts, currentPage]);
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredProducts.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredProducts, currentPage, ITEMS_PER_PAGE]);
+
 
   const stats = useMemo(() => {
-    const totalSKU = products.length;
-    const lowStock = products.filter(p => p.stock < 20).length;
-    const inventoryValue = products.reduce((sum, p) => sum + (p.price * p.stock), 0);
+    const totalSKU = allProducts.length;
+    const lowStock = allProducts.filter(p => p.stock < 20).length;
+    const inventoryValue = allProducts.reduce((sum, p) => sum + (p.price * p.stock), 0);
     const categoryCount = categories.length;
 
     const skuPrev = totalSKU > 0 ? Math.max(0, totalSKU - 1) : 0;
@@ -304,7 +260,7 @@ const ProductManagement = () => {
       valueGrowth,
       categoryGrowth
     };
-  }, [products, categories]);
+  }, [allProducts, categories]);
 
   if (loading) {
     return (
@@ -325,7 +281,7 @@ const ProductManagement = () => {
           <p className="text-sm sm:text-base text-slate-500 font-medium leading-relaxed">
             Đang lưu trữ{" "}
             <span className="inline-flex items-center align-middle mx-1 px-2.5 py-0.5 rounded-lg bg-blue-50 text-[#00288E] font-bold whitespace-nowrap animate-fade-in">
-              {products.length} mã SKU
+              {allProducts.length} mã SKU
             </span>{" "}
             · {categories.length} danh mục
           </p>
@@ -752,36 +708,22 @@ const ProductManagement = () => {
 
             {/* Pagination Container - Đồng bộ và định dạng cao cấp */}
             <div className="p-4 border-t border-slate-100 flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0 bg-slate-50/50">
-              <span className="hidden sm:inline">
-                Hiển thị {filteredProducts.length > 0 ? (currentPage - 1) * ITEMS_PER_PAGE + 1 : 0} -{' '}
-                {Math.min(currentPage * ITEMS_PER_PAGE, filteredProducts.length)} / {filteredProducts.length} sản phẩm
-              </span>
-              <span className="sm:hidden">
-                {filteredProducts.length} sản phẩm
+              <span>
+                Trang {currentPage} / {totalPages}
               </span>
               {totalPages > 1 && (
                 <div className="flex items-center gap-1">
-                  <button 
+                  <button
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
                     className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-all uppercase tracking-widest text-[9px]"
                   >
                     Trước
                   </button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                    <button 
-                      key={p}
-                      onClick={() => setCurrentPage(p)}
-                      className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all ${
-                        currentPage === p 
-                          ? 'bg-slate-900 text-white shadow-lg shadow-slate-200' 
-                          : 'border border-slate-200 text-slate-500 hover:bg-slate-50'
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  ))}
-                  <button 
+                  <span className="px-2 py-1.5 text-slate-600">
+                    {currentPage} / {totalPages}
+                  </span>
+                  <button
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
                     className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-all uppercase tracking-widest text-[9px]"
@@ -793,50 +735,7 @@ const ProductManagement = () => {
             </div>
           </div>
 
-      {/* Modal Xóa */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-2xl p-6 sm:p-10 max-w-md w-full shadow-2xl animate-in zoom-in duration-300 border border-slate-200">
-            <div className="text-center">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-rose-50 text-rose-500 rounded-xl flex items-center justify-center text-3xl sm:text-4xl mx-auto mb-6">
-                <span className="material-symbols-outlined text-3xl sm:text-4xl">delete_forever</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 uppercase tracking-tight mb-2">Xác nhận xóa?</h2>
-              <p className="text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
-                Hành động này sẽ gỡ bỏ sản phẩm <span className="text-slate-600">"{targetProduct?.name}"</span> khỏi hệ thống vĩnh viễn.
-              </p>
-            </div>
-            <div className="flex gap-4 mt-8 sm:mt-10">
-              <button 
-                onClick={() => setShowDeleteModal(false)}
-                className="flex-1 px-4 py-3 sm:py-4 bg-slate-100 text-slate-400 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 hover:text-slate-600 transition-all active:scale-95"
-              >
-                Hủy bỏ
-              </button>
-              <button 
-                onClick={confirmDeleteProduct}
-                className="flex-1 px-4 py-3 sm:py-4 bg-rose-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-rose-200 hover:bg-rose-700 transition-all active:scale-95"
-              >
-                Xác nhận xóa
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Toast Notification */}
-      {toast.show && (
-        <div className="fixed bottom-6 right-6 sm:bottom-10 sm:right-10 z-[100] animate-in slide-in-from-right-10 duration-300">
-          <div className="bg-slate-900 text-white px-6 py-4 sm:px-8 sm:py-5 rounded-xl shadow-2xl flex items-center gap-4 border border-white/10 backdrop-blur-xl">
-            <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${toast.type === 'error' ? 'bg-rose-500' : 'bg-emerald-500'}`}>
-              <span className="material-symbols-outlined text-base sm:text-lg">{toast.type === 'error' ? 'close' : 'check'}</span>
-            </div>
-            <p className="text-[10px] sm:text-xs font-black uppercase tracking-widest">{toast.message}</p>
-          </div>
-        </div>
-      )}
-
-      <ProductDetailDrawer 
+      <ProductDetailDrawer
         open={isDrawerOpen} 
         onClose={() => setIsDrawerOpen(false)} 
         product={drawerProduct}

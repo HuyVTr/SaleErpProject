@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import accountingService from '../../../services/accountingService';
-import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
+import { exportToExcel } from '../../../utils/exportUtils';
 import { useToast } from '../../../components/Common/AccountingToast';
 import RevenueAreaChart from '../../../components/Charts/RevenueAreaChart';
 import CategoryShareChart from '../../../components/Charts/CategoryShareChart';
 import SalesPerformanceTable from '../../../components/Tables/SalesPerformanceTable';
 import PrintableAccountingReportTemplate from '../../../components/Print/PrintableAccountingReportTemplate';
 import DailyActivityGrid from '../../../components/Charts/DailyActivityGrid';
+import { formatVND } from '../../../../../utils/formatVND';
 
 const getDaysInMonth = (year, month) => new Date(year, month, 0).getDate();
 const getFirstDayOfMonth = (year, month) => {
@@ -164,7 +165,7 @@ const AccountingReport = () => {
         setIsExporting(false);
         showToast("Xuất báo cáo PDF thành công!", "success");
       }, 500);
-    } catch (err) {
+    } catch {
       showToast("Không thể xuất báo cáo", "error");
       setIsExporting(false);
     }
@@ -180,7 +181,7 @@ const AccountingReport = () => {
       const topSales = performanceData.length > 0 ? [...performanceData].sort((a, b) => b.revenue - a.revenue)[0].name : 'N/A';
       
       const summaryData = [
-        { 'Chỉ số': 'TỔNG DOANH THU', 'Giá trị': totalRevenue.toLocaleString('vi-VN') + ' VND' },
+        { 'Chỉ số': 'TỔNG DOANH THU', 'Giá trị': formatVND(totalRevenue) },
         { 'Chỉ số': 'SỐ ĐƠN HÀNG', 'Giá trị': totalOrders },
         { 'Chỉ số': 'NHÂN VIÊN XUẤT SẮC', 'Giá trị': topSales },
         { 'Chỉ số': 'KỲ BÁO CÁO', 'Giá trị': periodLabel }
@@ -219,7 +220,7 @@ const AccountingReport = () => {
           { name: 'Danh mục', data: categoryExcelData, title: 'PHÂN TÍCH THEO DANH MỤC' },
           { name: 'Nhân viên', data: performanceExcelData, title: 'HIỆU SUẤT NHÂN VIÊN KINH DOANH' }
         ],
-        filename: `Bao_cao_Tai_chinh_Hizo_${periodLabel.replace(/[\/\s]/g, '_')}.xlsx`,
+        filename: `Bao_cao_Tai_chinh_Hizo_${periodLabel.replace(/[/\s]/g, '_')}.xlsx`,
       });
 
       showToast("Xuất Excel thành công!", "success");
@@ -756,7 +757,7 @@ const AccountingReport = () => {
                 </div>
               </div>
               
-              <div className="max-h-[23.75rem] md:max-h-none overflow-y-auto overflow-x-auto scrollbar-none pr-1">
+              <div className="overflow-x-auto pr-1">
                 <SalesPerformanceTable data={performanceData} loading={loading} />
               </div>
             </div>

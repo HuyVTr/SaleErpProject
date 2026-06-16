@@ -4,11 +4,11 @@ import salesService from '../../services/salesService';
 import adminService from '../../../admin/services/adminService';
 import { useSalesToast } from '../../components/Notification/useSalesToast';
 import SalesToastNotification from '../../components/Notification/SalesToastNotification';
+import { formatVND, VNDDisplay } from '../../../../utils/formatVND';
 
 const formatCurrency = (val, isSmall = false, colorClass = "text-slate-800") => {
   if (val === undefined || val === null) return "0 VND";
-  const num = typeof val === 'number' ? val : Number(val.toString().replace(/[đ₫\sVND.]/g, ''));
-  const formatted = new Intl.NumberFormat('vi-VN').format(num);
+  const formatted = formatVND(val, false);
   return (
     <span className="flex items-baseline gap-1">
       <span className={isSmall ? `font-bold ${colorClass}` : `font-black ${colorClass}`}>{formatted}</span>
@@ -815,10 +815,10 @@ const AddQuotation = () => {
       return [
         ...prev,
         {
-          productID: prod.productID,
+          productID: Number(prod.productID),
           productName: prod.productName,
           unit: prod.unit || 'm2',
-          unitPrice: overridePrice ?? prod.salePrice ?? 0,
+          unitPrice: Number(overridePrice ?? prod.salePrice) || 0,
           quantity: 1,
           discount: 0
         }
@@ -889,19 +889,19 @@ const AddQuotation = () => {
       setLoading(true);
       
       const payload = {
-        customerID: selectedCustomer.customerID,
+        customerID: Number(selectedCustomer.customerID),
         customerName: selectedCustomer.companyName || `${selectedCustomer.lastName} ${selectedCustomer.firstName}`,
         quotationDate,
         expiration,
         paymentTerm,
         paymentMethod,
-        totalAmount: calculations.totalAmount,
+        totalAmount: Number(calculations.totalAmount) || 0,
         quotationStatus: 'PENDING',
         items: quotationItems.map(item => ({
-          productID: item.productID,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          discount: item.discount
+          productID: Number(item.productID),
+          quantity: Number(item.quantity),
+          unitPrice: Number(item.unitPrice) || 0,
+          discount: Number(item.discount) || 0
         })),
         notes
       };
@@ -915,7 +915,8 @@ const AddQuotation = () => {
 
     } catch (e) {
       console.error(e);
-      showToast("Có lỗi xảy ra khi lưu báo giá!", "error");
+      const msg = e?.response?.data?.message || "Có lỗi xảy ra khi lưu báo giá!";
+      showToast(msg, "error");
       setLoading(false);
     }
   };

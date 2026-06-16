@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { VNDDisplay, CURRENCY_CLASS_PRIMARY, CURRENCY_CLASS_SECONDARY } from '../../../../utils/formatVND';
 
 const PaymentHistoryTable = ({ payments, loading, onPrint }) => {
   const [sortConfig, setSortConfig] = useState({ key: 'paymentDate', direction: 'desc' });
@@ -172,9 +173,7 @@ const PaymentHistoryTable = ({ payments, loading, onPrint }) => {
                   </div>
                 </td>
                 <td className="px-8 py-5 text-left tabular-nums whitespace-nowrap" data-label="Số tiền">
-                  <span className="text-sm font-black tracking-tighter m-0">
-                    {payment.amount?.toLocaleString('vi-VN')}&nbsp;<small className="text-[10px] opacity-70 font-bold">VND</small>
-                  </span>
+                  <VNDDisplay value={payment.amount || 0} />
                 </td>
                 <td className="px-8 py-5 text-center" data-label="Phương thức">
                   <span className={`acc-badge text-[10px] font-black border whitespace-nowrap px-3 py-1 rounded-full ${
@@ -239,10 +238,7 @@ const PaymentHistoryTable = ({ payments, loading, onPrint }) => {
                 {/* Amount */}
                 <div>
                   <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Số tiền</p>
-                  <p className="text-sm font-black text-acc-primary tabular-nums">
-                    {payment.amount?.toLocaleString('vi-VN')}
-                    <small className="text-[9px] font-bold ml-1 opacity-60">VND</small>
-                  </p>
+                  <VNDDisplay value={payment.amount || 0} className="text-sm font-black text-acc-primary tabular-nums" />
                 </div>
 
                 {/* Footer */}
@@ -301,13 +297,11 @@ const PaymentHistoryTable = ({ payments, loading, onPrint }) => {
         </div>
         <div className="flex items-center gap-3 sm:gap-4 text-xs font-black text-acc-text-main w-full sm:w-auto justify-between sm:justify-end">
           <span className="text-slate-400 uppercase text-[9px] font-black tracking-widest">Tổng thực thu:</span>
-          <span className="tabular-nums text-acc-primary text-sm font-black">
-            {payments.reduce((sum, p) => sum + (p.amount || 0), 0).toLocaleString('vi-VN')} VND
-          </span>
+          <VNDDisplay value={payments.reduce((sum, p) => sum + (p.amount || 0), 0)} className="tabular-nums text-acc-primary text-sm font-black" />
         </div>
       </div>
     </div>
   );
 };
 
-export default PaymentHistoryTable;
+export default React.memo(PaymentHistoryTable);

@@ -6,6 +6,7 @@ import adminService from '../../services/adminService';
 import accountingService from '../../../accounting/services/accountingService';
 import CategoryShareChart from '../../../accounting/components/Charts/CategoryShareChart';
 import DailyActivityGrid from '../../../sales/components/Charts/DailyActivityGrid';
+import { VNDDisplay, CURRENCY_CLASS_PRIMARY } from '../../../../utils/formatVND';
 
 const getDaysInMonth = (year, month) => new Date(year, month, 0).getDate();
 const getFirstDayOfMonth = (year, month) => {
@@ -38,25 +39,16 @@ const getResponsiveValueStyle = (val, rawVal) => {
 const formatCurrency = (val, isSmall = false, isStat = false, customColorClass = "", textSizeClass = "") => {
   if (val === undefined || val === null) return "0 VND";
 
-  let cleanVal = val;
-  const isMobileOrIpad = typeof window !== 'undefined' && window.innerWidth < 1024;
-  if (isMobileOrIpad && (typeof val === 'number' || typeof val === 'string')) {
-    const rawDigits = String(val).replace(/[^0-9]/g, '');
-    if (rawDigits.length > 15) {
-      const truncated = rawDigits.slice(0, 15);
-      const isNegative = String(val).startsWith('-');
-      cleanVal = Number(truncated) * (isNegative ? -1 : 1);
-    }
-  }
-
-  const formatted = typeof cleanVal === 'number' ? cleanVal.toLocaleString('vi-VN') : cleanVal.toString().replace(/[đ₫\sVND]/g, '').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
-
   if (isStat) {
     return (
-      <span className={`flex items-baseline gap-1.5 whitespace-nowrap ${customColorClass}`}>
-        <span className={`font-black text-inherit ${textSizeClass}`} style={{ fontSize: 'clamp(14px, 1.25vw, 20px)' }}>{formatted}</span>
-        <span className="font-black text-inherit uppercase tracking-tight" style={{ fontSize: 'clamp(9px, 0.75vw, 11px)' }}>VND</span>
-      </span>
+      <VNDDisplay
+        value={val}
+        className={`flex items-baseline gap-1.5 whitespace-nowrap ${CURRENCY_CLASS_PRIMARY} ${customColorClass}`}
+        valueClassName={`font-black text-inherit ${textSizeClass}`}
+        valueStyle={{ fontSize: 'clamp(14px, 1.25vw, 20px)' }}
+        unitClassName="font-black text-inherit uppercase tracking-tight"
+        unitStyle={{ fontSize: 'clamp(9px, 0.75vw, 11px)' }}
+      />
     );
   }
 
@@ -65,10 +57,14 @@ const formatCurrency = (val, isSmall = false, isStat = false, customColorClass =
   const valueSize = textSizeClass || (isSmall ? "text-xs" : "");
 
   return (
-    <span className={`inline-flex items-baseline gap-1 whitespace-nowrap ${customColorClass}`}>
-      <span className={`${isSmall ? "font-bold" : "font-black"} ${valueColor} ${valueSize}`} style={!textSizeClass ? { fontSize: 'clamp(11px, 0.9vw, 14px)' } : {}}>{formatted}</span>
-      <span className={`text-[10px] font-bold uppercase tracking-tighter ${unitColor}`} style={{ fontSize: 'clamp(8px, 0.7vw, 10px)' }}>VND</span>
-    </span>
+    <VNDDisplay
+      value={val}
+      className={`inline-flex items-baseline gap-1 whitespace-nowrap ${customColorClass}`}
+      valueClassName={`${isSmall ? "font-bold" : "font-black"} ${valueColor} ${valueSize}`}
+      valueStyle={!textSizeClass ? { fontSize: 'clamp(11px, 0.9vw, 14px)' } : {}}
+      unitClassName={`text-[10px] font-bold uppercase tracking-tighter ${unitColor}`}
+      unitStyle={{ fontSize: 'clamp(8px, 0.7vw, 10px)' }}
+    />
   );
 };
 
@@ -110,7 +106,7 @@ const monthNames = [
 ];
 
 const AdminDashboard = () => {
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [chartLoading, setChartLoading] = useState(true);
   const [activeTooltipIdx, setActiveTooltipIdx] = useState(null);
   const [dashboardStats, setDashboardStats] = useState([]);

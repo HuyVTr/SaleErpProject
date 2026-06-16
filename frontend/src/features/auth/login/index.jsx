@@ -4,8 +4,8 @@ import authService from '../services/authService'
 
 const LoginPage = () => {
   const navigate = useNavigate()
-  const [email, setEmail] = useState('admin@gmail.com')
-  const [password, setPassword] = useState('123456')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
 
   const handleLogin = async () => {

@@ -2,7 +2,8 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import adminService from '../../services/adminService';
 import dbData from '../../../../../db.json';
-import ProductDetailDrawer from '../../../sales/components/Drawers/ProductDetailDrawer';
+import ProductDetailDrawer from '../../components/Drawers/ProductDetailDrawer';
+import { VNDDisplay, CURRENCY_CLASS_SECONDARY } from '../../../../utils/formatVND';
 
 const getResponsiveValueStyle = (val) => {
   const str = String(val);
@@ -148,10 +149,6 @@ const getStatusStyle = (status) => {
   return 'bg-slate-50 text-slate-600 border-slate-100';
 };
 
-const formatPrice = (value) => {
-  if (value === '-' || value === undefined || value === null) return '-';
-  return value.toLocaleString('vi-VN') + ' ₫';
-};
 
 const normalizeProduct = (p, categories = []) => {
   const cat = categories.find(c => 
@@ -802,7 +799,7 @@ const ProductManagement = () => {
                       </div>
                     </td>
                     <td className="font-black text-slate-900" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)', fontSize: 'clamp(11px, 0.9vw, 13px)' }}>
-                      {formatPrice(product.price)}
+                      <VNDDisplay value={product.price} className={CURRENCY_CLASS_SECONDARY} />
                     </td>
                     <td style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
                       <div className="flex justify-center items-center w-full">
@@ -853,7 +850,7 @@ const ProductManagement = () => {
                       </span>
                       <h4 className="font-black text-slate-900 uppercase tracking-tight text-sm mt-1 truncate" title={product.name}>{product.name}</h4>
                       <p className="text-xs font-black text-slate-900 mt-2 font-mono">
-                        {formatPrice(product.price)}
+                        <VNDDisplay value={product.price} className={CURRENCY_CLASS_SECONDARY} />
                       </p>
                     </div>
                     

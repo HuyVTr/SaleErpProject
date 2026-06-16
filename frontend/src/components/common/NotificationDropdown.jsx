@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import notificationService from '../../features/auth/services/notificationService';
 
-const NotificationDropdown = ({ isOpen, onClose, onViewAll }) => {
+const NotificationDropdown = ({ isOpen, onViewAll }) => {
   const [notifications, setNotifications] = useState([]);
   const [activeTab, setActiveTab] = useState('all');
   const [loading, setLoading] = useState(false);
@@ -99,7 +99,7 @@ const NotificationDropdown = ({ isOpen, onClose, onViewAll }) => {
         >
           Chưa đọc
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1.5 bg-red-500 text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white">
+            <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border border-white">
               {unreadCount}
             </span>
           )}

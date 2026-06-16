@@ -4,36 +4,16 @@ import salesService from '../../services/salesService';
 import QuotationDetailDrawer from '../../components/Drawers/QuotationDetailDrawer';
 import { useSalesToast } from '../../components/Notification/useSalesToast';
 import SalesToastNotification from '../../components/Notification/SalesToastNotification';
+import { formatVND, VNDDisplay, CURRENCY_CLASS_PRIMARY } from '../../../../utils/formatVND';
 
 const formatCurrency = (val, isSmall = false, isStat = false) => {
   if (val === undefined || val === null) return "0 VND";
-  
-  let cleanVal = val;
-  const isMobileOrIpad = typeof window !== 'undefined' && window.innerWidth < 1024;
-  if (isMobileOrIpad && (typeof val === 'number' || typeof val === 'string')) {
-    const rawDigits = String(val).replace(/[^0-9]/g, '');
-    if (rawDigits.length > 15) {
-      const truncated = rawDigits.slice(0, 15);
-      const isNegative = String(val).startsWith('-');
-      cleanVal = Number(truncated) * (isNegative ? -1 : 1);
-    }
-  }
-
-  const formatted = typeof cleanVal === 'number' ? cleanVal.toLocaleString('vi-VN') : cleanVal.toString().replace(/[đ₫\sVND]/g, '').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
-  
-  if (isStat) {
-    return (
-      <span className="flex items-baseline gap-1.5 whitespace-nowrap">
-        <span className="font-black text-inherit">{formatted}</span>
-        <span className="font-black text-inherit uppercase tracking-tight">VND</span>
-      </span>
-    );
-  }
-
+  const formatted = formatVND(val, false);
+  const styleClass = isStat ? CURRENCY_CLASS_PRIMARY : (isSmall ? "font-bold text-slate-800" : "font-black text-slate-800");
   return (
-    <span className="flex items-baseline gap-1 whitespace-nowrap">
-      <span className={isSmall ? "font-bold text-slate-800" : "font-black text-slate-800"}>{formatted}</span>
-      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">VND</span>
+    <span className={`flex items-baseline gap-1 whitespace-nowrap ${isStat ? 'gap-1.5' : ''}`}>
+      <span className={styleClass}>{formatted}</span>
+      <span className={`text-[10px] font-bold uppercase tracking-tighter ${isStat ? 'text-inherit' : 'text-slate-400'}`}>VND</span>
     </span>
   );
 };
@@ -230,6 +210,7 @@ const QuotationManagement = () => {
       case 'ĐÃ DUYỆT':
         return { label: 'Đồng ý', color: 'bg-emerald-50 text-emerald-600 border-emerald-100 border' };
       case 'CANCELLED':
+      case 'REJECTED':
       case 'TỪ CHỐI':
       case 'ĐÃ HỦY':
         return { label: 'Từ chối', color: 'bg-red-50 text-red-600 border-red-100 border' };
@@ -420,14 +401,15 @@ const QuotationManagement = () => {
       } else if (activeTab === 'APPROVED') {
         matchesTab = s === 'APPROVED' || s === 'ĐỒNG Ý' || s === 'ĐÃ DUYỆT';
       } else if (activeTab === 'CANCELLED') {
-        matchesTab = s === 'CANCELLED' || s === 'TỪ CHỐI' || s === 'ĐÃ HỦY';
+        matchesTab = s === 'CANCELLED' || s === 'REJECTED' || s === 'TỪ CHỐI' || s === 'ĐÃ HỦY';
       }
       
       return matchesSearch && matchesTab;
     });
 
+    let sortedResult = result;
     if (sortConfig.key) {
-      result.sort((a, b) => {
+      sortedResult = [...result].sort((a, b) => {
         if (sortConfig.key === 'id') {
           const idA = extractIdNumber(a.id);
           const idB = extractIdNumber(b.id);
@@ -452,7 +434,7 @@ const QuotationManagement = () => {
         return 0;
       });
     }
-    return result;
+    return sortedResult;
   }, [filteredByTimeQuotations, searchQuery, activeTab, sortConfig]);
 
   const totalPages = Math.ceil(filteredQuotations.length / ITEMS_PER_PAGE);
@@ -1205,7 +1187,7 @@ const getArrowClasses = (idx) => {
   return leftArrow;
 };
 
-const GrowthBadge = ({ growth, type = 'number', currentValue, idx, activeTooltipIdx, setActiveTooltipIdx }) => {
+const GrowthBadge = ({ growth, type = 'number', currentValue, idx, activeTooltipIdx }) => {
   if (!growth) return null;
   const { percent, isUp, prevValue, label } = growth;
   

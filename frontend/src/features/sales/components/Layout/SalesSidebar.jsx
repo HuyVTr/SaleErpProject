@@ -1,12 +1,12 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import tokenStorage from '../../../../utils/tokenStorage';
 
 const SalesSidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    tokenStorage.clear();
     sessionStorage.clear();
     navigate('/');
   };
@@ -19,7 +19,7 @@ const SalesSidebar = ({ isOpen, onClose }) => {
     { name: 'Báo giá', path: '/sales/quotations', icon: 'sell' },
   ];
 
-  const user = JSON.parse(localStorage.getItem('user')) || {
+  const user = tokenStorage.getUser() || {
     firstName: 'Sale',
     lastName: 'Nhân viên',
     roleName: 'Nhân viên Sales'

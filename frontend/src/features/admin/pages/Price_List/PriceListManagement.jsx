@@ -191,7 +191,7 @@ const PriceListManagement = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('Tất cả');
   
-  const [activeTooltipIdx, setActiveTooltipIdx] = useState(null);
+  const [, setActiveTooltipIdx] = useState(null);
 
   const now = new Date();
   const [timeframe, setTimeframe] = useState('monthly');
@@ -289,7 +289,7 @@ const PriceListManagement = () => {
         return {
           id: formattedID || '',
           rawID,
-          name: p.name || p.title || '', 
+          name: p.name || p.priceListName || p.title || '', 
           effectiveDate: p.effectiveDate || p.startDate || '', 
           status: p.status || 'Tạm dừng', 
           type: p.type || p.listType || 'Bán sỉ', 
@@ -384,14 +384,6 @@ const PriceListManagement = () => {
     setCurrentPage(1);
   }, [search, statusFilter, timeframe, filterWeek, filterYear, filterYearsCount, filterDate, selectedDay]);
 
-  const stats = useMemo(() => {
-    const total = priceLists.length;
-    const active = priceLists.filter((item) => item.status === 'Kích hoạt').length;
-    const paused = priceLists.filter((item) => item.status === 'Tạm dừng').length;
-    const usagePercent = total ? Math.round((active / total) * 100) : 0;
-
-    return { total, active, paused, usagePercent };
-  }, [priceLists]);
 
   return (
     <div className="font-inter flex flex-col w-full h-full bg-slate-50 animate-fade-in gap-4 md:gap-6 pb-6">

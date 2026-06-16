@@ -2,41 +2,21 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Drawer, Box, Typography, IconButton } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
-import CreateOrder from './CreateOrder'; 
+import CreateOrder from './CreateOrder';
 import salesService from '../../services/salesService';
 import OrderDetailDrawer from '../../components/Drawers/OrderDetailDrawer';
 import { useSalesToast } from '../../components/Notification/useSalesToast';
 import SalesToastNotification from '../../components/Notification/SalesToastNotification';
+import { formatVND, VNDDisplay, CURRENCY_CLASS_PRIMARY } from '../../../../utils/formatVND';
 
 const formatCurrency = (val, isSmall = false, isStat = false, alignRight = false) => {
   if (val === undefined || val === null) return "0 VND";
-  
-  let cleanVal = val;
-  const isMobileOrIpad = typeof window !== 'undefined' && window.innerWidth < 1024;
-  if (isMobileOrIpad && (typeof val === 'number' || typeof val === 'string')) {
-    const rawDigits = String(val).replace(/[^0-9]/g, '');
-    if (rawDigits.length > 15) {
-      const truncated = rawDigits.slice(0, 15);
-      const isNegative = String(val).startsWith('-');
-      cleanVal = Number(truncated) * (isNegative ? -1 : 1);
-    }
-  }
-
-  const formatted = typeof cleanVal === 'number' ? cleanVal.toLocaleString('vi-VN') : cleanVal.toString().replace(/[đ₫\sVND]/g, '').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
-  
-  if (isStat) {
-    return (
-      <span className="flex items-baseline gap-1.5 whitespace-nowrap">
-        <span className="font-black text-inherit">{formatted}</span>
-        <span className="font-black text-inherit uppercase tracking-tight">VND</span>
-      </span>
-    );
-  }
-
+  const formatted = formatVND(val, false);
+  const styleClass = isStat ? CURRENCY_CLASS_PRIMARY : (isSmall ? "font-bold text-slate-800" : "font-black text-slate-800");
   return (
-    <span className={`flex items-baseline gap-1 whitespace-nowrap ${alignRight ? 'justify-end' : ''}`}>
-      <span className={isSmall ? "font-bold text-slate-800" : "font-black text-slate-800"}>{formatted}</span>
-      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">VND</span>
+    <span className={`flex items-baseline gap-1 whitespace-nowrap ${alignRight ? 'justify-end' : ''} ${isStat ? 'gap-1.5' : ''}`}>
+      <span className={styleClass}>{formatted}</span>
+      <span className={`text-[10px] font-bold uppercase tracking-tighter ${isStat ? 'text-inherit' : 'text-slate-400'}`}>VND</span>
     </span>
   );
 };
@@ -94,7 +74,7 @@ const OrderManagement = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [orders, setOrders] = useState([]);
+  const [allOrders, setAllOrders] = useState([]);
   const showToastMsg = (message, type = 'success') => {
     showToast(message, type);
   };
@@ -157,7 +137,6 @@ const OrderManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
   const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'desc' });
-
   const [activeTooltipIdx, setActiveTooltipIdx] = useState(null);
 
   useEffect(() => {
@@ -239,15 +218,15 @@ const OrderManagement = () => {
     }
   };
 
-  const fetchData = useCallback(async (silent = false) => {
+  const fetchAllData = useCallback(async (silent = false) => {
     try {
       if (!silent) setLoading(true);
       const rawUser = localStorage.getItem('current_user') || localStorage.getItem('user');
       const currentUser = rawUser ? JSON.parse(rawUser) : null;
       const userID = currentUser?.userID;
 
-      const data = await salesService.getOrders(userID);
-      
+      const data = await salesService.getOrders(userID, null, {});
+
       const mappedOrders = data.map(order => ({
         ...order,
         id: order.displayID,
@@ -260,17 +239,17 @@ const OrderManagement = () => {
         status: mapStatus(order.orderStatus)
       }));
 
-      setOrders(mappedOrders);
+      setAllOrders(mappedOrders);
     } catch (err) {
-      console.error("Lỗi khi tải đơn hàng:", err);
+      console.error("Lỗi khi tải dữ liệu đơn hàng:", err);
     } finally {
       if (!silent) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    fetchAllData();
+  }, [fetchAllData]);
 
   const mapStatus = (status) => {
     switch (status) {
@@ -285,7 +264,7 @@ const OrderManagement = () => {
   };
 
   const filteredByTimeOrders = useMemo(() => {
-    return orders.filter(o => {
+    return allOrders.filter(o => {
       const rawDateStr = o.orderDate || o.date.split('/').reverse().join('-');
       const d = new Date(rawDateStr);
       if (isNaN(d.getTime())) return false;
@@ -313,7 +292,7 @@ const OrderManagement = () => {
       }
       return true;
     });
-  }, [orders, timeframe, filterDate, filterWeek, filterYear, selectedDay, filterYearsCount]);
+  }, [allOrders, timeframe, filterDate, filterWeek, filterYear, selectedDay, filterYearsCount]);
 
   const dynamicStats = useMemo(() => {
     const currentOrders = filteredByTimeOrders;
@@ -326,7 +305,7 @@ const OrderManagement = () => {
       const prevDayDate = new Date(y, m - 1, selectedDay);
       prevDayDate.setDate(prevDayDate.getDate() - 1);
       
-      previousOrders = orders.filter(o => {
+      previousOrders = allOrders.filter(o => {
         const rawDateStr = o.orderDate || o.date.split('/').reverse().join('-');
         const d = new Date(rawDateStr);
         return !isNaN(d.getTime()) && 
@@ -340,7 +319,7 @@ const OrderManagement = () => {
       let prevY = y, prevW = w - 1;
       if (prevW === 0) { prevY--; prevW = 52; }
 
-      previousOrders = orders.filter(o => {
+      previousOrders = allOrders.filter(o => {
         const rawDateStr = o.orderDate || o.date.split('/').reverse().join('-');
         const d = new Date(rawDateStr);
         const getWeek = (date) => {
@@ -354,7 +333,7 @@ const OrderManagement = () => {
       });
       comparisonLabel = "So với tuần trước";
     } else if (timeframe === 'monthly') {
-      previousOrders = orders.filter(o => {
+      previousOrders = allOrders.filter(o => {
         const rawDateStr = o.orderDate || o.date.split('/').reverse().join('-');
         const d = new Date(rawDateStr);
         return !isNaN(d.getTime()) && d.getFullYear() === (filterYear - 1);
@@ -363,7 +342,7 @@ const OrderManagement = () => {
     } else if (timeframe === 'yearly') {
       const currentRangeStart = now.getFullYear() - filterYearsCount;
       const prevRangeStart = currentRangeStart - filterYearsCount;
-      previousOrders = orders.filter(o => {
+      previousOrders = allOrders.filter(o => {
         const rawDateStr = o.orderDate || o.date.split('/').reverse().join('-');
         const d = new Date(rawDateStr);
         return !isNaN(d.getTime()) && d.getFullYear() > prevRangeStart && d.getFullYear() <= currentRangeStart;
@@ -402,7 +381,7 @@ const OrderManagement = () => {
       shippingGrowth: { ...calculateGrowth(currentPeriod.shipping, prevPeriod.shipping), prevValue: prevPeriod.shipping, label: comparisonLabel },
       revenueGrowth: { ...calculateGrowth(currentPeriod.revenue, prevPeriod.revenue), prevValue: prevPeriod.revenue, label: comparisonLabel }
     };
-  }, [orders, filteredByTimeOrders, timeframe, filterDate, filterWeek, filterYear, selectedDay, filterYearsCount]);
+  }, [allOrders, filteredByTimeOrders, timeframe, filterDate, filterWeek, filterYear, selectedDay, filterYearsCount]);
 
   const stats = dynamicStats;
 
@@ -420,49 +399,59 @@ const OrderManagement = () => {
     return 'Toàn thời gian';
   };
 
+  // Client-side filtering
   const filteredOrders = useMemo(() => {
-    const result = filteredByTimeOrders.filter(order => {
-      const matchesTab = activeTab === 'Tất cả' || order.status === activeTab.toUpperCase();
-      const matchesSearch = 
-        String(order.id || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
-        String(order.customer || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        String(order.phone || '').includes(searchQuery);
-      return matchesTab && matchesSearch;
+    const q = searchQuery.trim().toLowerCase();
+    let result = filteredByTimeOrders.filter(o => {
+      const matchSearch = !q
+        || (o.id && o.id.toLowerCase().includes(q))
+        || (o.customer && o.customer.toLowerCase().includes(q))
+        || (o.phone && o.phone.includes(q));
+      
+      const matchTab = activeTab === 'Tất cả' || o.status === activeTab || o.rawStatus === activeTab;
+      return matchSearch && matchTab;
     });
 
     if (sortConfig.key) {
-      result.sort((a, b) => {
-        if (sortConfig.key === 'id') {
-          const idA = extractIdNumber(a.id);
-          const idB = extractIdNumber(b.id);
-          return sortConfig.direction === 'asc' ? idA - idB : idB - idA;
+      const { key, direction } = sortConfig;
+      result = [...result].sort((a, b) => {
+        let valA = a[key];
+        let valB = b[key];
+
+        if (key === 'id') {
+          // Sort by display ID number
+          valA = extractIdNumber(valA);
+          valB = extractIdNumber(valB);
+        } else if (key === 'date') {
+          // Sort by date value
+          const parseDate = (dStr) => {
+            if (!dStr || dStr === 'N/A') return 0;
+            const parts = dStr.split('/');
+            return new Date(parts[2], parts[1] - 1, parts[0]).getTime();
+          };
+          valA = parseDate(valA);
+          valB = parseDate(valB);
+        } else if (typeof valA === 'string') {
+          valA = valA.toLowerCase();
+          valB = valB.toLowerCase();
         }
-        if (sortConfig.key === 'customer') {
-          const comp = a.customer.localeCompare(b.customer, 'vi');
-          return sortConfig.direction === 'asc' ? comp : -comp;
-        }
-        if (sortConfig.key === 'date') {
-          const datePartsA = a.date.split('/');
-          const datePartsB = b.date.split('/');
-          const dateA = new Date(`${datePartsA[2]}-${datePartsA[1]}-${datePartsA[0]}`);
-          const dateB = new Date(`${datePartsB[2]}-${datePartsB[1]}-${datePartsB[0]}`);
-          return sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
-        }
-        if (sortConfig.key === 'total') {
-          const totalA = Number(a.total) || 0;
-          const totalB = Number(b.total) || 0;
-          return sortConfig.direction === 'asc' ? totalA - totalB : totalB - totalA;
-        }
+
+        if (valA < valB) return direction === 'asc' ? -1 : 1;
+        if (valA > valB) return direction === 'asc' ? 1 : -1;
         return 0;
       });
     }
     return result;
-  }, [filteredByTimeOrders, activeTab, searchQuery, sortConfig]);
+  }, [filteredByTimeOrders, searchQuery, activeTab, sortConfig]);
 
-  const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE);
+  const totalPages = useMemo(() => {
+    return Math.max(1, Math.ceil(filteredOrders.length / ITEMS_PER_PAGE));
+  }, [filteredOrders.length, ITEMS_PER_PAGE]);
+
   const paginatedOrders = useMemo(() => {
-    return filteredOrders.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-  }, [filteredOrders, currentPage]);
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredOrders.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredOrders, currentPage, ITEMS_PER_PAGE]);
 
   const getStatusBadge = (status) => {
     const badgeStyle = {
@@ -510,8 +499,8 @@ const OrderManagement = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
           <p className="text-sm sm:text-base text-slate-500 font-medium leading-relaxed">
             Đang quản lý{" "}
-            <span className="inline-flex items-center align-middle mx-1 px-2.5 py-0.5 rounded-lg bg-blue-50 text-[#00288E] font-bold whitespace-nowrap animate-fade-in" key={filteredOrders.length}>
-              {filteredOrders.length} đơn hàng
+            <span className="inline-flex items-center align-middle mx-1 px-2.5 py-0.5 rounded-lg bg-blue-50 text-[#00288E] font-bold whitespace-nowrap animate-fade-in" key={allOrders.length}>
+              {allOrders.length} đơn hàng
             </span>
           </p>
 
@@ -1209,32 +1198,21 @@ const OrderManagement = () => {
             {/* Pagination */}
             <div className="p-4 border-t border-slate-100 flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0 bg-slate-50/50">
               <span>
-                Hiển thị {filteredOrders.length > 0 ? (currentPage - 1) * ITEMS_PER_PAGE + 1 : 0} -{' '}
-                {Math.min(currentPage * ITEMS_PER_PAGE, filteredOrders.length)} / {filteredOrders.length} đơn hàng
+                Trang {currentPage} / {totalPages}
               </span>
               {totalPages > 1 && (
                 <div className="flex items-center gap-1">
-                  <button 
+                  <button
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
                     className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-all uppercase tracking-widest text-[9px]"
                   >
                     Trước
                   </button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                    <button 
-                      key={p}
-                      onClick={() => setCurrentPage(p)}
-                      className={`w-8 h-8 flex items-center justify-center rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-                        currentPage === p 
-                          ? 'bg-slate-900 text-white shadow-lg shadow-slate-200' 
-                          : 'border border-slate-200 text-slate-500 hover:bg-slate-50'
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  ))}
-                  <button 
+                  <span className="px-2 py-1.5 text-slate-600">
+                    {currentPage} / {totalPages}
+                  </span>
+                  <button
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
                     className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-transparent transition-all uppercase tracking-widest text-[9px]"
@@ -1246,12 +1224,12 @@ const OrderManagement = () => {
             </div>
           </div>
 
-      <OrderDetailDrawer 
-        open={isDrawerOpen} 
-        onClose={() => setIsDrawerOpen(false)} 
-        order={selectedOrder} 
+      <OrderDetailDrawer
+        open={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        order={selectedOrder}
         onRefresh={(msg) => {
-          fetchData(true);
+          fetchAllData(true);
           if (msg) showToastMsg(msg);
         }}
       />

@@ -1,6 +1,6 @@
-# Hola Group FE - Hệ Thống Quản Lý Sales (Sales ERP Project)
+# HIZO GROUP - Hệ Thống Quản Lý Sales (Sales ERP Project)
 
-Dự án Frontend cho Hệ thống Quản lý Sales của Hola Group (Hizo Group). Đây là hệ thống ERP thu nhỏ hỗ trợ quản lý quy trình bán hàng khép kín từ khâu tiếp cận khách hàng, báo giá, lên đơn hàng, giao nhận kho cho đến đối soát kế toán và báo cáo doanh thu.
+Dự án Frontend cho Hệ thống Quản lý Sales của HIZO GROUP. Đây là hệ thống ERP thu nhỏ hỗ trợ quản lý quy trình bán hàng khép kín từ khâu tiếp cận khách hàng, báo giá, lên đơn hàng, giao nhận kho cho đến đối soát kế toán và báo cáo doanh thu.
 
 ## 🚀 Tính Năng Chính Theo Phân Hệ
 

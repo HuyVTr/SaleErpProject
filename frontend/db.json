@@ -67,9 +67,9 @@
     { "userID": 4, "lastName": "Lê Văn", "firstName": "Kho", "dateOfBirth": "1995-03-15", "phoneNumber": "0905556666", "email": "warehouse@gmail.com", "address": "Bình Dương", "roleID": 4, "dept": "Kho vận" },
     { "userID": 5, "lastName": "Phạm", "firstName": "Admin", "dateOfBirth": "1985-07-20", "phoneNumber": "0907778888", "email": "admin@gmail.com", "address": "TP.HCM", "roleID": 5, "dept": "Ban Quản trị" },
     { "userID": 9, "lastName": "Nguyễn", "firstName": "Admin Thường", "dateOfBirth": "1990-08-12", "phoneNumber": "0981112222", "email": "admin1@gmail.com", "address": "TP.HCM", "roleID": 3, "dept": "Ban Quản trị" },
-    { "userID": 6, "lastName": "Trần Thị", "firstName": "Bình", "dateOfBirth": "1992-05-10", "phoneNumber": "0912223344", "email": "binh.tran@gmail.com", "address": "Quận 3, TP.HCM", "roleID": 2, "dept": "Kinh doanh" },
-    { "userID": 7, "lastName": "Lê Hoàng", "firstName": "Cường", "dateOfBirth": "1994-11-20", "phoneNumber": "0945556677", "email": "cuong.le@gmail.com", "address": "Quận 10, TP.HCM", "roleID": 2, "dept": "Kinh doanh" },
-    { "userID": 8, "lastName": "Ngô Gia", "firstName": "Bảo", "dateOfBirth": "1993-08-15", "phoneNumber": "0966778899", "email": "bao.ngo@gmail.com", "address": "Quận 7, TP.HCM", "roleID": 2, "dept": "Kinh doanh" }
+    { "userID": 6, "lastName": "Trần Thị", "firstName": "Bình", "dateOfBirth": "1992-05-10", "phoneNumber": "0912223344", "email": "sale1@gmail.com", "address": "Quận 3, TP.HCM", "roleID": 2, "dept": "Kinh doanh" },
+    { "userID": 7, "lastName": "Lê Hoàng", "firstName": "Cường", "dateOfBirth": "1994-11-20", "phoneNumber": "0945556677", "email": "sale2@gmail.com", "address": "Quận 10, TP.HCM", "roleID": 2, "dept": "Kinh doanh" },
+    { "userID": 8, "lastName": "Ngô Gia", "firstName": "Bảo", "dateOfBirth": "1993-08-15", "phoneNumber": "0966778899", "email": "sale3@gmail.com", "address": "Quận 7, TP.HCM", "roleID": 2, "dept": "Kinh doanh" }
   ],
   "customers": [
     { "customerID": 1, "firstName": "Kiến Trúc Việt", "lastName": "Công ty CP", "address": "123 Đường Lê Lợi, Quận 1, TP.HCM", "phoneNumber": "0901234567", "email": "ktviet@email.com", "companyName": "Công ty CP Kiến Trúc Việt", "status": "ACTIVE" },

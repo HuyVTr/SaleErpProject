@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import adminService from '../../services/adminService';
 
@@ -210,10 +210,14 @@ const EditProduct = () => {
         return;
       }
       setLoadedProduct(found);
+      const loadedCategory = typeof found.category === 'object' && found.category !== null
+        ? (found.category.categoryName || found.category.name || categories[0])
+        : (found.categoryName || found.category || categories[0]);
+
       const loadedValues = {
         productName: found.productName || found.name || '',
         sku: found.sku || found.code || '',
-        category: found.categoryName || found.category || categories[0],
+        category: loadedCategory,
         price: String(found.salePrice || found.price || ''),
         stock: String(found.quantity ?? found.stock ?? 0),
         unit: found.unit || units[0],
@@ -243,7 +247,7 @@ const EditProduct = () => {
       const arr = Array.isArray(res) ? res : [];
       const names = arr.map(c => c.categoryName || c.name || c.title).filter(Boolean);
       if (names.length) setCategories(names);
-    }).catch(err => {
+    }).catch(() => {
       // keep defaults
     });
     return () => { mounted = false; };

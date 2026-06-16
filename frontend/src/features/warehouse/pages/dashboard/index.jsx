@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import warehouseService, { formatCurrency } from '../../services/warehouseService';
+import warehouseService from '../../services/warehouseService';
 import { WarehouseStatCard } from '../../components/WarehouseStatCard';
+import { VNDDisplay, CURRENCY_CLASS_PRIMARY } from '../../../../utils/formatVND';
 
 const COLORS = { CONFIRMED: '#00288E', SHIPPING: '#0052CC', DELIVERED: '#4C9AFF' };
 const STATUS_LABELS = { CONFIRMED: 'Chờ giao', SHIPPING: 'Đang giao', DELIVERED: 'Đã giao' };
@@ -50,7 +51,6 @@ const CustomYAxisTick = ({ x, y, payload, isMobile }) => {
 };
 
 const WarehouseDashboard = () => {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
   const [activeTooltipIdx, setActiveTooltipIdx] = useState(null);
@@ -201,7 +201,7 @@ const WarehouseDashboard = () => {
 
   const statCards = [
     { title: 'Tổng sản phẩm', value: stats?.totalProducts || 0, icon: 'inventory_2', color: 'emerald', growth: productsGrowth, type: 'number', rawValue: stats?.totalProducts || 0 },
-    { title: 'Giá trị tồn kho', value: formatCurrency(stats?.totalStockValue || 0), icon: 'payments', color: 'blue', growth: valueGrowth, type: 'currency', rawValue: stats?.totalStockValue || 0 },
+    { title: 'Giá trị tồn kho', value: <VNDDisplay value={stats?.totalStockValue || 0} className={CURRENCY_CLASS_PRIMARY} />, icon: 'payments', color: 'blue', growth: valueGrowth, type: 'currency', rawValue: stats?.totalStockValue || 0 },
     { title: 'Đang giao hàng', value: stats?.orderStats?.SHIPPING || 0, icon: 'local_shipping', color: 'purple', growth: shippingGrowth, type: 'number', rawValue: stats?.orderStats?.SHIPPING || 0 },
     { title: 'Cảnh báo tồn kho', value: alertsVal, icon: 'warning', color: 'orange', growth: alertsGrowth, type: 'number', rawValue: alertsVal },
   ];
@@ -592,7 +592,7 @@ const WarehouseDashboard = () => {
                         outerRadius={90}
                         paddingAngle={5}
                         dataKey="value"
-                        label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+                        label={({ cx, cy, midAngle, outerRadius, percent }) => {
                           const RADIAN = Math.PI / 180;
                           const radius = outerRadius * 1.28;
                           const x = cx + radius * Math.cos(-midAngle * RADIAN);
@@ -751,7 +751,7 @@ const WarehouseDashboard = () => {
                                     <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                                     <span className="text-[11px] font-bold text-slate-500">Giá trị</span>
                                   </div>
-                                  <span className="text-sm font-black text-amber-600">{d.value?.toLocaleString('vi-VN')} <small className="text-[10px] opacity-50">VND</small></span>
+                                  <span className="text-sm font-black text-amber-600"><VNDDisplay value={d.value || 0} customColorClass="text-amber-600" /></span>
                                 </div>
                               </div>
                             </div>

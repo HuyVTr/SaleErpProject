@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import warehouseService, { formatCurrency, formatDate } from '../../services/warehouseService';
+import warehouseService, { formatDate } from '../../services/warehouseService';
+import { formatVND, VNDDisplay, CURRENCY_CLASS_SECONDARY } from '../../../../utils/formatVND';
 
 const getDaysInMonth = (year, month) => new Date(year, month, 0).getDate();
 const getFirstDayOfMonth = (year, month) => {
   let day = new Date(year, month - 1, 1).getDay();
   return day === 0 ? 6 : day - 1;
 };
+
+import ImportReceiptDetailDrawer from '../../components/ImportReceiptDetailDrawer';
 
 const StockImport = () => {
   const [products, setProducts] = useState([]);
@@ -17,6 +20,8 @@ const StockImport = () => {
   const [toastMsg, setToastMsg] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedReceipt, setSelectedReceipt] = useState(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const ITEMS_PER_PAGE = 7;
   const [errors, setErrors] = useState({});
   const [showConfirmClose, setShowConfirmClose] = useState(false);
@@ -397,7 +402,8 @@ const StockImport = () => {
       }
     } catch (err) {
       console.error(err);
-      toast('Có lỗi xảy ra. Vui lòng thử lại!');
+      const msg = err?.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại!';
+      toast(msg);
     } finally {
       setShowConfirmRevert(false);
       setSelectedReceiptToRevert(null);
@@ -410,6 +416,10 @@ const StockImport = () => {
 
     setSubmitting(true);
     try {
+      const rawUser = localStorage.getItem('current_user') || localStorage.getItem('user');
+      const currentUser = rawUser ? JSON.parse(rawUser) : null;
+      const createdBy = currentUser ? `${currentUser.lastName || ''} ${currentUser.firstName || ''}`.trim() : null;
+
       const receipt = {
         supplier: formData.supplier,
         items: formData.items.map(item => ({
@@ -420,6 +430,7 @@ const StockImport = () => {
         })),
         totalValue: calculateTotal(),
         notes: formData.notes,
+        createdBy: createdBy || undefined
       };
 
       await warehouseService.createImportReceipt(receipt);
@@ -436,7 +447,8 @@ const StockImport = () => {
       toast('Tạo phiếu nhập kho thành công!');
     } catch (err) {
       console.error(err);
-      toast('Có lỗi xảy ra. Vui lòng thử lại!');
+      const msg = err?.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại!';
+      toast(msg);
     } finally {
       setSubmitting(false);
     }
@@ -980,7 +992,7 @@ const StockImport = () => {
                       <div className="flex-1">
                         <input
                           type="text"
-                          value={formatCurrency(item.unitPrice)}
+                          value={formatVND(item.unitPrice)}
                           className="wh-input text-sm bg-gray-100 font-medium tabular-nums focus-visible:ring-2 focus-visible:ring-slate-300 outline-none"
                           aria-label={`Đơn giá dòng ${index + 1}`}
                           aria-readonly="true"
@@ -989,7 +1001,7 @@ const StockImport = () => {
                       </div>
                       <div className="flex-1 flex items-center">
                         <span className="text-sm font-bold text-emerald-600 tabular-nums">
-                          {formatCurrency(item.quantity * item.unitPrice)}
+                          <VNDDisplay value={item.quantity * item.unitPrice} customColorClass="text-emerald-600" />
                         </span>
                       </div>
                       {formData.items.length > 1 && (
@@ -1012,7 +1024,9 @@ const StockImport = () => {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-gray-100">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-bold text-gray-500 uppercase tracking-wider">Tổng giá trị:</span>
-                <span className="text-xl font-extrabold text-emerald-600 tabular-nums">{formatCurrency(calculateTotal())}</span>
+                <span className="text-xl font-extrabold text-emerald-600 tabular-nums">
+                  <VNDDisplay value={calculateTotal()} customColorClass="text-emerald-600" />
+                </span>
               </div>
               <div className="flex gap-3">
                 <button
@@ -1075,8 +1089,8 @@ const StockImport = () => {
         ) : (
           <div className="flex-1 min-h-0 flex flex-col">
             {/* View A: TABLE VIEW (Chỉ hiển thị trên Desktop >= 1280px) */}
-            <div className="hidden xl:flex flex-1 min-h-0 overflow-auto scrollbar-none" style={{ scrollbarGutter: 'stable' }}>
-              <table className="wh-responsive-table w-full text-left border-collapse min-w-[900px]">
+            <div className="hidden xl:block overflow-auto scrollbar-none" style={{ scrollbarGutter: 'stable' }}>
+              <table className="wh-responsive-table w-full text-left border-collapse min-w-[900px] h-auto">
                 <thead className="bg-slate-50 sticky top-0 z-10">
                   <tr className="border-b border-slate-200 text-slate-500 font-bold">
                     <th className="font-black uppercase tracking-widest text-left" style={{ padding: '1rem clamp(0.5rem, 1vw, 1.5rem)', fontSize: 'clamp(8px, 0.8vw, 11px)', width: '10%' }}>
@@ -1130,80 +1144,114 @@ const StockImport = () => {
                   </tr>
                 </thead>
                 <tbody className="text-slate-700 divide-y divide-slate-100">
-                  {paginatedImportHistory.map((receipt) => (
-                    <tr key={receipt.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
-                        <span className="text-xs font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full tracking-wider">
-                          {receipt.id}
-                        </span>
-                      </td>
-                      <td style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
-                        <span className="font-bold text-slate-600 uppercase tracking-tighter whitespace-nowrap" style={{ fontSize: 'clamp(10px, 0.85vw, 12px)' }}>
-                          {formatDate(receipt.date)}
-                        </span>
-                      </td>
-                      <td className="min-w-0" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
-                        <p className="font-black text-slate-900 uppercase tracking-tight truncate max-w-[180px]" title={receipt.supplier} style={{ fontSize: 'clamp(11px, 1vw, 14px)' }}>
-                          {receipt.supplier}
-                        </p>
-                      </td>
-                      <td style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
-                        <div className="flex flex-col gap-0.5 max-w-[200px] min-w-0">
-                          {receipt.items.map((item, i) => (
-                            <span key={i} className="font-semibold text-slate-600 truncate" title={item.productName} style={{ fontSize: 'clamp(10px, 0.85vw, 12px)' }}>
-                              {item.productName}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="text-center" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
-                        <div className="flex flex-col gap-0.5 items-center">
-                          {receipt.items.map((item, i) => (
-                            <span key={i} className="font-bold tabular-nums text-slate-700 bg-slate-100 rounded-md px-2 py-0.5" style={{ fontSize: 'clamp(10px, 0.85vw, 12px)' }}>
-                              {item.quantity}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
-                        <span className="font-bold text-slate-900 tabular-nums whitespace-nowrap" style={{ fontSize: 'clamp(10px, 0.9vw, 13px)' }}>
-                          {formatCurrency(receipt.totalValue)}
-                        </span>
-                      </td>
-                      <td className="text-center" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
-                        <span className="font-bold text-slate-500" style={{ fontSize: 'clamp(10px, 0.85vw, 12px)' }}>{receipt.createdBy}</span>
-                      </td>
-                      <td className="text-center" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
-                        <div className="flex flex-col items-center gap-1.5">
-                          {receipt.status === 'cancelled' ? (
-                            <span 
-                              style={{ fontSize: 'clamp(8px, 0.75vw, 10px)', padding: 'clamp(3px, 0.4vw, 5px) clamp(8px, 0.8vw, 12px)' }}
-                              className="wh-badge failed font-black rounded-lg border border-red-100 uppercase tracking-tighter whitespace-nowrap inline-flex items-center"
+                  {paginatedImportHistory.map((receipt) => {
+                    const totalQty = receipt.items.reduce((sum, item) => sum + item.quantity, 0);
+                    return (
+                      <tr 
+                        key={receipt.id} 
+                        onClick={() => {
+                          setSelectedReceipt(receipt);
+                          setIsDetailOpen(true);
+                        }}
+                        className="hover:bg-slate-50/50 transition-colors cursor-pointer"
+                      >
+                        <td style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
+                          <span className="text-xs font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full tracking-wider">
+                            {receipt.id}
+                          </span>
+                        </td>
+                        <td style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
+                          <span className="font-bold text-slate-600 uppercase tracking-tighter whitespace-nowrap" style={{ fontSize: 'clamp(10px, 0.85vw, 12px)' }}>
+                            {formatDate(receipt.date)}
+                          </span>
+                        </td>
+                        <td className="min-w-0" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
+                          <p className="font-black text-slate-900 uppercase tracking-tight truncate max-w-[180px]" title={receipt.supplier} style={{ fontSize: 'clamp(11px, 1vw, 14px)' }}>
+                            {receipt.supplier}
+                          </p>
+                        </td>
+                        <td style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
+                          {receipt.items.length > 2 ? (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedReceipt(receipt);
+                                setIsDetailOpen(true);
+                              }}
+                              className="text-[11px] font-black text-emerald-600 uppercase tracking-wider hover:underline inline-flex items-center gap-1 bg-transparent border-none p-0 cursor-pointer outline-none"
                             >
-                              <span className="wh-badge-dot" />Đã hủy
+                              <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>visibility</span>
+                              Xem trong chi tiết sản phẩm ({receipt.items.length} SP)
+                            </button>
+                          ) : (
+                            <div className="flex flex-col gap-0.5 max-w-[200px] min-w-0">
+                              {receipt.items.map((item, i) => (
+                                <span key={i} className="font-semibold text-slate-600 truncate" title={item.productName} style={{ fontSize: 'clamp(10px, 0.85vw, 12px)' }}>
+                                  {item.productName}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </td>
+                        <td className="text-center" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
+                          {receipt.items.length > 2 ? (
+                            <span className="font-bold tabular-nums text-slate-700 bg-slate-100 rounded-md px-2 py-0.5" style={{ fontSize: 'clamp(10px, 0.85vw, 12px)' }}>
+                              Tổng: {totalQty}
                             </span>
                           ) : (
-                            <>
+                            <div className="flex flex-col gap-0.5 items-center">
+                              {receipt.items.map((item, i) => (
+                                <span key={i} className="font-bold tabular-nums text-slate-700 bg-slate-100 rounded-md px-2 py-0.5" style={{ fontSize: 'clamp(10px, 0.85vw, 12px)' }}>
+                                  {item.quantity}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </td>
+                        <td style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
+                          <span className="font-bold text-slate-900 tabular-nums whitespace-nowrap" style={{ fontSize: 'clamp(10px, 0.9vw, 13px)' }}>
+                            <VNDDisplay value={receipt.totalValue} className={CURRENCY_CLASS_SECONDARY} />
+                          </span>
+                        </td>
+                        <td className="text-center" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
+                          <span className="font-bold text-slate-500" style={{ fontSize: 'clamp(10px, 0.85vw, 12px)' }}>{receipt.createdBy}</span>
+                        </td>
+                        <td className="text-center" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }} onClick={(e) => e.stopPropagation()}>
+                          <div className="flex flex-col items-center gap-1.5">
+                            {receipt.status === 'cancelled' ? (
                               <span 
                                 style={{ fontSize: 'clamp(8px, 0.75vw, 10px)', padding: 'clamp(3px, 0.4vw, 5px) clamp(8px, 0.8vw, 12px)' }}
-                                className="wh-badge delivered font-black rounded-lg border border-emerald-100 uppercase tracking-tighter whitespace-nowrap inline-flex items-center"
+                                className="wh-badge failed font-black rounded-lg border border-red-100 uppercase tracking-tighter whitespace-nowrap inline-flex items-center"
                               >
-                                <span className="wh-badge-dot" />Hoàn thành
+                                <span className="wh-badge-dot" />Đã hủy
                               </span>
-                              <button
-                                type="button"
-                                onClick={() => handleRevertReceipt(receipt.id)}
-                                className="text-[9px] font-black text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 px-2 py-1 rounded-md transition-colors uppercase tracking-wider focus-visible:ring-2 focus-visible:ring-red-400 outline-none cursor-pointer"
-                                aria-label={`Hủy phiếu nhập kho ${receipt.id}`}
-                              >
-                                Hủy phiếu
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                            ) : (
+                              <>
+                                <span 
+                                  style={{ fontSize: 'clamp(8px, 0.75vw, 10px)', padding: 'clamp(3px, 0.4vw, 5px) clamp(8px, 0.8vw, 12px)' }}
+                                  className="wh-badge delivered font-black rounded-lg border border-emerald-100 uppercase tracking-tighter whitespace-nowrap inline-flex items-center"
+                                >
+                                  <span className="wh-badge-dot" />Hoàn thành
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRevertReceipt(receipt.id);
+                                  }}
+                                  className="text-[9px] font-black text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 px-2 py-1 rounded-md transition-colors uppercase tracking-wider focus-visible:ring-2 focus-visible:ring-red-400 outline-none cursor-pointer"
+                                  aria-label={`Hủy phiếu nhập kho ${receipt.id}`}
+                                >
+                                  Hủy phiếu
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -1248,7 +1296,11 @@ const StockImport = () => {
                 {paginatedImportHistory.map((receipt) => (
                   <div 
                     key={receipt.id}
-                    className="bg-white rounded-2xl p-5 border border-slate-200 hover:border-[#00288E] hover:shadow-xl transition-[border-color,box-shadow] duration-300 flex flex-col justify-between h-full group"
+                    onClick={() => {
+                      setSelectedReceipt(receipt);
+                      setIsDetailOpen(true);
+                    }}
+                    className="bg-white rounded-2xl p-5 border border-slate-200 hover:border-[#00288E] hover:shadow-xl transition-[border-color,box-shadow] duration-300 flex flex-col justify-between h-full group cursor-pointer"
                   >
                     <div className="flex items-start gap-4 mb-4">
                       <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-black uppercase shadow-sm shrink-0 border border-slate-100">
@@ -1271,24 +1323,32 @@ const StockImport = () => {
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center justify-between">
                           <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">Sản phẩm nhập</span>
-                          <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">SL</span>
+                          {receipt.items.length <= 2 && <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">SL</span>}
                         </div>
-                        <div className="flex flex-col gap-1 bg-slate-50/60 p-2.5 rounded-xl border border-slate-100 max-h-[120px] overflow-y-auto">
-                          {receipt.items.map((item, i) => (
-                            <div key={i} className="flex items-center justify-between gap-2 min-w-0">
-                              <span className="text-xs font-semibold text-slate-700 truncate min-w-0" title={item.productName}>
-                                {item.productName}
-                              </span>
-                              <span className="text-[10px] font-black tabular-nums text-slate-600 bg-slate-200/70 rounded px-1.5 py-0.5 shrink-0">
-                                {item.quantity}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
+                        {receipt.items.length > 2 ? (
+                          <div className="bg-slate-50/60 p-3 rounded-xl border border-slate-100 flex items-center justify-center text-center">
+                            <span className="text-[11px] font-black text-emerald-600 uppercase tracking-wider">
+                              Xem trong chi tiết sản phẩm ({receipt.items.length} SP)
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col gap-1 bg-slate-50/60 p-2.5 rounded-xl border border-slate-100 max-h-[120px] overflow-y-auto">
+                            {receipt.items.map((item, i) => (
+                              <div key={i} className="flex items-center justify-between gap-2 min-w-0">
+                                <span className="text-xs font-semibold text-slate-700 truncate min-w-0" title={item.productName}>
+                                  {item.productName}
+                                </span>
+                                <span className="text-[10px] font-black tabular-nums text-slate-600 bg-slate-200/70 rounded px-1.5 py-0.5 shrink-0">
+                                  {item.quantity}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       <div className="flex justify-between items-center text-xs">
                         <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">Tổng giá trị</span>
-                        <span className="font-black text-[#00288E] tabular-nums">{formatCurrency(receipt.totalValue)}</span>
+                        <span className="font-black text-[#00288E] tabular-nums"><VNDDisplay value={receipt.totalValue} className={CURRENCY_CLASS_SECONDARY} /></span>
                       </div>
                       <div className="flex justify-between items-center text-xs">
                         <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">Người tạo</span>
@@ -1313,10 +1373,13 @@ const StockImport = () => {
                         )}
                       </div>
                       {receipt.status !== 'cancelled' && (
-                        <div className="border-t border-slate-100/60 pt-3 flex justify-end">
+                        <div className="border-t border-slate-100/60 pt-3 flex justify-end" onClick={(e) => e.stopPropagation()}>
                           <button
                             type="button"
-                            onClick={() => handleRevertReceipt(receipt.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRevertReceipt(receipt.id);
+                            }}
                             className="w-full text-center py-2.5 rounded-xl text-[10px] font-black text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-100 transition-colors uppercase tracking-widest focus-visible:ring-2 focus-visible:ring-red-300 outline-none cursor-pointer"
                             aria-label={`Hủy phiếu nhập kho ${receipt.id}`}
                           >
@@ -1377,6 +1440,19 @@ const StockImport = () => {
           </div>
         )}
       </div>
+
+      <ImportReceiptDetailDrawer
+        open={isDetailOpen}
+        onClose={() => {
+          setIsDetailOpen(false);
+          setSelectedReceipt(null);
+        }}
+        receipt={selectedReceipt}
+        onRevert={(id) => {
+          setIsDetailOpen(false);
+          handleRevertReceipt(id);
+        }}
+      />
     </div>
   );
 };

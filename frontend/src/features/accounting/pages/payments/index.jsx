@@ -7,6 +7,7 @@ import PaymentHistoryTable from '../../components/Tables/PaymentHistoryTable';
 import PaymentConfirmationModal from '../../components/Modals/PaymentConfirmationModal';
 import PrintableInvoiceTemplate from '../../components/Print/PrintableInvoiceTemplate';
 import '../../styles/accounting.css';
+import { formatVND } from '../../../../utils/formatVND';
 
 const getDaysInMonth = (year, month) => new Date(year, month, 0).getDate();
 const getFirstDayOfMonth = (year, month) => {
@@ -207,7 +208,7 @@ const PaymentManagement = () => {
         type: 'voucher',
         data: {
           id: payment.id,
-          amount: payment.amount?.toLocaleString('vi-VN'),
+          amount: formatVND(payment.amount, false),
           method: payment.method === 'Cash' ? 'Tiền mặt' : payment.method === 'Transfer' ? 'Chuyển khoản' : 'Thẻ/POS',
           recordedBy: payment.recordedBy,
           paymentDate: payment.paymentDate,

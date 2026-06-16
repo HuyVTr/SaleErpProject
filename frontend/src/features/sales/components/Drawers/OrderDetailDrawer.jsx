@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Drawer, 
   Box, 
@@ -19,17 +19,9 @@ import {
   Payments as PaymentsIcon
 } from '@mui/icons-material';
 import salesService from '../../services/salesService';
+import { formatVND, VNDDisplay } from '../../../../utils/formatVND';
 
 // --- HÀM ĐỊNH DẠNG NGÀY HOẠT ĐỘNG (chỉ hiển thị ngày, DB dùng kiểu DATE) ---
-const formatDate = (dateStr) => {
-  if (!dateStr) return "N/A";
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return "N/A";
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-  return `${day}/${month}/${year}`;
-};
 
 import { useSwipeToClose } from './useSwipeToClose';
 
@@ -89,8 +81,7 @@ const OrderDetailDrawer = ({ open, onClose, order, onRefresh }) => {
 
   const formatCurrency = (val, customColorClass = 'text-[#00288E]') => {
     if (val === undefined || val === null) return "0 VND";
-    const num = typeof val === 'number' ? val : Number(val.toString().replace(/[đ₫\sVND.]/g, ''));
-    const formatted = new Intl.NumberFormat('vi-VN').format(num);
+    const formatted = formatVND(val, false);
     return (
       <span className="inline-flex items-baseline gap-0.5 font-inter">
         <span className={`font-black ${customColorClass}`}>{formatted}</span>

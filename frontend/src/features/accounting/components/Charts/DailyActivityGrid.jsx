@@ -1,8 +1,9 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
+import { formatVND, VNDDisplay, CURRENCY_CLASS_PRIMARY, CURRENCY_CLASS_SECONDARY } from '../../../../utils/formatVND';
 
 const DailyActivityGrid = ({ loading, apiData, dateFilter, onSelectDay, selectedDay }) => {
   const [hoveredDay, setHoveredDay] = useState(null);
-  
+
   const daysInMonth = (month, year) => new Date(year, month + 1, 0).getDate();
   const firstDayOfMonth = (month, year) => new Date(year, month, 1).getDay();
 
@@ -20,11 +21,6 @@ const DailyActivityGrid = ({ loading, apiData, dateFilter, onSelectDay, selected
       return { day, revenue: 0, debt: 0, actual: 0, intensity: 0 };
     });
   }, [month, year, totalDays, apiData]);
-
-  const formatCurrency = (val) => {
-    if (val === undefined || val === null) return '0 VND';
-    return val.toLocaleString('vi-VN') + ' VND';
-  };
 
   if (loading) {
     return (
@@ -71,7 +67,7 @@ const DailyActivityGrid = ({ loading, apiData, dateFilter, onSelectDay, selected
                   onSelectDay && onSelectDay(data.day);
                 }
               }}
-              aria-label={`Ngày ${data.day}, Doanh thu: ${data.revenue.toLocaleString('vi-VN')} VND`}
+              aria-label={`Ngày ${data.day}, Doanh thu: ${formatVND(data.revenue)}`}
               className={`relative rounded-lg transition-all duration-300 cursor-pointer border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-acc-primary ${selectedDay === data.day ? 'border-acc-primary ring-2 ring-acc-primary/20 scale-[1.03] z-10 shadow-sm' : (data.intensity > 0 ? 'border-transparent' : 'border-slate-100/60')} hover:border-acc-primary/40 group overflow-hidden min-h-[2rem] sm:min-h-[2.5rem]`}
               style={{ 
                   backgroundColor: data.intensity > 0 
@@ -114,18 +110,16 @@ const DailyActivityGrid = ({ loading, apiData, dateFilter, onSelectDay, selected
                     <div className="space-y-2.5">
                         <div className="flex justify-between items-center">
                             <span className="text-[10px] text-acc-text-light font-black uppercase tracking-tighter">Doanh thu</span>
-                            <div className="flex items-baseline gap-0.5 text-emerald-600">
+                            <div className={`flex items-baseline gap-0.5 text-emerald-600 ${CURRENCY_CLASS_SECONDARY}`}>
                                 <span className="text-[9px] font-black">+</span>
-                                <span className="text-[10px] font-black">{hoveredDay.revenue.toLocaleString('vi-VN')}</span>
-                                <span className="text-[8px] font-bold opacity-70 ml-0.5">VND</span>
+                                <VNDDisplay value={hoveredDay.revenue} className="text-[10px] font-black" />
                             </div>
                         </div>
                         <div className="flex justify-between items-center">
                             <span className="text-[10px] text-acc-text-light font-black uppercase tracking-tighter">Công nợ</span>
-                            <div className="flex items-baseline gap-0.5 text-rose-500">
+                            <div className={`flex items-baseline gap-0.5 text-rose-500 ${CURRENCY_CLASS_SECONDARY}`}>
                                 <span className="text-[9px] font-black">-</span>
-                                <span className="text-[10px] font-black">{hoveredDay.debt.toLocaleString('vi-VN')}</span>
-                                <span className="text-[8px] font-bold opacity-70 ml-0.5">VND</span>
+                                <VNDDisplay value={hoveredDay.debt} className="text-[10px] font-black" />
                             </div>
                         </div>
                         <div className="flex justify-between items-center">
@@ -143,8 +137,7 @@ const DailyActivityGrid = ({ loading, apiData, dateFilter, onSelectDay, selected
                         <div className="flex justify-between items-center pt-2.5 border-t border-slate-100">
                             <span className="text-[11px] text-acc-text-main font-black uppercase tracking-wider">Thực thu</span>
                             <div className="flex items-baseline gap-0.5 bg-acc-primary/10 px-3 py-1 rounded-lg text-acc-primary">
-                                <span className="text-[10px] font-black">{hoveredDay.actual.toLocaleString('vi-VN')}</span>
-                                <span className="text-[8px] font-bold opacity-70 ml-0.5">VND</span>
+                                <VNDDisplay value={hoveredDay.actual} className="text-[10px] font-black" />
                             </div>
                         </div>
                     </div>
@@ -156,4 +149,4 @@ const DailyActivityGrid = ({ loading, apiData, dateFilter, onSelectDay, selected
   );
 };
 
-export default DailyActivityGrid;
+export default React.memo(DailyActivityGrid);

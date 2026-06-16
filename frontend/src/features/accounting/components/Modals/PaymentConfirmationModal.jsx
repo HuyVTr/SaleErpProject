@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { VNDDisplay, CURRENCY_CLASS_PRIMARY, CURRENCY_CLASS_SECONDARY } from '../../../../utils/formatVND';
+import ConfirmDialog from './ConfirmDialog';
 
 const PaymentConfirmationModal = ({ isOpen, onClose, invoice, onConfirm, loading }) => {
   const [amount, setAmount] = useState(0);
   const [method, setMethod] = useState('Transfer'); // Cash, Transfer, Card
   const [note, setNote] = useState('');
   const [nextPaymentDate, setNextPaymentDate] = useState('');
+  const [showConfirmClose, setShowConfirmClose] = useState(false);
 
   useEffect(() => {
     if (invoice) {
@@ -25,9 +28,7 @@ const PaymentConfirmationModal = ({ isOpen, onClose, invoice, onConfirm, loading
   const handleCloseAttempt = () => {
     const isDirty = parseFloat(amount) !== remainingBefore || note.trim() !== '' || nextPaymentDate !== '';
     if (isDirty) {
-      if (window.confirm('Bạn có thay đổi chưa lưu. Bạn có chắc muốn đóng và hủy bỏ thao tác thu tiền này không?')) {
-        onClose();
-      }
+      setShowConfirmClose(true);
     } else {
       onClose();
     }
@@ -50,7 +51,7 @@ const PaymentConfirmationModal = ({ isOpen, onClose, invoice, onConfirm, loading
     });
   };
 
-  return createPortal(
+  const modalPortal = createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-0 sm:p-4 acc-modal-overlay">
       {/* 
           NOTE KỸ THUẬT: KHÔNG ĐƯỢC CHỈNH SỬA CODE PLATFORM DESKTOP NGOÀI KÍCH THƯỚC MODAL.
@@ -127,7 +128,7 @@ const PaymentConfirmationModal = ({ isOpen, onClose, invoice, onConfirm, loading
                     onChange={(e) => setNextPaymentDate(e.target.value)}
                     className="w-full bg-red-50/50 border-2 border-red-100 focus:border-acc-error focus:ring-4 focus:ring-acc-error/10 focus:bg-white rounded-2xl px-5 py-3 text-body-sm text-acc-error font-bold transition-all outline-none focus-visible:ring-2 focus-visible:ring-acc-error"
                   />
-                  <p className="text-[10px] text-red-400 font-medium italic tabular-nums">* Khách hàng còn nợ {remainingAfter.toLocaleString('vi-VN')} VND</p>
+                  <p className="text-[10px] text-red-400 font-medium italic tabular-nums">* Khách hàng còn nợ <VNDDisplay value={remainingAfter} /></p>
                 </div>
               )}
 
@@ -175,18 +176,16 @@ const PaymentConfirmationModal = ({ isOpen, onClose, invoice, onConfirm, loading
                 <div className="space-y-3">
                   <div className="flex justify-between items-center text-body-sm">
                     <span className="text-acc-text-muted">Tổng nợ hiện tại:</span>
-                    <span className="font-bold text-acc-text-main tabular-nums">{remainingBefore.toLocaleString('vi-VN')} VND</span>
+                    <VNDDisplay value={remainingBefore} className="font-bold text-acc-text-main tabular-nums" />
                   </div>
                   <div className="flex justify-between items-center text-body-sm">
                     <span className="text-acc-text-muted">Số tiền thu mới:</span>
-                    <span className="font-bold text-acc-primary tabular-nums">-{parseFloat(amount || 0).toLocaleString('vi-VN')} VND</span>
+                    <span className="font-bold text-acc-primary tabular-nums">-<VNDDisplay value={parseFloat(amount || 0)} /></span>
                   </div>
                   <div className="pt-4 border-t border-dashed border-slate-300">
                     <div className="flex justify-between items-center">
                       <span className="text-label-xs text-acc-text-light uppercase">Nợ còn lại:</span>
-                      <span className={`text-heading-sm font-black tabular-nums ${remainingAfter === 0 ? 'text-green-600' : 'text-acc-error'}`}>
-                        {remainingAfter.toLocaleString('vi-VN')} VND
-                      </span>
+                      <VNDDisplay value={remainingAfter} className={`text-heading-sm font-black tabular-nums ${remainingAfter === 0 ? 'text-green-600' : 'text-acc-error'}`} />
                     </div>
                   </div>
                 </div>
@@ -222,6 +221,24 @@ const PaymentConfirmationModal = ({ isOpen, onClose, invoice, onConfirm, loading
       </div>
     </div>,
     document.body
+  );
+
+  return (
+    <>
+      {modalPortal}
+      <ConfirmDialog
+        isOpen={showConfirmClose}
+        title="Thay đổi chưa lưu"
+        message="Bạn có thay đổi chưa lưu. Bạn có chắc muốn đóng và hủy bỏ thao tác thu tiền này không?"
+        confirmLabel="Đồng ý đóng"
+        cancelLabel="Hủy"
+        onConfirm={() => {
+          setShowConfirmClose(false);
+          onClose();
+        }}
+        onCancel={() => setShowConfirmClose(false)}
+      />
+    </>
   );
 };
 

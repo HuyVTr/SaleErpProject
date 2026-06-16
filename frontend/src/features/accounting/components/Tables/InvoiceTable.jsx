@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { VNDDisplay, CURRENCY_CLASS_PRIMARY, CURRENCY_CLASS_SECONDARY } from '../../../../utils/formatVND';
 
 const InvoiceTable = ({ invoices, onSelect, selectedId, loading, isCompleted = false }) => {
   const [sortConfig, setSortConfig] = useState({ key: 'displayID', direction: 'desc' });
@@ -185,7 +186,7 @@ const InvoiceTable = ({ invoices, onSelect, selectedId, loading, isCompleted = f
                     </div>
                   </td>
                   <td className="px-8 py-5 text-left tabular-nums whitespace-nowrap" data-label="Giá trị">
-                    <span className="text-sm font-black tracking-tighter m-0">{(displayValue || 0).toLocaleString('vi-VN')}&nbsp;<small className="text-[10px] opacity-70 font-bold">VND</small></span>
+                    <VNDDisplay value={displayValue || 0} />
                   </td>
                   <td className="px-8 py-5 text-center" data-label="Trạng thái">
                     <span className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider shadow-sm transition-colors whitespace-nowrap ${
@@ -290,10 +291,7 @@ const InvoiceTable = ({ invoices, onSelect, selectedId, loading, isCompleted = f
                   <p className={`text-[9px] font-black uppercase tracking-widest mb-0.5 ${isSelected ? 'text-white/60' : 'text-slate-400'}`}>
                     {isCompleted ? 'Tổng giá trị' : 'Còn lại'}
                   </p>
-                  <p className={`text-sm font-black tabular-nums ${isSelected ? 'text-white' : 'text-acc-primary'}`}>
-                    {(displayValue || 0).toLocaleString('vi-VN')}
-                    <small className={`text-[9px] font-bold ml-1 ${isSelected ? 'text-white/70' : 'opacity-60'}`}>VND</small>
-                  </p>
+                  <VNDDisplay value={displayValue || 0} className={`text-sm font-black tabular-nums ${isSelected ? 'text-white' : `text-acc-primary ${CURRENCY_CLASS_PRIMARY}`}`} />
                 </div>
 
                 {/* Footer */}
@@ -344,11 +342,11 @@ const InvoiceTable = ({ invoices, onSelect, selectedId, loading, isCompleted = f
         </div>
         <div className="flex items-center gap-3 sm:gap-4 text-xs font-black text-acc-text-main w-full sm:w-auto justify-between sm:justify-end">
           <span className="text-slate-400 uppercase text-[9px] font-black tracking-widest">{isCompleted ? 'Tổng giá trị:' : 'Tổng chờ thu:'}</span>
-          <span className="tabular-nums text-acc-primary text-sm font-black">{totalValue.toLocaleString('vi-VN')} VND</span>
+          <VNDDisplay value={totalValue} className="tabular-nums text-acc-primary text-sm font-black" />
         </div>
       </div>
     </div>
   );
 };
 
-export default InvoiceTable;
+export default React.memo(InvoiceTable);

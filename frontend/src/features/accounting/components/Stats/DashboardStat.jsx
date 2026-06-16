@@ -1,4 +1,20 @@
 import React from 'react';
+import { formatVND, VNDDisplay, CURRENCY_CLASS_PRIMARY, CURRENCY_CLASS_SECONDARY } from '../../../../utils/formatVND';
+
+const getResponsiveValueClass = (val) => {
+  if (!val) return "text-base sm:text-lg lg:text-lg xl:text-xl";
+  const str = String(val).replace(/\./g, '');
+  const len = str.length;
+  if (len <= 10) {
+    return "text-base sm:text-lg lg:text-lg xl:text-xl";
+  } else if (len <= 15) {
+    return "text-sm sm:text-base lg:text-[13px] xl:text-lg";
+  } else if (len <= 20) {
+    return "text-xs sm:text-sm lg:text-[11px] xl:text-base";
+  } else {
+    return "text-[10px] sm:text-xs lg:text-[10px] xl:text-sm";
+  }
+};
 
 const DashboardStat = ({ label, value, trend, isPositive, icon: Icon, color, loading, growth, tooltipAlign = 'left' }) => {
   const [showTooltip, setShowTooltip] = React.useState(false);
@@ -43,8 +59,8 @@ const DashboardStat = ({ label, value, trend, isPositive, icon: Icon, color, loa
 
     const { percent, isUp, prevValue, label: comparisonLabel } = data;
     const formatTooltipValue = (val) => {
-      if (typeof val === 'number') return val.toLocaleString('vi-VN');
-      return val;
+      if (label.includes('Hóa đơn')) return val;
+      return formatVND(val);
     };
 
     const isRight = tooltipAlign === 'right';
@@ -83,8 +99,15 @@ const DashboardStat = ({ label, value, trend, isPositive, icon: Icon, color, loa
 
               <div className="space-y-0.5">
                 <p className="text-[8px] font-bold text-slate-400 uppercase tracking-tight">Giá trị trước đó</p>
-                <p className="text-xs font-black text-slate-700 font-mono">
-                  {formatTooltipValue(prevValue)} {label.includes('Hóa đơn') ? '' : 'VND'}
+                <p className="text-xs font-mono">
+                  {label.includes('Hóa đơn') ? (
+                    <span className={CURRENCY_CLASS_PRIMARY}>{formatTooltipValue(prevValue)}</span>
+                  ) : (
+                    <>
+                      <span className={CURRENCY_CLASS_PRIMARY}>{formatVND(prevValue, false)}</span>{' '}
+                      <span className={CURRENCY_CLASS_PRIMARY}>VND</span>
+                    </>
+                  )}
                 </p>
               </div>
 
@@ -135,10 +158,17 @@ const DashboardStat = ({ label, value, trend, isPositive, icon: Icon, color, loa
         <div className="space-y-0.5 sm:space-y-1">
           <p className="text-[8px] sm:text-[9px] text-acc-text-light font-bold truncate uppercase tracking-widest leading-none">{label}</p>
           <h2
-            className="acc-summary-value text-sm sm:text-base md:text-lg xl:text-xl font-black text-acc-text-main tracking-tight group-hover:text-acc-primary transition-colors overflow-hidden text-ellipsis leading-tight"
+            className={`block w-full font-black text-acc-text-main tracking-tight group-hover:text-acc-primary transition-colors overflow-hidden text-ellipsis whitespace-nowrap leading-tight ${getResponsiveValueClass(value)}`}
             title={value}
           >
-            {value}
+            {typeof value === 'string' && value.endsWith(' VND') ? (
+              <>
+                <span className="text-inherit">{value.replace(' VND', '')}</span>{' '}
+                <span className="text-inherit">VND</span>
+              </>
+            ) : (
+              value
+            )}
           </h2>
         </div>
       </div>

@@ -95,42 +95,42 @@ const getLocalInvoices = () => {
   try {
     const raw = localStorage.getItem('added_invoices');
     return raw ? JSON.parse(raw) : [];
-  } catch (e) { return []; }
+  } catch { return []; }
 };
 
 const getLocalOrders = () => {
   try {
     const raw = localStorage.getItem('added_orders');
     return raw ? JSON.parse(raw) : [];
-  } catch (e) { return []; }
+  } catch { return []; }
 };
 
 const getLocalCustomers = () => {
   try {
     const raw = localStorage.getItem('added_customers');
     return raw ? JSON.parse(raw) : [];
-  } catch (e) { return []; }
+  } catch { return []; }
 };
 
 const getLocalProducts = () => {
   try {
     const raw = localStorage.getItem('added_products');
     return raw ? JSON.parse(raw) : [];
-  } catch (e) { return []; }
+  } catch { return []; }
 };
 
 const getDeletedProductIds = () => {
   try {
     const raw = localStorage.getItem('deleted_product_ids');
     return raw ? JSON.parse(raw) : [];
-  } catch (e) { return []; }
+  } catch { return []; }
 };
 
 const getInvoiceOverrides = () => {
   try {
     const raw = localStorage.getItem('invoice_overrides');
     return raw ? JSON.parse(raw) : [];
-  } catch (e) { return []; }
+  } catch { return []; }
 };
 
 const getAllCurrentInvoices = () => {
@@ -151,7 +151,7 @@ const getCurrentUser = () => {
   try {
     const raw = localStorage.getItem('current_user') || localStorage.getItem('user');
     return raw ? JSON.parse(raw) : null;
-  } catch (e) { return null; }
+  } catch { return null; }
 };
 
 // ─── SALES SERVICE LOGIC ───────────────────────────────────────────────────
@@ -189,12 +189,18 @@ const salesService = {
   },
 
   getOrders: async (userID, timeframe, options = {}) => {
+    const { page, limit } = options;
+    const hasServerPagination = page !== undefined && limit !== undefined;
+
     if (!USE_MOCK) {
       try {
-        const response = await api.get('/orders', { params: { userID, timeframe, ...options } });
+        const params = { userID, timeframe, ...options };
+        const response = await api.get('/orders', { params });
         const data = response.data?.data || response.data || [];
+        const pagination = response.data?.pagination;
         const customers = await salesService.getCustomers();
-        return data.map(o => {
+
+        const mapped = data.map(o => {
           const customer = customers.find(c => c.customerID === o.customerID) || o.customer;
           return {
             ...o,
@@ -204,6 +210,11 @@ const salesService = {
             date: o.orderDate || o.date ? new Date(o.orderDate || o.date).toLocaleDateString('vi-VN') : 'N/A'
           };
         });
+
+        if (hasServerPagination && pagination) {
+          mapped._pagination = pagination;
+        }
+        return mapped;
       } catch (e) {
         console.warn("Failed to fetch orders from API, falling back to mock:", e);
       }
@@ -349,11 +360,21 @@ const salesService = {
       });
   },
 
-  getProducts: async () => {
+  getProducts: async (options = {}) => {
+    const { page, limit } = options;
+    const hasServerPagination = page !== undefined && limit !== undefined;
+
     if (!USE_MOCK) {
       try {
-        const response = await api.get('/products');
-        return response.data?.data || response.data || [];
+        const params = { ...options };
+        const response = await api.get('/products', { params });
+        const data = response.data?.data || response.data || [];
+        const pagination = response.data?.pagination;
+
+        if (hasServerPagination && pagination) {
+          data._pagination = pagination;
+        }
+        return data;
       } catch (e) {
         console.warn("Failed to fetch products from API, falling back to mock:", e);
       }
@@ -377,72 +398,8 @@ const salesService = {
       return Array.from(productMap.values());
   },
 
-  // Tạo sản phẩm mới
-  createProduct: async (productData) => {
-    if (USE_MOCK) {
-      const local = getLocalProducts();
-      const apiData = dbData.products || [];
-      const deletedIds = getDeletedProductIds();
-      
-      const allIds = [
-        ...local.map(p => Number(p.productID) || 0),
-        ...apiData.map(p => Number(p.productID) || 0),
-        ...deletedIds.map(Number)
-      ];
-      
-      const maxId = allIds.reduce((max, id) => Math.max(max, id), 0);
-
-      const newProduct = {
-        ...productData,
-        productID: maxId + 1
-      };
-      localStorage.setItem('added_products', JSON.stringify([newProduct, ...local]));
-      return newProduct;
-    }
-    const response = await api.post('/products', productData);
-    return response.data;
-  },
-
-  // Cập nhật thông tin sản phẩm
-  updateProduct: async (productID, productData) => {
-    if (USE_MOCK) {
-      const local = getLocalProducts();
-      const updatedLocal = local.map(p => 
-        Number(p.productID) === Number(productID) ? { ...p, ...productData } : p
-      );
-      const isOriginal = !local.some(p => Number(p.productID) === Number(productID));
-      if (isOriginal) {
-        const originalProduct = dbData.products.find(p => Number(p.productID) === Number(productID));
-        if (originalProduct) {
-          const updatedOriginal = { ...originalProduct, ...productData };
-          localStorage.setItem('added_products', JSON.stringify([updatedOriginal, ...local]));
-        }
-      } else {
-        localStorage.setItem('added_products', JSON.stringify(updatedLocal));
-      }
-      return { success: true };
-    }
-    const response = await api.put(`/products/${productID}`, productData);
-    return response.data;
-  },
-
-  // Xóa sản phẩm
-  deleteProduct: async (productID) => {
-    if (USE_MOCK) {
-      const local = getLocalProducts();
-      const updatedLocal = local.filter(p => Number(p.productID) !== Number(productID));
-      localStorage.setItem('added_products', JSON.stringify(updatedLocal));
-      
-      const deletedIds = getDeletedProductIds();
-      if (!deletedIds.includes(Number(productID))) {
-        deletedIds.push(Number(productID));
-        localStorage.setItem('deleted_product_ids', JSON.stringify(deletedIds));
-      }
-      return { success: true };
-    }
-    const response = await api.delete(`/products/${productID}`);
-    return response.data;
-  },
+  // Lưu ý: Module Sales chỉ được XEM và TÌM KIẾM sản phẩm.
+  // Việc tạo/sửa/xóa sản phẩm thuộc về module Admin (xem adminService).
 
   // Lấy danh sách danh mục
   getCategories: async () => {
@@ -469,6 +426,7 @@ const salesService = {
           const customer = customers.find(c => c.customerID === q.customerID) || q.customer;
           return {
             ...q,
+            status: q.quotationStatus || q.status || 'PENDING',
             displayID: `QUO-${q.quotationID.toString().padStart(3, '0')}`,
             customerName: customer ? (customer.companyName || `${customer.lastName} ${customer.firstName}`) : 'Khách hàng lẻ',
             customerEmail: customer ? customer.email : 'N/A',

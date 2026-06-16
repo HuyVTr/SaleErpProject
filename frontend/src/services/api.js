@@ -1,8 +1,10 @@
 import axios from 'axios';
+import tokenStorage from '../utils/tokenStorage';
 
 // Cấu hình Axios base
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -14,7 +16,7 @@ api.interceptors.request.use(
     if (config.url && config.url.startsWith('/api')) {
       config.url = config.url.replace(/^\/api/, '');
     }
-    const token = localStorage.getItem('access_token') || localStorage.getItem('token') || localStorage.getItem('auth_token');
+    const token = tokenStorage.getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -23,15 +25,88 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response Interceptor: xử lý lỗi toàn cục
+// Quản lý việc refresh token và lưu trữ các request bị treo để thực hiện lại sau khi refresh thành công
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+// Response Interceptor: xử lý lỗi toàn cục và tự động refresh token
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('token');
-      localStorage.removeItem('auth_token');
-      window.location.href = '/login';
+    const originalRequest = error.config;
+
+    // Tránh vòng lặp vô hạn và chỉ xử lý lỗi 401
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      // Bỏ qua nếu là request liên quan đến login hoặc chính endpoint refresh
+      if (originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/refresh')) {
+        tokenStorage.clear();
+        return Promise.reject(error);
+      }
+
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return api(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      const refreshToken = tokenStorage.getRefreshToken();
+      if (!refreshToken) {
+        isRefreshing = false;
+        tokenStorage.clear();
+        window.location.href = '/login';
+        return Promise.reject(error);
+      }
+
+      try {
+        // Gọi API refresh token
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/refresh`,
+          { refreshToken }
+        );
+
+        const { token: newAccessToken, refreshToken: newRefreshToken } = response.data?.data || response.data || {};
+        
+        if (newAccessToken) {
+          tokenStorage.setToken(newAccessToken);
+          if (newRefreshToken) {
+            tokenStorage.setRefreshToken(newRefreshToken);
+          }
+          
+          api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          
+          processQueue(null, newAccessToken);
+          return api(originalRequest);
+        } else {
+          throw new Error('Refresh token response missing access token');
+        }
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        tokenStorage.clear();
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
     }
     return Promise.reject(error);
   }

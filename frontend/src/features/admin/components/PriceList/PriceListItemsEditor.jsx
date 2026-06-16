@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import ProductPickerDrawer from './ProductPickerDrawer';
-
-const formatCurrency = (val) => `${new Intl.NumberFormat('vi-VN').format(val || 0)} đ`;
+import { formatVND } from '../../../../utils/formatVND';
 
 const PriceListItemsEditor = ({ items, onChange }) => {
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -63,14 +62,14 @@ const PriceListItemsEditor = ({ items, onChange }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {items.map(item => (
-                <tr key={item.productID}>
+              {items.map((item, idx) => (
+                <tr key={item.productID ?? item.id ?? idx}>
                   <td className="px-4 py-3">
                     <p className="font-bold text-sm text-slate-800">{item.productName}</p>
                     <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">ĐVT: {item.unit}</p>
                   </td>
                   <td className="px-4 py-3 text-right text-sm font-semibold text-slate-500 tabular-nums">
-                    {formatCurrency(item.basePrice)}
+                    {formatVND(item.basePrice)}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <input

@@ -19,6 +19,7 @@ import adminService from '../../services/adminService';
 import salesService from '../../../sales/services/salesService';
 import dbData from '../../../../../db.json';
 import { useSwipeToClose } from '../../../sales/components/Drawers/useSwipeToClose';
+import { VNDDisplay, CURRENCY_CLASS_SECONDARY } from '../../../../utils/formatVND';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '---';
@@ -30,16 +31,6 @@ const formatDate = (dateStr) => {
   return `${day}/${month}/${year}`;
 };
 
-const formatCurrency = (val, customColorClass = 'text-[#00288E]') => {
-  if (val === undefined || val === null) return "0 VND";
-  const formatted = new Intl.NumberFormat('vi-VN').format(val);
-  return (
-    <span className="inline-flex items-baseline gap-0.5 font-inter">
-      <span className={`font-black ${customColorClass}`}>{formatted}</span>
-      <span className="text-[10px] font-black uppercase tracking-tighter text-slate-400 ml-0.5">VND</span>
-    </span>
-  );
-};
 
 const getStatusStyle = (status) => {
   if (status === 'Còn hàng') return 'bg-emerald-50 text-emerald-700 border-emerald-100';
@@ -95,8 +86,17 @@ const CategoryDetailDrawer = ({ open, onClose, category, onEdit, onDelete }) => 
 
       // 5. Lọc sản phẩm thuộc danh mục này
       const catProducts = allProducts.filter(p => {
-        const catName = p.categoryName || p.category || '';
-        return String(p.categoryID) === String(category.id) || catName.toLowerCase() === category.name.toLowerCase();
+        let catNameStr = '';
+        if (p.categoryName) {
+          catNameStr = typeof p.categoryName === 'object' ? (p.categoryName.name || p.categoryName.categoryName || '') : String(p.categoryName);
+        } else if (p.category) {
+          catNameStr = typeof p.category === 'object' ? (p.category.name || p.category.categoryName || '') : String(p.category);
+        }
+        
+        const catIdMatches = String(p.categoryID) === String(category.id);
+        const catNameMatches = category.name && catNameStr && catNameStr.toLowerCase() === category.name.toLowerCase();
+        
+        return catIdMatches || catNameMatches;
       }).map(p => {
         const pID = p.productID || p.id;
         const items = allOrderItems.filter(oi => Number(oi.productID) === Number(pID));
@@ -291,7 +291,7 @@ const CategoryDetailDrawer = ({ open, onClose, category, onEdit, onDelete }) => 
                   <div>
                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 font-inter">Doanh thu thu hồi</p>
                     <p className="text-lg font-black text-emerald-700 font-inter">
-                      {loading ? <CircularProgress size={14} sx={{ color: '#059669' }} /> : formatCurrency(stats.totalRevenue, 'text-emerald-700')}
+                      {loading ? <CircularProgress size={14} sx={{ color: '#059669' }} /> : <VNDDisplay value={stats.totalRevenue} className={CURRENCY_CLASS_SECONDARY} />}
                     </p>
                   </div>
                   <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
@@ -772,7 +772,7 @@ const CategoryDetailDrawer = ({ open, onClose, category, onEdit, onDelete }) => 
                     <div className="bg-gradient-to-br from-emerald-50 to-teal-50/30 p-4 rounded-xl border border-emerald-100">
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 font-inter">Doanh thu thu hồi</p>
                       <p className="text-lg font-black text-emerald-700 font-inter">
-                        {formatCurrency(stats.totalRevenue, 'text-emerald-700')}
+                        {(stats.totalRevenue || 0).toLocaleString('vi-VN')} ₫
                       </p>
                     </div>
                   </div>
@@ -811,7 +811,7 @@ const CategoryDetailDrawer = ({ open, onClose, category, onEdit, onDelete }) => 
                             <p className="text-[10px] font-semibold text-slate-400 font-inter">Đã bán: {p.sold.toLocaleString('vi-VN')} {p.unit}</p>
                           </div>
                           <div className="shrink-0 text-right">
-                            <p className="text-xs font-black text-emerald-700 font-inter">{formatCurrency(p.revenue, 'text-emerald-700')}</p>
+                            <p className="text-xs font-black text-emerald-700 font-inter"><VNDDisplay value={p.revenue} className="text-emerald-700" /></p>
                           </div>
                         </div>
                       ))}

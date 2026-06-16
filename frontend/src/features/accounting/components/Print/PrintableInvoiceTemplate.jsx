@@ -1,6 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import dbData from '../../../../../db.json';
+import { formatVND } from '../../../../utils/formatVND';
 
 /**
  * ⚠️ Mẫu in TỔNG HỢP KẾ TOÁN PRO-MAX V4.5 (Multi-page Fix)
@@ -45,7 +45,7 @@ const PrintableInvoiceTemplate = ({ detail, extendedData }) => {
                     {item.name} <br/>
                     <small style={{ color: '#94a3b8' }}>Mã: {item.id}</small>
                   </td>
-                  <td style={{ padding: '0.6rem', textAlign: 'center', fontSize: '0.75rem', fontWeight: '900', whiteSpace: 'nowrap' }}>{item.amount?.toLocaleString()} VND</td>
+                  <td style={{ padding: '0.6rem', textAlign: 'center', fontSize: '0.75rem', fontWeight: '900', whiteSpace: 'nowrap' }}>{formatVND(item.amount || 0)}</td>
                   <td style={{ padding: '0.6rem', textAlign: 'right', fontSize: '0.7rem', fontWeight: '700', color: '#e11d48' }}>Trễ {item.days} Ngày</td>
                 </tr>
               ))}
@@ -57,7 +57,7 @@ const PrintableInvoiceTemplate = ({ detail, extendedData }) => {
         return (
           <div style={{ padding: '2rem', border: '2px solid #f1f5f9', borderRadius: '1.5rem', textAlign: 'center', backgroundColor: '#fcfcfc' }}>
             <p style={{ fontSize: '0.65rem', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.2em' }}>TỔNG TIỀN QUYẾT TOÁN</p>
-            <h2 style={{ fontSize: '2.5rem', fontWeight: '900', color: '#00288E', margin: '1rem 0', whiteSpace: 'nowrap' }}>{extendedData.data?.amount || extendedData.data?.value} VND</h2>
+            <h2 style={{ fontSize: '2.5rem', fontWeight: '900', color: '#00288E', margin: '1rem 0', whiteSpace: 'nowrap' }}>{formatVND(extendedData.data?.amount || extendedData.data?.value || 0)}</h2>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginTop: '2rem', textAlign: 'left' }}>
               <div style={{ backgroundColor: 'white', padding: '1rem', borderRadius: '1rem', border: '1px solid #e2e8f0' }}>
                 <span style={{ fontSize: '0.6rem', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase' }}>Đơn vị thụ hưởng</span>
@@ -78,7 +78,7 @@ const PrintableInvoiceTemplate = ({ detail, extendedData }) => {
                 {extendedData.data?.summary?.map((item, idx) => (
                   <div key={idx} style={{ padding: '1rem', border: '1px solid #e2e8f0', borderRadius: '1rem' }}>
                     <span style={{ fontSize: '0.6rem', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase' }}>{item.label}</span>
-                    <p style={{ margin: '0.5rem 0 0 0', fontWeight: '900', fontSize: '1rem', color: '#00288E', whiteSpace: 'nowrap' }}>{item.value} VND</p>
+                    <p style={{ margin: '0.5rem 0 0 0', fontWeight: '900', fontSize: '1rem', color: '#00288E', whiteSpace: 'nowrap' }}>{formatVND(item.value || 0)}</p>
                   </div>
                 ))}
              </div>
@@ -88,7 +88,7 @@ const PrintableInvoiceTemplate = ({ detail, extendedData }) => {
                   <div key={idx} style={{ marginBottom: '0.8rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', fontWeight: '700', marginBottom: '0.3rem' }}>
                       <span>{item.label}</span>
-                      <span style={{ whiteSpace: 'nowrap' }}>{item.value} VND</span>
+                      <span style={{ whiteSpace: 'nowrap' }}>{formatVND(item.value || 0)}</span>
                     </div>
                     <div style={{ height: '6px', backgroundColor: '#f1f5f9', borderRadius: '3px' }}>
                       <div style={{ height: '100%', width: '70%', backgroundColor: '#00288E', borderRadius: '3px' }}></div>
@@ -99,7 +99,7 @@ const PrintableInvoiceTemplate = ({ detail, extendedData }) => {
           </div>
         );
 
-      default: // INVOICE
+      default: { // INVOICE
         const items = detail.items || [];
         const subtotal = items.reduce((sum, item) => sum + ((item.price || item.unitPrice || 0) * (item.quantity || 0)), 0);
         const taxAmount = subtotal * 0.1;
@@ -152,7 +152,7 @@ const PrintableInvoiceTemplate = ({ detail, extendedData }) => {
                           {item.quantity}
                         </td>
                         <td style={{ padding: '1rem 0.8rem', textAlign: 'right', fontSize: '0.75rem', fontWeight: '900', color: '#00288E', border: '1px solid #edf2f7', whiteSpace: 'nowrap' }}>
-                          {((item.price || item.unitPrice || 0) * (item.quantity || 0))?.toLocaleString()} VND
+                          {formatVND(((item.price || item.unitPrice || 0) * (item.quantity || 0)) || 0)}
                         </td>
                       </tr>
                     ))}
@@ -164,26 +164,27 @@ const PrintableInvoiceTemplate = ({ detail, extendedData }) => {
             <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '1.5rem' }}>
               <div style={{ padding: '1.5rem', border: '1px solid #edf2f7', borderRadius: '1.5rem' }}>
                 <span style={{ fontSize: '0.6rem', fontWeight: '900', color: '#94a3b8' }}>TIẾN ĐỘ THANH TOÁN</span>
-                <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', fontWeight: '700', whiteSpace: 'nowrap' }}>Đã thanh toán: {paid.toLocaleString()} VND</p>
-                <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', fontWeight: '700', color: '#e53e3e', whiteSpace: 'nowrap' }}>Còn lại: {remaining.toLocaleString()} VND</p>
+                <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', fontWeight: '700', whiteSpace: 'nowrap' }}>Đã thanh toán: {formatVND(paid || 0)}</p>
+                <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', fontWeight: '700', color: '#e53e3e', whiteSpace: 'nowrap' }}>Còn lại: {formatVND(remaining || 0)}</p>
               </div>
               <div style={{ padding: '1.5rem', border: '1px solid #edf2f7', borderRadius: '1.5rem', backgroundColor: '#f8fafc' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
                   <span style={{ fontSize: '0.65rem', fontWeight: '700', color: '#64748b' }}>Tạm tính:</span>
-                  <span style={{ fontSize: '0.65rem', fontWeight: '700' }}>{subtotal.toLocaleString()} VND</span>
+                  <span style={{ fontSize: '0.65rem', fontWeight: '700' }}>{formatVND(subtotal || 0)}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                   <span style={{ fontSize: '0.65rem', fontWeight: '700', color: '#64748b' }}>VAT (10%):</span>
-                  <span style={{ fontSize: '0.65rem', fontWeight: '700' }}>{taxAmount.toLocaleString()} VND</span>
+                  <span style={{ fontSize: '0.65rem', fontWeight: '700' }}>{formatVND(taxAmount || 0)}</span>
                 </div>
                 <div style={{ borderTop: '1px dashed #cbd5e1', paddingTop: '0.5rem' }}>
                   <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase' }}>TỔNG CỘNG</p>
-                  <p style={{ margin: '0.3rem 0 0 0', fontSize: '1.4rem', fontWeight: '900', color: '#00288E', whiteSpace: 'nowrap' }}>{total.toLocaleString()} VND</p>
+                  <p style={{ margin: '0.3rem 0 0 0', fontSize: '1.4rem', fontWeight: '900', color: '#00288E', whiteSpace: 'nowrap' }}>{formatVND(total || 0)}</p>
                 </div>
               </div>
             </div>
           </>
         );
+      }
     }
   };
 

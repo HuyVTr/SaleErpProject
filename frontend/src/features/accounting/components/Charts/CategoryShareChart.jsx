@@ -1,5 +1,6 @@
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { VNDDisplay, CURRENCY_CLASS_PRIMARY, CURRENCY_CLASS_SECONDARY } from '../../../../utils/formatVND';
 
 const COLORS = ['#00288E', '#0052CC', '#4C9AFF', '#B3D4FF', '#DEEBFF'];
 
@@ -9,9 +10,7 @@ const CustomTooltip = ({ active, payload }) => {
     return (
       <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-slate-100 p-3 animate-in fade-in zoom-in duration-200">
         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{data.name}</p>
-        <p className="text-sm font-black text-acc-text-main">
-          {data.value.toLocaleString()} <small className="text-[10px] opacity-50">VND</small>
-        </p>
+        <VNDDisplay value={data.value} className={`text-sm font-black text-acc-text-main ${CURRENCY_CLASS_PRIMARY}`} />
       </div>
     );
   }
@@ -40,7 +39,7 @@ const CategoryShareChart = ({ data, loading }) => {
   }
 
   const RADIAN = Math.PI / 180;
-  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+  const renderCustomizedLabel = ({ cx, cy, midAngle, outerRadius, percent }) => {
     // Positioning labels just outside the outer radius for better readability
     const radius = outerRadius * 1.25;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
@@ -94,4 +93,4 @@ const CategoryShareChart = ({ data, loading }) => {
   );
 };
 
-export default CategoryShareChart;
+export default React.memo(CategoryShareChart);

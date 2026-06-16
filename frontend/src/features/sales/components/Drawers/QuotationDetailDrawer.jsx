@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Drawer, 
   Box, 
@@ -20,6 +20,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import salesService from '../../services/salesService';
+import { formatVND, VNDDisplay } from '../../../../utils/formatVND';
 
 const ActivityItem = ({ title, time, user, color = 'bg-slate-400', desc }) => (
   <Box className="relative font-inter">
@@ -37,15 +38,6 @@ const ActivityItem = ({ title, time, user, color = 'bg-slate-400', desc }) => (
   </Box>
 );
 
-const formatDate = (dateStr) => {
-  if (!dateStr) return '---';
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return '---';
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-  return `${day}/${month}/${year}`;
-};
 
 import { useSwipeToClose } from './useSwipeToClose';
 
@@ -115,8 +107,7 @@ const QuotationDetailDrawer = ({ open, onClose, quotation, onRefresh }) => {
 
   const formatCurrency = (val, customColorClass = 'text-[#00288E]') => {
     if (val === undefined || val === null) return "0 VND";
-    const num = typeof val === 'number' ? val : Number(val.toString().replace(/[đ₫\sVND.]/g, ''));
-    const formatted = new Intl.NumberFormat('vi-VN').format(num);
+    const formatted = formatVND(val, false);
     return (
       <span className="inline-flex items-baseline gap-0.5 font-inter">
         <span className={`font-black ${customColorClass}`}>{formatted}</span>
@@ -188,7 +179,7 @@ const QuotationDetailDrawer = ({ open, onClose, quotation, onRefresh }) => {
                     let details = { label: 'Chờ duyệt', bg: 'bg-amber-50 border-amber-200 text-amber-700', dot: 'bg-amber-500' };
                     if (s === 'APPROVED' || s === 'ĐỒNG Ý' || s === 'ĐÃ DUYỆT') {
                       details = { label: 'Đồng ý', bg: 'bg-emerald-50 border-emerald-200 text-emerald-700', dot: 'bg-emerald-500' };
-                    } else if (s === 'CANCELLED' || s === 'TỪ CHỐI' || s === 'ĐÃ HỦY') {
+                    } else if (s === 'CANCELLED' || s === 'REJECTED' || s === 'TỪ CHỐI' || s === 'ĐÃ HỦY') {
                       details = { label: 'Từ chối', bg: 'bg-red-50 border-red-200 text-red-700', dot: 'bg-red-500' };
                     }
                     return (
@@ -366,7 +357,7 @@ const QuotationDetailDrawer = ({ open, onClose, quotation, onRefresh }) => {
                 <span>Gửi lại Email</span>
               </button>
             </>
-          ) : (quotation.status === 'CANCELLED' || quotation.status === 'TỪ CHỐI' || quotation.status === 'ĐÃ HỦY') ? (
+          ) : (quotation.status === 'CANCELLED' || quotation.status === 'REJECTED' || quotation.status === 'TỪ CHỐI' || quotation.status === 'ĐÃ HỦY') ? (
             <>
               <button 
                 onClick={onClose}
@@ -403,7 +394,7 @@ const QuotationDetailDrawer = ({ open, onClose, quotation, onRefresh }) => {
                   iconColor: 'text-rose-500',
                   confirmLabel: 'Từ chối',
                   confirmClass: 'bg-rose-600 hover:bg-rose-700 shadow-rose-200',
-                  onConfirm: () => handleUpdateStatus('CANCELLED'),
+                  onConfirm: () => handleUpdateStatus('REJECTED'),
                 })}
                 className="flex-1 group flex items-center justify-center gap-1.5 bg-white border-2 border-rose-300 hover:bg-rose-50/50 text-rose-600 py-3.5 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-wider transition-all duration-300 active:scale-95 whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               >

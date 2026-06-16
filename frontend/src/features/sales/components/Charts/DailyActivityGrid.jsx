@@ -115,4 +115,4 @@ const DailyActivityGrid = ({ loading, apiData, dateFilter, onSelectDay, selected
   );
 };
 
-export default DailyActivityGrid;
+export default React.memo(DailyActivityGrid);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import warehouseService, { formatCurrency, formatDate } from '../../services/warehouseService';
+import warehouseService, { formatDate } from '../../services/warehouseService';
+import { VNDDisplay } from '../../../../utils/formatVND';
 
 // Luồng trạng thái chính (đồng bộ với Sales)
 const STATUS_FLOW = ['CONFIRMED', 'SHIPPING', 'DELIVERED'];
@@ -183,7 +184,8 @@ const DeliveryDetail = () => {
       await fetchOrder(); // Reload để lấy state mới nhất
     } catch (err) {
       console.error(err);
-      toast('Có lỗi xảy ra, vui lòng thử lại!', 'error');
+      const msg = err?.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại!';
+      toast(msg, 'error');
     } finally {
       setUpdating(false);
     }
@@ -227,7 +229,8 @@ const DeliveryDetail = () => {
       await fetchOrder();
     } catch (err) {
       console.error(err);
-      toast('Có lỗi xảy ra, vui lòng thử lại!', 'error');
+      const msg = err?.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại!';
+      toast(msg, 'error');
     } finally {
       setUpdating(false);
     }
@@ -498,8 +501,8 @@ const DeliveryDetail = () => {
                         <td className={`px-6 py-4 text-right font-black tabular-nums ${stockOk ? 'text-emerald-600' : 'text-red-500'}`}>
                           {item.stockQuantity ?? 'N/A'}
                         </td>
-                        <td className="px-6 py-4 text-right text-slate-500 font-medium tabular-nums">{formatCurrency(item.unitPrice)}</td>
-                        <td className="px-6 py-4 text-right font-black text-blue-600 tabular-nums">{formatCurrency(item.total)}</td>
+                        <td className="px-6 py-4 text-right text-slate-500 font-medium tabular-nums"><VNDDisplay value={item.unitPrice} /></td>
+                        <td className="px-6 py-4 text-right font-black text-blue-600 tabular-nums"><VNDDisplay value={item.total} customColorClass="text-blue-600" /></td>
                         <td className="px-6 py-4 text-center">
                           {stockOut ? (
                             <span style={{ fontSize: 'clamp(8px, 0.75vw, 10px)', padding: 'clamp(3px, 0.4vw, 5px) clamp(8px, 0.8vw, 12px)' }} className="bg-red-50 text-red-600 border-red-100 font-black rounded-lg border uppercase tracking-tighter whitespace-nowrap">Hết hàng</span>
@@ -519,7 +522,7 @@ const DeliveryDetail = () => {
                       Tổng cộng (đã gồm VAT 10%)
                     </td>
                     <td className="px-6 py-4 text-right font-black text-blue-600 text-lg tabular-nums">
-                      {formatCurrency(order.totalAmount)}
+                      <VNDDisplay value={order.totalAmount} isStat={true} customColorClass="text-blue-600" textSizeClass="text-lg" />
                     </td>
                     <td />
                   </tr>
@@ -561,32 +564,34 @@ const DeliveryDetail = () => {
                       <div className="grid grid-cols-2 gap-2 text-[10px] border-t border-slate-100 pt-3 mt-auto">
                         <div className="space-y-1">
                           <p className="text-slate-400 font-bold uppercase tracking-wider">Đơn giá</p>
-                          <p className="font-bold text-slate-600 tabular-nums">{formatCurrency(item.unitPrice)}</p>
-                        </div>
-                        <div className="space-y-1 text-right">
-                          <p className="text-slate-400 font-bold uppercase tracking-wider">Yêu cầu / Tồn</p>
-                          <p className="font-bold text-slate-800 tabular-nums">
-                            {item.quantity} <span className="text-slate-300">/</span> <span className={stockOk ? 'text-emerald-600' : 'text-red-500'}>{item.stockQuantity ?? '0'}</span>
-                          </p>
+                        <div className="font-bold text-slate-600 tabular-nums">
+                          <VNDDisplay value={item.unitPrice} />
                         </div>
                       </div>
-                      {/* Total Amount */}
-                      <div className="flex justify-between items-center bg-slate-50/70 px-2.5 py-1.5 rounded-lg border border-slate-100/50 mt-1">
-                        <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Thành tiền</span>
-                        <span className="font-black text-blue-600 text-[11px] tabular-nums">
-                          {formatCurrency(item.total)}
-                        </span>
+                      <div className="space-y-1 text-right">
+                        <p className="text-slate-400 font-bold uppercase tracking-wider">Yêu cầu / Tồn</p>
+                        <p className="font-bold text-slate-800 tabular-nums">
+                          {item.quantity} <span className="text-slate-300">/</span> <span className={stockOk ? 'text-emerald-600' : 'text-red-500'}>{item.stockQuantity ?? '0'}</span>
+                        </p>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-              {/* Total Footer */}
-              <div className="border-t border-slate-200 pt-4 flex justify-between items-center">
-                <span className="text-xs font-black text-slate-900 uppercase tracking-widest">Tổng cộng (đã gồm VAT 10%):</span>
-                <span className="font-black text-blue-600 text-lg tabular-nums">
-                  {formatCurrency(order.totalAmount)}
-                </span>
+                    {/* Total Amount */}
+                    <div className="flex justify-between items-center bg-slate-50/70 px-2.5 py-1.5 rounded-lg border border-slate-100/50 mt-1">
+                      <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Thành tiền</span>
+                      <span className="font-black text-blue-600 text-[11px] tabular-nums">
+                        <VNDDisplay value={item.total} customColorClass="text-blue-600" />
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {/* Total Footer */}
+            <div className="border-t border-slate-200 pt-4 flex justify-between items-center">
+              <span className="text-xs font-black text-slate-900 uppercase tracking-widest">Tổng cộng (đã gồm VAT 10%):</span>
+              <span className="font-black text-blue-600 text-lg tabular-nums">
+                <VNDDisplay value={order.totalAmount} isStat={true} customColorClass="text-blue-600" textSizeClass="text-lg" />
+              </span>
               </div>
             </div>
           </div>

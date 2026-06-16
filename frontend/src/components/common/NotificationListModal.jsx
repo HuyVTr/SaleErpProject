@@ -47,7 +47,7 @@ const NotificationListModal = ({ isOpen, onClose }) => {
       }
     });
 
-    return Object.entries(grouped).filter(([_, notifs]) => notifs.length > 0);
+    return Object.entries(grouped).filter(([, notifs]) => notifs.length > 0);
   };
 
   const getRelativeTime = (date) => {

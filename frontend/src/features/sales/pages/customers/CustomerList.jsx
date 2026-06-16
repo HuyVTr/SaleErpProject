@@ -4,36 +4,16 @@ import salesService from '../../services/salesService';
 import CustomerDetailDrawer from '../../components/Drawers/CustomerDetailDrawer';
 import { useSalesToast } from '../../components/Notification/useSalesToast';
 import SalesToastNotification from '../../components/Notification/SalesToastNotification';
+import { formatVND, VNDDisplay, CURRENCY_CLASS_PRIMARY } from '../../../../utils/formatVND';
 
 const formatCurrency = (val, isSmall = false, isStat = false) => {
   if (val === undefined || val === null) return "0 VND";
-  
-  let cleanVal = val;
-  const isMobileOrIpad = typeof window !== 'undefined' && window.innerWidth < 1024;
-  if (isMobileOrIpad && (typeof val === 'number' || typeof val === 'string')) {
-    const rawDigits = String(val).replace(/[^0-9]/g, '');
-    if (rawDigits.length > 15) {
-      const truncated = rawDigits.slice(0, 15);
-      const isNegative = String(val).startsWith('-');
-      cleanVal = Number(truncated) * (isNegative ? -1 : 1);
-    }
-  }
-
-  const formatted = typeof cleanVal === 'number' ? cleanVal.toLocaleString('vi-VN') : cleanVal.toString().replace(/[đ₫\sVND]/g, '').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
-  
-  if (isStat) {
-    return (
-      <span className="flex items-baseline gap-1.5 whitespace-nowrap">
-        <span className="font-black text-inherit">{formatted}</span>
-        <span className="font-black text-inherit uppercase tracking-tight">VND</span>
-      </span>
-    );
-  }
-
+  const formatted = formatVND(val, false);
+  const styleClass = isStat ? CURRENCY_CLASS_PRIMARY : (isSmall ? "font-bold text-slate-800" : "font-black text-slate-800");
   return (
-    <span className="flex items-baseline gap-1 whitespace-nowrap">
-      <span className={isSmall ? "font-bold text-slate-800" : "font-black text-slate-800"}>{formatted}</span>
-      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">VND</span>
+    <span className={`flex items-baseline gap-1 whitespace-nowrap ${isStat ? 'gap-1.5' : ''}`}>
+      <span className={styleClass}>{formatted}</span>
+      <span className={`text-[10px] font-bold uppercase tracking-tighter ${isStat ? 'text-inherit' : 'text-slate-400'}`}>VND</span>
     </span>
   );
 };
@@ -123,21 +103,13 @@ const CustomerList = () => {
         setLoading(true);
         const data = await salesService.getCustomers();
         const orders = await salesService.getOrders(null, 'all', { ignoreUserFilter: true });
-        const invoices = await salesService.getInvoices();
-        
         const mapped = data.map(c => {
           const customerOrders = orders.filter(o => o.customerID === c.customerID);
-          const customerInvoices = invoices.filter(inv => inv.customerID === c.customerID);
           
           const revenue = customerOrders.reduce((sum, o) => sum + (Number(o.totalAmount) || 0), 0);
           
-          // Logic Trạng thái: Đang giao dịch nếu có hóa đơn chưa thanh toán hết
-          const hasUnpaidInvoice = customerInvoices.some(inv => {
-            const s = (inv.status || '').toLowerCase();
-            return s !== 'paid' && s !== 'đã thanh toán' && s !== 'completed';
-          });
-
-          const isTrading = customerInvoices.length > 0 && hasUnpaidInvoice;
+          // Trạng thái lấy theo dữ liệu đã lưu trong CSDL (ACTIVE/INACTIVE)
+          const isTrading = (c.status || '').toUpperCase() === 'ACTIVE';
           
           return {
             ...c,
@@ -300,17 +272,10 @@ const CustomerList = () => {
 
     try {
       const orders = await salesService.getOrders(null, 'all', { ignoreUserFilter: true });
-      const invoices = await salesService.getInvoices();
       const quotations = await salesService.getQuotations(null, 'all', { ignoreUserFilter: true });
 
       const customerOrders = orders.filter(o => o.customerID === customer.customerID);
-      const customerInvoices = invoices.filter(inv => inv.customerID === customer.customerID);
       const customerQuotations = quotations.filter(q => q.customerID === customer.customerID);
-
-      const hasUnpaidInvoice = customerInvoices.some(inv => {
-        const s = (inv.status || '').toLowerCase();
-        return s !== 'paid' && s !== 'đã thanh toán' && s !== 'completed';
-      });
 
       const hasPendingOrder = customerOrders.some(o => {
         const s = (o.orderStatus || '').toLowerCase();
@@ -322,7 +287,7 @@ const CustomerList = () => {
         return s !== 'approved' && s !== 'đã duyệt' && s !== 'cancelled' && s !== 'đã hủy' && s !== 'completed';
       });
 
-      const hasHistory = customerOrders.length > 0 || customerInvoices.length > 0 || customerQuotations.length > 0;
+      const hasHistory = customerOrders.length > 0 || customerQuotations.length > 0;
 
       // Bị chặn hoàn toàn nếu còn lịch sử giao dịch vì ràng buộc ON DELETE RESTRICT trong srs.sql
       const allowed = !hasHistory;
@@ -330,13 +295,13 @@ const CustomerList = () => {
       setDeleteStatus({
         checking: false,
         allowed,
-        hasUnpaidInvoice,
+        hasUnpaidInvoice: false,
         hasPendingOrder,
         hasActiveQuotation,
         hasHistory,
         details: {
           ordersCount: customerOrders.length,
-          invoicesCount: customerInvoices.length,
+          invoicesCount: 0,
           quotationsCount: customerQuotations.length
         }
       });
@@ -1368,7 +1333,7 @@ const getArrowClasses = (idx) => {
   return leftArrow;
 };
 
-const GrowthBadge = ({ growth, type = 'number', currentValue, idx, activeTooltipIdx }) => {
+const GrowthBadge = ({ growth, type = 'number', currentValue, idx, activeTooltipIdx, setActiveTooltipIdx }) => {
   if (!growth) return null;
   const { percent, isUp, prevValue, label } = growth;
   

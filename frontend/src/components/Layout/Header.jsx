@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import authService from '../../features/auth/services/authService';
 import notificationService from '../../features/auth/services/notificationService';
 import dbData from '../../../db.json';
@@ -10,7 +10,6 @@ import { getInitials, getAvatarGradient } from '../../utils/avatarHelper';
 
 const Header = ({ onToggleSidebar, toggleBreakpoint = 'lg' }) => {
   const navigate = useNavigate();
-  const location = useLocation();
   const [user, setUser] = useState(null);
 
   // States cho Global Search Modal

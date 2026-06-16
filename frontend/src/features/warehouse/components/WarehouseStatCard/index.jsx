@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatCurrency } from '../../services/warehouseService';
+import { VNDDisplay, CURRENCY_CLASS_PRIMARY } from '../../../../utils/formatVND';
 
 const getResponsiveValueClass = (val, rawVal) => {
   let str = '';
@@ -86,13 +86,13 @@ const GrowthBadge = ({ growth, type = 'number', currentValue, idx, activeTooltip
             <div className="flex justify-between items-center gap-2">
               <span className="text-slate-500 font-medium">Kỳ trước:</span>
               <span className="font-black text-slate-700 text-[9px]">
-                {type === 'currency' ? formatCurrency(prevValue) : prevValue.toLocaleString('vi-VN')}
+                {type === 'currency' ? <VNDDisplay value={prevValue} className={CURRENCY_CLASS_PRIMARY} /> : prevValue.toLocaleString('vi-VN')}
               </span>
             </div>
             <div className="flex justify-between items-center gap-2">
               <span className="text-slate-500 font-medium">Kỳ này:</span>
               <span className={`font-black text-[9px] ${isUp ? 'text-emerald-600' : 'text-rose-600'}`}>
-                {type === 'currency' ? formatCurrency(currentValue) : Number(currentValue).toLocaleString('vi-VN')}
+                {type === 'currency' ? <VNDDisplay value={currentValue} className={CURRENCY_CLASS_PRIMARY} /> : Number(currentValue).toLocaleString('vi-VN')}
               </span>
             </div>
           </div>

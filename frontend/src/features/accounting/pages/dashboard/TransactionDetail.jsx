@@ -6,6 +6,8 @@ import html2canvas from 'html2canvas';
 import accountingService from '../../services/accountingService';
 import PrintableInvoiceTemplate from '../../components/Print/PrintableInvoiceTemplate';
 import { useSwipeToClose } from '../../utils/useSwipeToClose';
+import { useToast } from '../../../../components/feedback/ToastProvider';
+import { formatVND, CURRENCY_CLASS_PRIMARY, CURRENCY_CLASS_SECONDARY } from '../../../../utils/formatVND';
 
 // Từ điển nhãn tiếng Việt dùng chung
 const TRANSACTION_LABEL_MAP = {
@@ -47,6 +49,7 @@ const TransactionDetail = () => {
    const { id } = useParams();
    const navigate = useNavigate();
    const swipeHandlers = useSwipeToClose(() => navigate('/accounting'));
+   const { showToast } = useToast();
    const [detail, setDetail] = useState(null);
    const [extendedData, setExtendedData] = useState(null);
    const [loading, setLoading] = useState(true);
@@ -115,7 +118,7 @@ const TransactionDetail = () => {
          pdf.save(`HizoGroup_ChungTu_${id}_${new Date().getTime()}.pdf`);
       } catch (error) {
          console.error("Lỗi khi tải PDF:", error);
-         alert("Có lỗi xảy ra khi tạo file PDF. Vui lòng thử lại.");
+         showToast("Có lỗi xảy ra khi tạo file PDF. Vui lòng thử lại.", "error");
       } finally {
          setIsGeneratingPDF(false);
       }
@@ -341,7 +344,10 @@ const TransactionDetail = () => {
                                                 <span className="text-sm font-black text-acc-text-main block">{item.name}</span>
                                                 <span className="text-[10px] text-acc-text-light font-bold">Mã số: {item.id}</span>
                                              </td>
-                                             <td className="px-6 py-4 text-right text-sm font-black text-acc-text-main tabular-nums">{item.amount} <span className="text-[9px] opacity-40">VND</span></td>
+                                             <td className="px-6 py-4 text-right tabular-nums">
+                                                <span className={CURRENCY_CLASS_PRIMARY}>{formatVND(item.amount, false)}</span>{' '}
+                                                <span className={CURRENCY_CLASS_SECONDARY}>VND</span>
+                                             </td>
                                              <td className="px-6 py-4 text-right">
                                                 <span className={`inline-flex items-center px-2 py-0.5 rounded text-[8px] font-black border uppercase ${item.status === 'high' ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
                                                    Trễ {item.days} Ngày
@@ -384,7 +390,8 @@ const TransactionDetail = () => {
                                           <div className="flex items-center justify-between border-t border-slate-100 pt-3">
                                              <span className="text-[0.5625rem] font-black text-slate-400 uppercase tracking-widest">Giá trị giao dịch</span>
                                              <span className="text-sm font-black text-[#00288E] tabular-nums">
-                                                {item.amount} <span className="text-[0.5625rem] font-bold text-slate-400 uppercase tracking-tighter ml-0.5">VND</span>
+                                                <span className={CURRENCY_CLASS_PRIMARY}>{formatVND(item.amount, false)}</span>{' '}
+                                                <span className={CURRENCY_CLASS_SECONDARY}>VND</span>
                                              </span>
                                           </div>
                                        </div>
@@ -403,8 +410,9 @@ const TransactionDetail = () => {
                                     <div key={idx} className="p-4 rounded-3xl bg-slate-50 border border-slate-100 flex flex-col gap-2">
                                        <span className="text-[0.5rem] font-black text-acc-text-muted uppercase tracking-[0.2em] opacity-60">{item.label}</span>
                                        <div className="flex items-end justify-between">
-                                          <span className="text-xl font-black text-acc-text-main tabular-nums leading-none tracking-tight">
-                                             {item.value} <span className="text-[0.625rem] font-normal opacity-30">VND</span>
+                                          <span className="tabular-nums leading-none tracking-tight">
+                                             <span className={CURRENCY_CLASS_PRIMARY}>{formatVND(item.value, false)}</span>{' '}
+                                             <span className={CURRENCY_CLASS_SECONDARY}>VND</span>
                                           </span>
                                           <span className={`w-2.5 h-2.5 rounded-full ring-4 ring-white shadow-sm ${item.status === 'approved' ? 'bg-emerald-500' : 'bg-amber-400'}`}></span>
                                        </div>
@@ -423,7 +431,10 @@ const TransactionDetail = () => {
                                           <div key={idx} className="space-y-2">
                                              <div className="flex justify-between text-[0.6875rem] font-black uppercase">
                                                 <span className="text-acc-text-light">{item.label}</span>
-                                                <span className="text-acc-text-main">{item.value} VND</span>
+                                                <span>
+                                                   <span className={CURRENCY_CLASS_PRIMARY}>{formatVND(item.value, false)}</span>{' '}
+                                                   <span className={CURRENCY_CLASS_SECONDARY}>VND</span>
+                                                </span>
                                              </div>
                                              <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden border border-slate-100 p-0.5 shadow-inner">
                                                 <div className="h-full bg-acc-primary rounded-full transition-[width] duration-1000" style={{ width: `${85 - (idx * 12)}%` }}></div>
@@ -472,8 +483,8 @@ const TransactionDetail = () => {
                                     <div className="text-center space-y-1">
                                        <span className="text-[0.5625rem] font-black text-acc-text-light uppercase tracking-[0.4em]">Tổng tiền quyết toán</span>
                                        <h2 className="text-3xl sm:text-4xl font-black text-acc-text-main tracking-tighter tabular-nums leading-none">
-                                          {extendedData.data?.amount || extendedData.data?.value}
-                                          <span className="text-lg font-normal text-acc-text-light ml-2 opacity-40">VND</span>
+                                          <span className={CURRENCY_CLASS_PRIMARY}>{formatVND(extendedData.data?.amount || extendedData.data?.value, false)}</span>{' '}
+                                          <span className={CURRENCY_CLASS_SECONDARY}>VND</span>
                                        </h2>
                                     </div>
                                  </div>

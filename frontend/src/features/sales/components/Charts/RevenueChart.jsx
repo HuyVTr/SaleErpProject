@@ -84,4 +84,4 @@ const RevenueChart = ({ data, formatCurrency }) => {
   );
 };
 
-export default RevenueChart;
+export default React.memo(RevenueChart);

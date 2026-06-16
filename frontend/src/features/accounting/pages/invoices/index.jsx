@@ -4,8 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import '../../styles/accounting.css';
 import accountingService from '../../services/accountingService';
 import dbData from '../../../../../db.json';
-import { exportToPDF } from '../../utils/exportUtils';
+import { formatVND, VNDDisplay, CURRENCY_CLASS_PRIMARY, CURRENCY_CLASS_SECONDARY } from '../../../../utils/formatVND';
 import PrintableInvoiceTemplate from '../../components/Print/PrintableInvoiceTemplate';
+import ConfirmDialog from '../../components/Modals/ConfirmDialog';
 
 const getDaysInMonth = (year, month) => new Date(year, month, 0).getDate();
 const getFirstDayOfMonth = (year, month) => {
@@ -107,7 +108,7 @@ const StatusBadgeDropdown = ({ status, onStatusChange, onOpenChange, openUp = fa
   );
 };
 
-const SearchableCustomerSelect = ({ selectedCustomer, onSelect }) => {
+const SearchableCustomerSelect = ({ selectedCustomer, onSelect, initialName }) => {
   const [isOpen, setIsOpen] = useState(false);
   const customers = dbData.customers || [];
   const wrapperRef = useRef(null);
@@ -117,9 +118,10 @@ const SearchableCustomerSelect = ({ selectedCustomer, onSelect }) => {
 
   // Initialize searchTerm with the name if selectedCustomer is an ID
   const getInitialName = () => {
-    if (!selectedCustomer) return '';
+    if (!selectedCustomer) return initialName || '';
     const found = customers.find(c => c.customerID === Number(selectedCustomer));
-    return found ? getFullName(found) : selectedCustomer;
+    if (found) return getFullName(found);
+    return initialName || (isNaN(Number(selectedCustomer)) ? selectedCustomer : '');
   };
 
   const [searchTerm, setSearchTerm] = useState(getInitialName());
@@ -347,7 +349,9 @@ const ProductCategoryLinkedSelect = ({
                       {categories.find(c => c.categoryID === prod.categoryID)?.categoryName || 'Sản phẩm'}
                     </span>
                   </div>
-                  <span className="text-[10px] font-black text-acc-primary tabular-nums">{prod.salePrice.toLocaleString()} VND</span>
+                  <span className="text-[10px] font-black text-acc-primary tabular-nums">
+                    <VNDDisplay value={prod.salePrice} />
+                  </span>
                 </div>
               </button>
             ))}
@@ -646,7 +650,7 @@ const AdjustmentModal = ({ isOpen, onClose, invoice, onUpdate }) => {
                         id={`adjust-fee-${item.key}`}
                         name={item.key}
                         type="text"
-                        value={fees[item.key] ? Number(fees[item.key]).toLocaleString() : ''}
+                        value={fees[item.key] ? formatVND(fees[item.key], false) : ''}
                         onChange={(e) => handleInputChange(item.key, e.target.value)}
                         placeholder="0"
                         className={`w-full border-2 rounded-[1.5rem] py-4 px-5 text-sm font-black outline-none focus:ring-4 transition-[border-color,background-color,box-shadow,transform] tabular-nums placeholder:text-slate-200 ${item.key === 'discount' ? 'bg-rose-50/30 text-rose-600 border-rose-100/50 focus:bg-white focus:border-rose-200 focus:ring-rose-500/5' : 'bg-slate-50 text-slate-800 border-slate-200/60 focus:bg-white focus:border-acc-primary/20 focus:ring-acc-primary/5'}`}
@@ -664,14 +668,19 @@ const AdjustmentModal = ({ isOpen, onClose, invoice, onUpdate }) => {
                 <div className="space-y-4 relative z-10">
                   <div className="flex justify-between items-center px-2">
                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Giá trị gốc</span>
-                    <span className="text-sm font-black tabular-nums">{invoice.totalAmount?.toLocaleString()} VND</span>
+                    <span className="text-sm font-black tabular-nums">
+                      <VNDDisplay value={invoice.totalAmount} customColorClass="text-white" />
+                    </span>
                   </div>
                   <div className={`flex justify-between items-center px-4 py-3 rounded-2xl ${totalAdjustment >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
                     <div className="flex items-center gap-2">
                       <span className="material-symbols-outlined text-sm">{totalAdjustment >= 0 ? 'trending_up' : 'trending_down'}</span>
                       <span className="text-[10px] font-black uppercase tracking-widest">Biến động {totalAdjustment >= 0 ? 'Cộng' : 'Trừ'}</span>
                     </div>
-                    <span className="text-base font-black tabular-nums">{totalAdjustment >= 0 ? '+' : ''}{totalAdjustment.toLocaleString()} VND</span>
+                    <span className="text-base font-black tabular-nums">
+                      {totalAdjustment >= 0 ? '+' : '-'}
+                      <VNDDisplay value={Math.abs(totalAdjustment)} customColorClass={totalAdjustment >= 0 ? 'text-emerald-400' : 'text-rose-400'} />
+                    </span>
                   </div>
                 </div>
               </div>
@@ -698,7 +707,7 @@ const AdjustmentModal = ({ isOpen, onClose, invoice, onUpdate }) => {
           <div className="px-6 sm:px-10 py-5 sm:py-8 border-t border-slate-100 flex flex-row items-center justify-between bg-slate-50/50 backdrop-blur-xl shrink-0 acc-modal-mobile-taskbar">
             <div className="flex flex-col items-start">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Quyết toán mới</span>
-              <span className="text-xl sm:text-3xl font-black text-acc-primary tracking-tighter tabular-nums">{finalTotal.toLocaleString()} VND</span>
+              <VNDDisplay value={finalTotal} isStat={true} customColorClass="text-acc-primary" textSizeClass="text-xl sm:text-3xl" />
             </div>
             <div className="flex items-center gap-3">
               <button onClick={onClose} className="px-6 py-4 sm:py-3.5 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:bg-slate-200/50 rounded-xl sm:rounded-2xl transition-all active:scale-95">Hủy</button>
@@ -811,7 +820,7 @@ const ActionMenu = ({ invoice, onAdjust, onEdit, onDelete, onView, onOpenChange,
   );
 };
 
-const CustomSelect = ({ label, value, onChange, options, disabled = false, placeholder = "Chọn…" }) => {
+const CustomSelect = ({ label, value, onChange, options, disabled = false, placeholder = "Chọn…", emptyText = "", loading = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -849,27 +858,43 @@ const CustomSelect = ({ label, value, onChange, options, disabled = false, place
       {isOpen && (
         <div className="absolute left-0 right-0 mt-2 bg-white border border-slate-200 rounded-3xl shadow-2xl z-[999] p-2 animate-in fade-in slide-in-from-top-2 duration-200 max-h-60 overflow-y-auto no-scrollbar">
           <div className="space-y-1">
-            {options.length === 0 ? (
-              <div className="p-3 text-center text-xs font-black text-slate-400 uppercase tracking-widest">{placeholder}</div>
+            {loading ? (
+              <div className="p-3 text-center text-xs font-black text-slate-400 uppercase tracking-widest flex items-center justify-center gap-2">
+                <div className="w-4 h-4 border-2 border-slate-300 border-t-acc-primary rounded-full animate-spin" />
+                Đang tải dữ liệu...
+              </div>
+            ) : options.length === 0 ? (
+              <div className="p-3 text-center text-xs font-bold text-slate-400 normal-case tracking-normal whitespace-pre-line leading-relaxed">{emptyText || placeholder}</div>
             ) : (
               options.map((opt) => {
                 const isSelected = String(opt.value) === String(value);
+                const isOptDisabled = opt.disabled;
                 return (
                   <button
                     key={opt.value}
                     type="button"
+                    disabled={isOptDisabled}
                     onClick={() => {
-                      onChange(opt.value);
-                      setIsOpen(false);
+                      if (!isOptDisabled) {
+                        onChange(opt.value);
+                        setIsOpen(false);
+                      }
                     }}
-                    className={`w-full text-left px-4 py-3 rounded-2xl text-xs font-bold flex items-center justify-between transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-acc-primary/5 text-acc-primary font-black border-l-4 border-acc-primary'
-                        : 'hover:bg-slate-50 text-slate-600 hover:text-slate-900'
+                    className={`w-full text-left px-4 py-3 rounded-2xl text-xs font-bold flex items-center justify-between transition-all ${
+                      isOptDisabled 
+                        ? 'opacity-50 cursor-not-allowed bg-slate-50/50 text-slate-400' 
+                        : isSelected
+                          ? 'bg-acc-primary/5 text-acc-primary font-black border-l-4 border-acc-primary'
+                          : 'hover:bg-slate-50 text-slate-600 hover:text-slate-900 cursor-pointer'
                     }`}
                   >
-                    <span>{opt.label}</span>
-                    {isSelected && (
+                    <div className="flex flex-col items-start gap-0.5">
+                      <span>{opt.label}</span>
+                      {isOptDisabled && opt.reason && (
+                        <span className="text-[9px] text-rose-500 font-bold uppercase tracking-wider">{opt.reason}</span>
+                      )}
+                    </div>
+                    {isSelected && !isOptDisabled && (
                       <span className="material-symbols-outlined text-sm font-bold text-acc-primary">check</span>
                     )}
                   </button>
@@ -968,7 +993,7 @@ const CustomDatePicker = ({ label, value, onChange, min, disabled = false }) => 
 
   const displayValue = useMemo(() => {
     if (!value) return '';
-    const [y, m, d] = value.split('-');
+    const [y, m, d] = value.slice(0, 10).split('-');
     return `${d}/${m}/${y}`;
   }, [value]);
 
@@ -1257,12 +1282,12 @@ const InvoiceFormModal = ({ isOpen, onClose, onSave, initialData = null, title =
     items: [{ id: 1, name: '', quantity: 1, price: 0 }]
   });
   
+  const [showConfirmClose, setShowConfirmClose] = useState(false);
+  
   const handleClose = () => {
     const isDirty = formData.customer || formData.salesperson || formData.orderID || formData.notes || formData.paidAmount > 0 || formData.items.some(it => it.name || it.quantity > 1 || (it.price && it.price > 0) || (it.unitPrice && it.unitPrice > 0));
     if (isDirty) {
-      if (window.confirm("Bạn có chắc chắn muốn thoát? Các thay đổi chưa lưu sẽ bị mất.")) {
-        onClose();
-      }
+      setShowConfirmClose(true);
     } else {
       onClose();
     }
@@ -1271,11 +1296,13 @@ const InvoiceFormModal = ({ isOpen, onClose, onSave, initialData = null, title =
   const [allOrders, setAllOrders] = useState([]);
   const [availableOrders, setAvailableOrders] = useState([]);
   const [currentInvoices, setCurrentInvoices] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
 
   useEffect(() => {
     const toISODate = (dateStr) => {
       if (!dateStr) return '';
-      if (dateStr.includes('-')) return dateStr; // Already ISO
+      if (dateStr.includes('T')) dateStr = dateStr.split('T')[0];
+      if (dateStr.includes('-')) return dateStr.slice(0, 10);
       if (dateStr.includes('/')) {
         const parts = dateStr.split('/');
         if (parts.length === 3) return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
@@ -1287,6 +1314,7 @@ const InvoiceFormModal = ({ isOpen, onClose, onSave, initialData = null, title =
       // Tải tất cả đơn hàng và hóa đơn hiện có để lọc
       const loadContext = async () => {
         try {
+          setLoadingOrders(true);
           const [orders, invoices] = await Promise.all([
             accountingService.getOrders(),
             accountingService.getInvoices()
@@ -1295,6 +1323,8 @@ const InvoiceFormModal = ({ isOpen, onClose, onSave, initialData = null, title =
           setCurrentInvoices(invoices);
         } catch (err) {
           console.error("Lỗi tải context:", err);
+        } finally {
+          setLoadingOrders(false);
         }
       };
       loadContext();
@@ -1317,26 +1347,59 @@ const InvoiceFormModal = ({ isOpen, onClose, onSave, initialData = null, title =
     }
   }, [isOpen, initialData]);
 
-  // Logic lọc đơn hàng khả dụng dựa trên nhân viên bán hàng (chỉ hiển thị đơn hàng đã giao - DELIVERED)
+  const salespersonOptions = useMemo(() => {
+    const baseOptions = (dbData.users || []).filter(u => u.roleID === 2).map(u => ({
+      value: String(u.userID),
+      label: `${u.lastName} ${u.firstName}`
+    }));
+    
+    if (formData.salesperson && !baseOptions.some(opt => opt.value === String(formData.salesperson))) {
+      const user = (dbData.users || []).find(u => String(u.userID) === String(formData.salesperson));
+      const label = user 
+        ? `${user.lastName} ${user.firstName}` 
+        : (initialData?.salespersonName || 'Không xác định');
+      baseOptions.push({
+        value: String(formData.salesperson),
+        label
+      });
+    }
+    return baseOptions;
+  }, [formData.salesperson, initialData]);
+
+  // Logic lọc đơn hàng khả dụng dựa trên nhân viên bán hàng (bao gồm đơn chưa giao ở dạng disabled)
   useEffect(() => {
     if (formData.salesperson && !initialData) {
       const salespersonID = Number(formData.salesperson);
-      // Tìm các hóa đơn đã tồn tại gắn với mã đơn hàng nào
       const existingOrderIDs = currentInvoices.map(inv => String(inv.orderID));
       
-      const filtered = allOrders.filter(order => {
-        const matchesUser = Number(order.userID) === salespersonID;
-        const noInvoice = !existingOrderIDs.includes(String(order.orderID));
-        // Chỉ cho phép xuất hóa đơn với đơn hàng đã giao (DELIVERED)
-        const isDelivered = order.orderStatus && (
-          String(order.orderStatus).toUpperCase() === 'DELIVERED' ||
-          order.orderStatus === 'Đã giao hàng' ||
-          order.orderStatus === 'Đã giao'
-        );
-        return matchesUser && noInvoice && isDelivered;
-      });
+      const getStatusReason = (status) => {
+        const s = String(status || '').toUpperCase();
+        if (s === 'PENDING' || s === 'CHỜ XÁC NHẬN') return 'Chờ xác nhận';
+        if (s === 'CONFIRMED' || s === 'ĐÃ XÁC NHẬN') return 'Chờ giao hàng';
+        if (s === 'SHIPPING' || s === 'ĐANG GIAO HÀNG' || s === 'ĐANG GIAO') return 'Đang vận chuyển';
+        if (s === 'CANCELLED' || s === 'ĐÃ HỦY') return 'Đơn hàng đã hủy';
+        return 'Chưa đủ điều kiện (Chưa giao)';
+      };
+
+      const mapped = allOrders
+        .filter(order => {
+          const matchesUser = Number(order.userID) === salespersonID;
+          const noInvoice = !existingOrderIDs.includes(String(order.orderID));
+          return matchesUser && noInvoice;
+        })
+        .map(order => {
+          const statusUpper = String(order.orderStatus || '').toUpperCase();
+          const isDelivered = statusUpper === 'DELIVERED' ||
+                              order.orderStatus === 'Đã giao hàng' ||
+                              order.orderStatus === 'Đã giao';
+          return {
+            ...order,
+            disabled: !isDelivered,
+            reason: !isDelivered ? getStatusReason(order.orderStatus) : null
+          };
+        });
       
-      setAvailableOrders(filtered);
+      setAvailableOrders(mapped);
     } else {
       setAvailableOrders([]);
     }
@@ -1437,7 +1500,6 @@ const InvoiceFormModal = ({ isOpen, onClose, onSave, initialData = null, title =
   const subTotal = formData.items.reduce((sum, item) => sum + (Number(item.quantity || 0) * (Number(item.unitPrice || item.price || 0))), 0);
   const taxAmount = subTotal * 0.1; // VAT 10%
   const totalAmount = subTotal + taxAmount;
-  const remaining = Math.max(0, totalAmount - formData.paidAmount);
 
   const [showErrorPopup, setShowErrorPopup] = useState(false);
 
@@ -1517,7 +1579,7 @@ const InvoiceFormModal = ({ isOpen, onClose, onSave, initialData = null, title =
   };
 
   if (!isOpen) return null;
-  return createPortal(
+  const modalPortal = createPortal(
     <div className="fixed inset-0 z-[150] overflow-y-auto sm:overflow-hidden animate-fade-in acc-modal-overlay">
       <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md" onClick={handleClose} />
 
@@ -1538,17 +1600,14 @@ const InvoiceFormModal = ({ isOpen, onClose, onSave, initialData = null, title =
           <div className="flex-1 overflow-y-auto p-5 sm:p-8 no-scrollbar acc-modal-scroll-area" style={{ WebkitOverflowScrolling: 'touch' }}>
             <form className="space-y-8" id="invoice-form" onSubmit={handleSubmit}>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2"><label className="text-[10px] font-black uppercase text-acc-text-main ml-1">Khách hàng <span className="text-rose-500">*</span></label><SearchableCustomerSelect onSelect={(val) => setFormData(prev => ({ ...prev, customer: val }))} selectedCustomer={formData.customer} /></div>
+                <div className="space-y-2"><label className="text-[10px] font-black uppercase text-acc-text-main ml-1">Khách hàng <span className="text-rose-500">*</span></label><SearchableCustomerSelect onSelect={(val) => setFormData(prev => ({ ...prev, customer: val }))} selectedCustomer={formData.customer} initialName={initialData?.customerName} /></div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase text-acc-text-main ml-1">Nhân viên bán hàng <span className="text-rose-500">*</span></label>
                   <CustomSelect 
                     value={formData.salesperson} 
                     onChange={(val) => setFormData(prev => ({ ...prev, salesperson: val }))}
                     placeholder="Chọn nhân viên…"
-                    options={(dbData.users || []).filter(u => u.roleID === 2).map(u => ({
-                      value: String(u.userID),
-                      label: `${u.lastName} ${u.firstName}`
-                    }))}
+                    options={salespersonOptions}
                   />
                 </div>
                 <div className="space-y-2">
@@ -1557,11 +1616,19 @@ const InvoiceFormModal = ({ isOpen, onClose, onSave, initialData = null, title =
                     <CustomSelect 
                       value={formData.orderID} 
                       disabled={!formData.salesperson}
+                      loading={loadingOrders}
                       onChange={(val) => handleOrderSelect(val)}
                       placeholder={formData.salesperson ? 'Chọn đơn hàng chưa lập HĐ…' : 'Vui lòng chọn nhân viên trước'}
+                      emptyText={
+                        !formData.salesperson 
+                          ? 'Hãy chọn nhân viên bán hàng trước.' 
+                          : 'Chưa có đơn đủ điều kiện. Đơn phải được giao xong mới lập được hóa đơn.'
+                      }
                       options={availableOrders.map(order => ({
                         value: String(order.orderID),
-                        label: `${order.orderID} - Khách: ${dbData.customers.find(c => c.customerID === order.customerID)?.companyName || 'Khách hàng lẻ'}`
+                        label: `${order.orderID} - Khách: ${dbData.customers.find(c => c.customerID === order.customerID)?.companyName || 'Khách hàng lẻ'}`,
+                        disabled: order.disabled,
+                        reason: order.reason
                       }))}
                     />
                   ) : (
@@ -1617,7 +1684,7 @@ const InvoiceFormModal = ({ isOpen, onClose, onSave, initialData = null, title =
                 <div className="flex justify-between items-center px-6 py-4 rounded-2xl bg-white/50 border border-acc-primary/10">
                   <div className="flex flex-col">
                     <span className="text-[9px] font-bold text-acc-text-main uppercase tracking-widest">Dư nợ còn lại</span>
-                    <span className="text-base font-black text-acc-primary">{(totalAmount - formData.paidAmount).toLocaleString() + "\u00A0VND"}</span>
+                    <VNDDisplay value={totalAmount - formData.paidAmount} />
                   </div>
                   <div className="text-[10px] font-black text-acc-primary uppercase bg-acc-primary/10 px-3 py-1 rounded-lg">
                     {Math.round((formData.paidAmount / totalAmount) * 100) || 0}% Đã thu
@@ -1657,8 +1724,7 @@ const InvoiceFormModal = ({ isOpen, onClose, onSave, initialData = null, title =
                               />
                             </td>
                             <td className="p-3 text-left font-black text-acc-primary tabular-nums" data-label="Thành tiền">
-                              {(item.quantity * (item.unitPrice || item.price || 0)).toLocaleString()} 
-                              <span className="text-[9px] opacity-40 ml-1">VND</span>
+                              <VNDDisplay value={item.quantity * (item.unitPrice || item.price || 0)} />
                             </td>
                             <td className="p-3 text-center" data-label="Thao tác">
                               <button 
@@ -1688,11 +1754,11 @@ const InvoiceFormModal = ({ isOpen, onClose, onSave, initialData = null, title =
           <div className="px-6 sm:px-8 py-5 sm:py-6 border-t border-slate-100 flex flex-row items-center justify-between bg-slate-50/50 sm:bg-slate-50/50 gap-4 shrink-0 acc-modal-mobile-taskbar">
             <div className="flex flex-col items-start w-full sm:w-auto">
               <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">
-                Tiền hàng: {subTotal.toLocaleString()} | VAT (10%): {taxAmount.toLocaleString()}
+                Tiền hàng: {formatVND(subTotal)} | VAT (10%): {formatVND(taxAmount)}
               </span>
               <div className="flex items-center gap-2">
                 <span className="text-[9px] font-black text-acc-text-main uppercase tracking-widest">Tổng hóa đơn</span>
-                <span className="text-lg sm:text-2xl font-black text-acc-primary tracking-tighter">{totalAmount.toLocaleString()} VND</span>
+                <VNDDisplay value={totalAmount} isStat={true} customColorClass="text-acc-primary" textSizeClass="text-lg sm:text-2xl" />
               </div>
             </div>
             <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -1713,6 +1779,24 @@ const InvoiceFormModal = ({ isOpen, onClose, onSave, initialData = null, title =
       />
     </div>,
     document.body
+  );
+
+  return (
+    <>
+      {modalPortal}
+      <ConfirmDialog
+        isOpen={showConfirmClose}
+        title="Thay đổi chưa lưu"
+        message="Bạn có chắc chắn muốn thoát? Các thay đổi chưa lưu sẽ bị mất."
+        confirmLabel="Đồng ý đóng"
+        cancelLabel="Hủy"
+        onConfirm={() => {
+          setShowConfirmClose(false);
+          onClose();
+        }}
+        onCancel={() => setShowConfirmClose(false)}
+      />
+    </>
   );
 };
 
@@ -1829,7 +1913,6 @@ const ToastNotification = ({ show, message, type = 'success', onClose }) => {
 };
 
 const InvoiceList = () => {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [invoices, setInvoices] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -1969,7 +2052,7 @@ const InvoiceList = () => {
       const newInvoice = await accountingService.createInvoice(invoiceRawData);
       setInvoices(prev => [newInvoice, ...prev]);
       showToast(`Đã tạo hóa đơn ${newInvoice.displayID} thành công!`);
-    } catch (err) {
+    } catch {
       showToast("Lỗi khi tạo hóa đơn. Vui lòng kiểm tra lại.", "error");
     }
   };
@@ -1979,7 +2062,7 @@ const InvoiceList = () => {
       // In real app: await accountingService.updateInvoice(updatedData.invoiceID, updatedData);
       setInvoices(prev => prev.map(inv => inv.invoiceID === updatedData.invoiceID ? updatedData : inv));
       showToast(`Cập nhật hóa đơn ${updatedData.displayID} hoàn tất!`);
-    } catch (err) {
+    } catch {
       showToast("Cập nhật thất bại. Vui lòng thử lại.", "error");
     }
   };
@@ -2013,7 +2096,7 @@ const InvoiceList = () => {
       await accountingService.updateInvoiceStatus(invoiceID, newStatus);
       setInvoices(prev => prev.map(inv => inv.invoiceID === invoiceID ? { ...inv, orderStatus: newStatus } : inv));
       showToast(`Đã cập nhật trạng thái.`);
-    } catch (err) {
+    } catch {
       showToast("Lỗi cập nhật trạng thái.", "error");
     }
   };
@@ -2023,7 +2106,7 @@ const InvoiceList = () => {
       await accountingService.updateInvoiceCosts(invoiceID, data.finalTotal);
       setInvoices(prev => prev.map(inv => inv.invoiceID === invoiceID ? { ...inv, totalAmount: data.finalTotal } : inv));
       showToast("Đã cập nhật chi phí quyết toán mới.");
-    } catch (err) {
+    } catch {
       showToast("Lỗi cập nhật chi phí.", "error");
     }
   };
@@ -2595,10 +2678,7 @@ const InvoiceList = () => {
                       <p className="text-[10px] text-slate-400 font-bold">{inv.date}</p>
                     </td>
                     <td className="px-6 py-4 text-sm font-black tabular-nums" data-label="Giá trị">
-                      <span className="inline-flex items-baseline gap-1">
-                        <span>{inv.totalAmount?.toLocaleString() || 0}</span>
-                        <span className="inv-vnd-unit font-black opacity-60">VND</span>
-                      </span>
+                      <VNDDisplay value={inv.totalAmount || 0} />
                     </td>
                     <td className="px-6 py-4 text-center" onClick={e => e.stopPropagation()} data-label="Trạng thái">
                       <StatusBadgeDropdown
@@ -2614,7 +2694,7 @@ const InvoiceList = () => {
                         onAdjust={(i) => { setSelectedInvoice(i); setIsAdjustmentModalOpen(true); }}
                         onEdit={(i) => { setSelectedInvoice(i); setIsEditModalOpen(true); }}
                         onDelete={() => handleDeleteInvoice(rowID)}
-                        onView={(id) => { setSelectedInvoice(inv); setIsDetailModalOpen(true); }}
+                        onView={() => { setSelectedInvoice(inv); setIsDetailModalOpen(true); }}
                         onOpenChange={(open) => setActiveRowId(open ? rowID : null)}
                         openUp={isNearBottom}
                       />
@@ -2707,7 +2787,7 @@ const InvoiceList = () => {
                           onAdjust={(i) => { setSelectedInvoice(i); setIsAdjustmentModalOpen(true); }}
                           onEdit={(i) => { setSelectedInvoice(i); setIsEditModalOpen(true); }}
                           onDelete={() => handleDeleteInvoice(rowID)}
-                          onView={(id) => { setSelectedInvoice(inv); setIsDetailModalOpen(true); }}
+                          onView={() => { setSelectedInvoice(inv); setIsDetailModalOpen(true); }}
                           onOpenChange={(open) => setActiveRowId(open ? rowID : null)}
                           openUp={isNearBottom}
                         />
@@ -2721,9 +2801,7 @@ const InvoiceList = () => {
                       </div>
                       <div className="flex justify-between items-center text-xs">
                         <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">Giá trị</span>
-                        <span className="font-black text-slate-900">
-                          {inv.totalAmount?.toLocaleString() || 0} <span className="text-[10px] font-bold text-slate-400 uppercase">VND</span>
-                        </span>
+                        <VNDDisplay value={inv.totalAmount || 0} />
                       </div>
                       <div className="flex justify-between items-center border-t border-slate-100/60 pt-3" onClick={e => e.stopPropagation()}>
                         <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">Trạng thái</span>
@@ -2774,7 +2852,7 @@ const InvoiceList = () => {
           </div>
           <div className="flex items-center gap-3 sm:gap-4 text-xs font-black text-acc-text-main w-full sm:w-auto justify-between sm:justify-end">
             <span className="text-slate-400 uppercase text-[9px] font-black tracking-widest">Tổng cộng:</span>
-            <span className="tabular-nums text-acc-primary text-sm font-black">{filteredInvoices.reduce((sum, inv) => sum + (inv.totalAmount || 0), 0).toLocaleString()} VND</span>
+            <VNDDisplay value={filteredInvoices.reduce((sum, inv) => sum + (inv.totalAmount || 0), 0)} customColorClass="text-acc-primary" textSizeClass="text-sm" />
           </div>
         </div>
       </div>

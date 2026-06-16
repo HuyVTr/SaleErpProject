@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import accountingService from '../../services/accountingService';
 import { useToast } from '../../components/Common/AccountingToast';
-import { exportToPDF } from '../../utils/exportUtils';
+import { formatVND, VNDDisplay } from '../../../../utils/formatVND';
 import '../../styles/accounting.css';
 
 // Import components
@@ -60,7 +60,7 @@ const AccountingDashboard = () => {
     "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"
   ];
 
-  const [error, setError] = useState(null);
+  const [, setError] = useState(null);
 
   // Close pickers on click outside
   useEffect(() => {
@@ -82,7 +82,7 @@ const AccountingDashboard = () => {
       setLoading(true);
       const result = await accountingService.getDashboardStats(tf, options);
       setStats(result);
-    } catch (err) {
+    } catch {
       setError("Dữ liệu hệ thống chưa sẵn sàng");
     } finally {
       setLoading(false);
@@ -94,7 +94,7 @@ const AccountingDashboard = () => {
       setChartLoading(true);
       const result = await accountingService.getRevenueData(tf, options);
       setChartData(Array.isArray(result) ? result : (result?.chartData || []));
-    } catch (err) {
+    } catch {
       setChartData([]);
     } finally {
       setChartLoading(false);
@@ -140,7 +140,7 @@ const AccountingDashboard = () => {
         setIsExporting(false);
         showToast("Xuất báo cáo thành công!", "success");
       }, 500);
-    } catch (err) {
+    } catch {
       showToast("Lỗi khi tạo PDF", "error");
       setIsExporting(false);
     }
@@ -152,12 +152,6 @@ const AccountingDashboard = () => {
     monthly: 'Tháng này',
     yearly: 'Năm nay',
     all: 'Toàn thời gian'
-  };
-
-   const formatCurrency = (val) => {
-    if (val === undefined || val === null) return "0 VND";
-    if (typeof val === 'string') return val.replace(/[đ₫]/g, ' VND');
-    return val.toLocaleString('vi-VN') + ' VND';
   };
 
   if (loading && !stats) {
@@ -260,7 +254,7 @@ const AccountingDashboard = () => {
               <>
                 <DashboardStat 
                   label="Tổng Doanh thu" 
-                  value={formatCurrency(rawRev)} 
+                  value={stats?.totalRevenue ? `${formatVND(stats.totalRevenue, false)} VND` : "0 VND"} 
                   growth={stats?.revenueGrowth} 
                   icon={RevenueIcon} 
                   color="text-blue-600" 
@@ -269,7 +263,7 @@ const AccountingDashboard = () => {
                 />
                 <DashboardStat 
                   label="Tổng Công nợ" 
-                  value={formatCurrency(rawDebt)} 
+                  value={stats?.totalDebt ? `${formatVND(stats.totalDebt, false)} VND` : "0 VND"} 
                   growth={stats?.debtGrowth} 
                   icon={DebtIcon} 
                   color="text-amber-500" 
@@ -286,7 +280,7 @@ const AccountingDashboard = () => {
                 />
                 <DashboardStat 
                   label="Thực thu" 
-                  value={formatCurrency(collectedValue)} 
+                  value={collectedValue ? `${formatVND(collectedValue, false)} VND` : "0 VND"} 
                   growth={stats?.collectedGrowth} 
                   icon={WalletIcon} 
                   color="text-emerald-500" 

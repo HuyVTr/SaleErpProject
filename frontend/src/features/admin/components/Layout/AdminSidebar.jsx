@@ -1,12 +1,12 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import tokenStorage from '../../../../utils/tokenStorage';
 
 const AdminSidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    tokenStorage.clear();
     sessionStorage.clear();
     navigate('/');
   };
@@ -19,7 +19,7 @@ const AdminSidebar = ({ isOpen, onClose }) => {
     { name: 'Quản lý Danh mục', path: '/admin/categories', icon: 'category' },
   ];
 
-  const user = JSON.parse(localStorage.getItem('user')) || {
+  const user = tokenStorage.getUser() || {
     firstName: 'Admin',
     lastName: 'System',
     roleName: 'Quản trị viên'

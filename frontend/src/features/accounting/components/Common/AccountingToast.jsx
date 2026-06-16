@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- Provider + hook useToast cố tình ở chung file (mẫu Context phổ biến); chỉ ảnh hưởng HMR lúc dev */
 import React, { createContext, useContext, useState, useCallback } from 'react';
 
 const ToastContext = createContext(null);

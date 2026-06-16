@@ -1,20 +1,21 @@
 import React from 'react';
+import { formatVND } from '../../../../utils/formatVND';
 
 /**
  * Mẫu in Báo cáo Kế toán chuyên nghiệp (Report Module)
  * Thiết kế chuẩn A4 Landscape cho báo cáo phân tích tài chính
  */
-const PrintableAccountingReportTemplate = ({ 
-  performanceData, 
-  categoryData, 
+const PrintableAccountingReportTemplate = ({
+  performanceData,
+  categoryData,
   revenueData,
   timeframeText,
-  summaryStats 
+  summaryStats
 }) => {
   if (!performanceData) return null;
 
   const formatCurrency = (val) => {
-    return (val || 0).toLocaleString('vi-VN') + ' VND';
+    return formatVND(val || 0);
   };
 
   return (
@@ -28,8 +29,7 @@ const PrintableAccountingReportTemplate = ({
         backgroundColor: '#FFFFFF',
         color: '#0f172a',
         fontFamily: "'Inter', 'Segoe UI', sans-serif",
-        boxSizing: 'border-box',
-        position: 'relative'
+        boxSizing: 'border-box'
       }}
     >
       <style>
@@ -291,15 +291,14 @@ const PrintableAccountingReportTemplate = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {performanceData.filter(p => p.revenue > 0).length > 0 ? (
+                    {performanceData && performanceData.length > 0 ? (
                       performanceData
-                        .filter(p => p.revenue > 0)
                         .map((p, idx) => (
                           <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
                             <td style={{ padding: '12px 10px', fontWeight: '800' }}>{p.name.toUpperCase()}</td>
                             <td style={{ padding: '12px 10px', textAlign: 'left', fontWeight: 'bold', whiteSpace: 'nowrap' }}>{formatCurrency(p.revenue)}</td>
                             <td style={{ padding: '12px 10px', textAlign: 'center', fontWeight: 'bold' }}>{p.orderCount}</td>
-                            <td style={{ padding: '12px 10px', fontSize: '9px', whiteSpace: 'nowrap' }}>{(p.revenue || 0).toLocaleString()} / {formatCurrency(p.target)}</td>
+                            <td style={{ padding: '12px 10px', fontSize: '9px', whiteSpace: 'nowrap' }}>{formatVND(p.revenue || 0)} / {formatCurrency(p.target)}</td>
                             <td style={{ padding: '12px 10px', textAlign: 'center', fontWeight: 'bold', whiteSpace: 'nowrap' }}>{p.achievement.toFixed(1)}%</td>
                             <td style={{ padding: '12px 10px', textAlign: 'left', fontWeight: 'bold', whiteSpace: 'nowrap' }}>{formatCurrency(p.commission)}</td>
                           </tr>
@@ -307,7 +306,7 @@ const PrintableAccountingReportTemplate = ({
                     ) : (
                       <tr>
                         <td colSpan="6" style={{ padding: '30px', textAlign: 'center', color: '#94a3b8', fontStyle: 'italic', fontSize: '11px' }}>
-                          Không có dữ liệu nhân viên kinh doanh phát sinh doanh thu trong ngày.
+                          Không có dữ liệu nhân viên kinh doanh.
                         </td>
                       </tr>
                     )}

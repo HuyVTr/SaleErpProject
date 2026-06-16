@@ -20,7 +20,6 @@ import {
   Description as QuotationIcon,
   TrendingUp as TrendingUpIcon
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
 import dbData from '../../../../../db.json';
 import { useSwipeToClose } from '../../../sales/components/Drawers/useSwipeToClose';
 
@@ -123,9 +122,8 @@ const EmptyState = ({ message }) => (
   </Box>
 );
 
-const StaffDetailDrawer = ({ open, onClose, staff, onEdit, onDelete }) => {
+const StaffDetailDrawer = ({ open, onClose, staff, onEdit }) => {
   const swipeHandlers = useSwipeToClose(onClose);
-  const navigate = useNavigate();
   const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState({ orders: [], quotations: [] });
@@ -855,15 +853,6 @@ const StaffDetailDrawer = ({ open, onClose, staff, onEdit, onDelete }) => {
             >
               <span className="material-symbols-outlined text-sm">edit</span>
               Sửa / Khóa
-            </button>
-          )}
-          {onDelete && (
-            <button
-              onClick={() => onDelete(staff)}
-              className="flex-1 flex items-center justify-center gap-2 bg-white border-2 border-rose-300 hover:bg-rose-50/50 text-rose-600 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 active:scale-95 cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-sm">delete</span>
-              Xóa
             </button>
           )}
           <button

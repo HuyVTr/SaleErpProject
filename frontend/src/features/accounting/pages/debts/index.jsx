@@ -6,6 +6,7 @@ import DebtTable from '../../components/Tables/DebtTable';
 import DashboardStat from '../../components/Stats/DashboardStat';
 import { WalletIcon, DebtIcon, CustomerIcon } from '../../components/Icons/AccountingIcons';
 import '../../styles/accounting.css';
+import { VNDDisplay } from '../../../../utils/formatVND';
 
 const getDaysInMonth = (year, month) => new Date(year, month, 0).getDate();
 const getFirstDayOfMonth = (year, month) => {
@@ -23,19 +24,6 @@ const getWeekRange = (year, week) => {
   return `${start.getDate()}/${start.getMonth() + 1} - ${end.getDate()}/${end.getMonth() + 1}`;
 };
 
-const getResponsiveValueClass = (val) => {
-  const str = val ? String(val) : '';
-  const len = str.length;
-  if (len <= 10) {
-    return "text-base sm:text-lg lg:text-lg xl:text-xl";
-  } else if (len <= 15) {
-    return "text-sm sm:text-base lg:text-[13px] xl:text-lg";
-  } else if (len <= 20) {
-    return "text-xs sm:text-sm lg:text-[11px] xl:text-base";
-  } else {
-    return "text-[10px] sm:text-xs lg:text-[10px] xl:text-sm";
-  }
-};
 
 const DebtTracker = () => {
   const { showToast } = useToast();
@@ -267,9 +255,17 @@ const DebtTracker = () => {
     
     try {
       // Gọi service - khi ghép BE sẽ gọi endpoint /api/reminders/send
-      await accountingService.sendDebtReminder(item.invoiceID);
+      const response = await accountingService.sendDebtReminder(item.invoiceID);
+      const reminderDate = response?.lastReminderDate 
+        ? new Date(response.lastReminderDate).toLocaleDateString('vi-VN') 
+        : new Date().toLocaleDateString('vi-VN');
+
+      setDebts(prev => prev.map(d =>
+        d.invoiceID === item.invoiceID ? { ...d, lastReminderDate: reminderDate } : d
+      ));
+
       showToast(`Đã gửi nhắc nợ tới ${item.email}`, 'success');
-    } catch (error) {
+    } catch {
       showToast("Không thể kết nối máy chủ gửi mail", "error");
     }
   };
@@ -287,13 +283,20 @@ const DebtTracker = () => {
     try {
       const ids = withEmail.map(d => d.invoiceID);
       // Gọi service - khi ghép BE sẽ gọi endpoint /api/reminders/batch-send
-      await accountingService.sendBatchReminders(ids);
+      const response = await accountingService.sendBatchReminders(ids);
+      const reminderDate = response?.lastReminderDate 
+        ? new Date(response.lastReminderDate).toLocaleDateString('vi-VN') 
+        : new Date().toLocaleDateString('vi-VN');
+
+      setDebts(prev => prev.map(d =>
+        ids.includes(d.invoiceID) ? { ...d, lastReminderDate: reminderDate } : d
+      ));
 
       const msg = noEmail.length > 0
         ? `Đã gửi ${withEmail.length} nhắc nợ · ${noEmail.length} KH chưa có email (bỏ qua)`
         : `Đã gửi nhắc nợ tới ${withEmail.length} khách hàng`;
       showToast(msg, 'success');
-    } catch (error) {
+    } catch {
       showToast("Lỗi khi gửi nhắc nợ hàng loạt", "error");
     }
   };
@@ -815,7 +818,7 @@ const DebtTracker = () => {
           <div className="flex items-center gap-3 sm:gap-4 text-xs font-black text-acc-text-main w-full sm:w-auto justify-between sm:justify-end">
             <span className="text-slate-400 uppercase text-[9px] font-black tracking-widest">Tổng nợ:</span>
             <span className="tabular-nums text-acc-primary text-sm font-black">
-              {filteredDebts.reduce((sum, d) => sum + (d.remainingAmount || 0), 0).toLocaleString('vi-VN')} VND
+              <VNDDisplay value={filteredDebts.reduce((sum, d) => sum + (d.remainingAmount || 0), 0)} />
             </span>
           </div>
         </div>

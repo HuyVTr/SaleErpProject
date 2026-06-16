@@ -1,5 +1,6 @@
 import React from 'react';
 import '../../styles/accounting.css';
+import { VNDDisplay } from '../../../../utils/formatVND';
 
 const PaymentDetail = () => {
   return (
@@ -70,7 +71,7 @@ const PaymentDetail = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <p className="text-label-xs text-acc-text-light uppercase">Tổng số tiền đã thu</p>
-                <p className="text-display-sm text-acc-primary tabular-nums">150.000.000&nbsp;VND</p>
+                <VNDDisplay value={150000000} isStat={true} customColorClass="text-acc-primary" textSizeClass="text-display-sm" />
               </div>
               <div className="pt-4 border-t border-slate-200">
                 <p className="text-label-xs text-acc-text-light uppercase mb-2">Bằng chữ</p>

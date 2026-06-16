@@ -12,3 +12,11 @@ dist/
 .idea/
 .claude/
 memory
+
+# Mock data (đã chuyển sang dùng BE thật qua .env)
+frontend/db.json
+frontend/routes.json
+
+# Tài liệu kế hoạch nội bộ (không đẩy lên repo)
+PLAN-ra-soat-va-toi-uu.md
+PLAN-restore-sale-accounts.md

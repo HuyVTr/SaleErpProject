@@ -1,18 +1,19 @@
 import React from 'react';
+import { formatVND } from '../../../../utils/formatVND';
 
 /**
  * Mẫu in Dashboard kế toán chuyên nghiệp PRO-MAX V4.6
  * Đã phục hồi kích thước hiển thị tối ưu cho khổ A4 và tích hợp Footer đa trang cố định.
  */
-const PrintableDashboardTemplate = ({ stats, chartData, timeframeLabels, timeframe, dynamicLabel }) => {
+const PrintableDashboardTemplate = ({ stats, dynamicLabel }) => {
   if (!stats) return null;
 
   const formatDisplayValue = (val) => {
     if (val === undefined || val === null) return '0';
     if (typeof val === 'string') {
-      return val.replace(/[đ₫VND]/g, '').trim();
+      return val.replace(/VND|đ|₫/g, '').trim();
     }
-    return val.toLocaleString('vi-VN');
+    return formatVND(val, false);
   };
 
   const formatDisplayDate = (d) => d ? new Date(d).toLocaleDateString('vi-VN') : 'N/A';

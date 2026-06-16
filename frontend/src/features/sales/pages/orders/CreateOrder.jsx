@@ -4,11 +4,11 @@ import salesService from '../../services/salesService';
 import adminService from '../../../admin/services/adminService';
 import { useSalesToast } from '../../components/Notification/useSalesToast';
 import SalesToastNotification from '../../components/Notification/SalesToastNotification';
+import { formatVND, VNDDisplay } from '../../../../utils/formatVND';
 
 const formatCurrency = (val, isSmall = false, colorClass = "text-slate-800") => {
   if (val === undefined || val === null) return "0 VND";
-  const num = typeof val === 'number' ? val : Number(val.toString().replace(/[đ₫\sVND.]/g, ''));
-  const formatted = new Intl.NumberFormat('vi-VN').format(num);
+  const formatted = formatVND(val, false);
   return (
     <span className="flex items-baseline gap-1">
       <span className={isSmall ? `font-bold ${colorClass}` : `font-black ${colorClass}`}>{formatted}</span>
@@ -77,7 +77,7 @@ const CreateOrder = () => {
           sku: `QT-${quotation.quotationID.toString().padStart(3, '0')}`, 
           name: `Hàng hóa theo Báo giá ${quotation.displayID || `QUO-${quotation.quotationID}`}`, 
           icon: '📦', 
-          price: quotation.totalAmount || 100000000, 
+          price: Number(quotation.totalAmount) || 100000000, 
           quantity: 1 
         }
       ];
@@ -157,10 +157,19 @@ const CreateOrder = () => {
   }, [selectedCustomer]);
 
   const updateQuantity = (id, delta) => {
+    // Find product stock in allProducts
+    const prod = allProducts.find(p => p.productID === id);
+    const stock = prod ? (Number(prod.stockQuantity) || 0) : 99999;
+
     setCart(prevCart => 
       prevCart.map(item => {
         if (item.id === id) {
-          const newQuantity = Math.max(1, item.quantity + delta);
+          const targetQty = item.quantity + delta;
+          if (targetQty > stock) {
+            showToastMsg(`Không thể tăng thêm. Chỉ còn ${stock} sản phẩm trong kho!`, 'error');
+            return item;
+          }
+          const newQuantity = Math.max(1, targetQty);
           return { ...item, quantity: newQuantity };
         }
         return item;
@@ -188,10 +197,19 @@ const CreateOrder = () => {
   };
 
   const handleAddProduct = (prod) => {
+    const stock = Number(prod.stockQuantity) || 0;
+    if (stock <= 0) {
+      showToastMsg('Sản phẩm đã hết hàng tồn kho!', 'error');
+      return;
+    }
     const overridePrice = customerPriceMap?.get(Number(prod.productID));
     setCart(prevCart => {
       const existing = prevCart.find(item => item.id === prod.productID);
       if (existing) {
+        if (existing.quantity >= stock) {
+          showToastMsg(`Không thể thêm. Chỉ còn ${stock} sản phẩm trong kho!`, 'error');
+          return prevCart;
+        }
         return prevCart.map(item =>
           item.id === prod.productID
             ? { ...item, quantity: item.quantity + 1 }
@@ -201,11 +219,11 @@ const CreateOrder = () => {
       return [
         ...prevCart,
         {
-          id: prod.productID,
+          id: Number(prod.productID),
           sku: `SP-${prod.productID.toString().padStart(3, '0')}`,
           name: prod.productName,
           icon: '📦',
-          price: overridePrice ?? prod.salePrice,
+          price: Number(overridePrice ?? prod.salePrice) || 0,
           quantity: 1
         }
       ];
@@ -287,20 +305,20 @@ const CreateOrder = () => {
       const orderData = {
         customerID: Number(selectedCustomer.id.replace(/[^\d]/g, '')) || 1,
         userID: userID,
-        totalAmount: subTotal,
-        taxAmount: tax,
-        discountAmount: discount,
+        totalAmount: Number(subTotal) || 0,
+        taxAmount: Number(tax) || 0,
+        discountAmount: Number(discount) || 0,
         paymentMethod: quotation ? (quotation.paymentMethod || 'TRANSFER') : 'TRANSFER',
         paymentTerm: quotation ? (quotation.paymentTerm || 'NET_30') : 'NET_30',
         orderStatus: 'PENDING',
         paidAmount: 0,
         notes: notes.trim(),
         items: cart.map(item => ({
-          productID: item.id,
+          productID: Number(item.id),
           productName: item.name,
-          quantity: item.quantity,
-          unitPrice: item.price,
-          discount: 0
+          quantity: Number(item.quantity),
+          unitPrice: Number(item.price) || 0,
+          discount: Number(item.discount) || 0
         }))
       };
       
@@ -313,7 +331,8 @@ const CreateOrder = () => {
       });
     } catch (error) {
       console.error(error);
-      showToastMsg("Có lỗi xảy ra khi tạo đơn hàng!", 'error');
+      const msg = error?.response?.data?.message || "Có lỗi xảy ra khi tạo đơn hàng!";
+      showToastMsg(msg, 'error');
     } finally {
       setLoading(false);
     }
@@ -796,24 +815,56 @@ const CreateOrder = () => {
                 filteredProducts.map(prod => {
                   const cartItem = cart.find(item => item.id === prod.productID);
                   const qty = cartItem ? cartItem.quantity : 0;
+                  const stock = Number(prod.stockQuantity) || 0;
+                  const isOutOfStock = stock <= 0;
+                  const isLowStock = !isOutOfStock && stock < 20;
+
                   return (
                     <div 
                       key={prod.productID} 
                       className={`p-4 rounded-2xl border-2 flex items-center gap-4 transition-all duration-300 ${
-                        qty > 0 ? 'border-blue-500/20 bg-blue-50/30' : 'border-slate-100 hover:border-slate-200 bg-white shadow-sm'
+                        isOutOfStock 
+                          ? 'border-red-200/40 bg-red-50/10 opacity-60' 
+                          : qty > 0 
+                            ? 'border-blue-500/20 bg-blue-50/30' 
+                            : 'border-slate-100 hover:border-slate-200 bg-white shadow-sm'
                       }`}
                     >
-                      <div className="w-12 h-12 bg-blue-50/50 rounded-xl flex items-center justify-center text-blue-600 border border-blue-100/50 shadow-inner group-hover:scale-105 transition-transform">
+                      <div className="w-12 h-12 bg-blue-50/50 rounded-xl flex items-center justify-center text-blue-600 border border-blue-100/50 shadow-inner group-hover:scale-105 transition-transform shrink-0">
                         <span className="material-symbols-outlined text-[20px]">image</span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="font-black text-xs text-slate-900 uppercase tracking-tight truncate">{prod.productName}</h4>
                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">SKU: SP-{prod.productID.toString().padStart(3, '0')}</p>
-                        <p className="text-xs font-black text-blue-600 mt-1">{new Intl.NumberFormat('vi-VN').format(prod.salePrice)} VND</p>
+                        
+                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                          <p className="text-xs font-black text-blue-600">{new Intl.NumberFormat('vi-VN').format(prod.salePrice)} VND</p>
+                          {isOutOfStock ? (
+                            <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-lg border bg-red-50 text-red-600 border-red-100">
+                              Hết hàng tồn kho
+                            </span>
+                          ) : isLowStock ? (
+                            <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-lg border bg-amber-50 text-amber-600 border-amber-100">
+                              Sắp hết · Tồn: {stock}
+                            </span>
+                          ) : (
+                            <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-lg border bg-emerald-50 text-emerald-600 border-emerald-100">
+                              Tồn kho: {stock}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       
                       <div className="flex items-center gap-1">
-                        {qty > 0 ? (
+                        {isOutOfStock ? (
+                          <button 
+                            disabled
+                            className="bg-slate-100 text-slate-400 w-8 h-8 rounded-xl flex items-center justify-center transition-all cursor-not-allowed border border-slate-200"
+                            title="Đã hết hàng tồn kho"
+                          >
+                            <span className="material-symbols-outlined text-sm">block</span>
+                          </button>
+                        ) : qty > 0 ? (
                           <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
                             <button 
                               onClick={() => updateQuantity(prod.productID, -1)}

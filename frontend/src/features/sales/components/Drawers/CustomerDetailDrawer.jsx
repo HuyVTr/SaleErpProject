@@ -26,17 +26,9 @@ import {
 } from '@mui/icons-material';
 import salesService from '../../services/salesService';
 import { useNavigate } from 'react-router-dom';
+import { formatVND, VNDDisplay } from '../../../../utils/formatVND';
 
 // --- HÀM ĐỊNH DẠNG NGÀY HOẠT ĐỘNG (chỉ hiển thị ngày, DB dùng kiểu DATE) ---
-const formatDate = (dateStr) => {
-  if (!dateStr) return "N/A";
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return "N/A";
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-  return `${day}/${month}/${year}`;
-};
 
 import { useSwipeToClose } from './useSwipeToClose';
 
@@ -50,8 +42,6 @@ const CustomerDetailDrawer = ({ open, onClose, customerId, customerData }) => {
   const [loadingActivities, setLoadingActivities] = useState(false);
   const [history, setHistory] = useState({ orders: [], quotations: [], invoices: [] });
   const [isTrading, setIsTrading] = useState(false);
-  const [now, setNow] = useState(Date.now());
-  const [drawerOpenTime, setDrawerOpenTime] = useState(Date.now());
 
   // States cho tính năng thu gọn thông tin, tìm kiếm và lọc thời gian
   const [infoExpanded, setInfoExpanded] = useState(false);
@@ -122,10 +112,7 @@ const CustomerDetailDrawer = ({ open, onClose, customerId, customerData }) => {
     
     if (!matchQuery) return false;
     
-    const correspondingInvoice = history.invoices?.find(inv => inv.orderID === order.orderID);
-    const invoiceDate = correspondingInvoice 
-      ? (correspondingInvoice.createAt || correspondingInvoice.invoiceDate) 
-      : (order.orderDate || order.date);
+    const invoiceDate = order.orderDate || order.date;
 
     return matchDate(invoiceDate);
   });
@@ -171,25 +158,21 @@ const CustomerDetailDrawer = ({ open, onClose, customerId, customerData }) => {
         // Fetch history
         const allOrders = await salesService.getOrders(null, 'all', { ignoreUserFilter: true });
         const allQuotations = await salesService.getQuotations(null, 'all', { ignoreUserFilter: true });
-        const allInvoices = await salesService.getInvoices();
         
         const customerOrders = allOrders.filter(o => o.customerID === customerId);
         const customerQuotations = allQuotations.filter(q => q.customerID === customerId);
-        const customerInvoices = allInvoices.filter(inv => inv.customerID === customerId);
         
-        // Logic Trạng thái: Đang giao dịch nếu có hóa đơn chưa thanh toán hết
-        const hasUnpaidInvoice = customerInvoices.some(inv => {
-          const s = (inv.status || '').toLowerCase();
-          return s !== 'paid' && s !== 'đã thanh toán' && s !== 'completed';
+        // Logic Trạng thái: Đang giao dịch nếu có đơn hàng chưa hoàn tất
+        const tradingStatus = customerOrders.some(o => {
+          const s = (o.orderStatus || o.status || '').toUpperCase();
+          return s && s !== 'CANCELLED' && s !== 'REJECTED' && s !== 'COMPLETED' && s !== 'DELIVERED';
         });
-
-        const tradingStatus = customerInvoices.length > 0 && hasUnpaidInvoice;
         setIsTrading(tradingStatus);
         
         setHistory({
           orders: customerOrders,
           quotations: customerQuotations,
-          invoices: customerInvoices
+          invoices: []
         });
 
         // Tải danh sách hoạt động từ API ready-for-BE
@@ -220,7 +203,7 @@ const CustomerDetailDrawer = ({ open, onClose, customerId, customerData }) => {
 
   const formatCurrency = (val, customColorClass = 'text-[#00288E]') => {
     if (val === undefined || val === null) return "0 VND";
-    const formatted = new Intl.NumberFormat('vi-VN').format(val);
+    const formatted = formatVND(val, false);
     return (
       <span className="inline-flex items-baseline gap-0.5 font-inter">
         <span className={`font-black ${customColorClass}`}>{formatted}</span>
@@ -920,7 +903,7 @@ const CustomerDetailDrawer = ({ open, onClose, customerId, customerData }) => {
   );
 };
  
-const ActivityItem = ({ title, time, user, icon, color = 'bg-slate-400', desc }) => (
+const ActivityItem = ({ title, time, user, color = 'bg-slate-400', desc }) => (
   <Box className="relative font-inter">
     <div className={`absolute -left-[20px] top-1.5 w-2.5 h-2.5 rounded-full ${color} border-2 border-white ring-4 ring-slate-50 z-10`}></div>
     <Typography className="text-xs font-black text-slate-800 leading-none mb-1.5 font-inter">

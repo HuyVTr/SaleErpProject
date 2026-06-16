@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import adminService from '../../services/adminService';
-
-const formatCurrency = (val) => `${new Intl.NumberFormat('vi-VN').format(val || 0)} đ`;
+import { VNDDisplay } from '../../../../utils/formatVND';
 
 const ProductPickerDrawer = ({ open, onClose, excludedIds, onPick }) => {
   const [products, setProducts] = useState([]);
@@ -87,7 +86,9 @@ const ProductPickerDrawer = ({ open, onClose, excludedIds, onPick }) => {
                   <div className="flex-1 min-w-0">
                     <h4 className="font-black text-xs text-slate-900 uppercase tracking-tight truncate" title={prod.productName}>{prod.productName}</h4>
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">ĐVT: {prod.unit || 'cái'}</p>
-                    <p className="text-xs font-black text-blue-600 mt-1">{formatCurrency(prod.salePrice)}</p>
+                    <div className="mt-1">
+                      <VNDDisplay value={prod.salePrice} customColorClass="text-blue-600" textSizeClass="text-xs" />
+                    </div>
                   </div>
                   <button
                     onClick={() => onPick(prod)}

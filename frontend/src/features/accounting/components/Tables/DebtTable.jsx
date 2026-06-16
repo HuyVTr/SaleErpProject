@@ -1,4 +1,5 @@
 import React from 'react';
+import { VNDDisplay, CURRENCY_CLASS_PRIMARY, CURRENCY_CLASS_SECONDARY } from '../../../../utils/formatVND';
 
 // ─── Display helpers (SQL-aligned) ───────────────────────────────────────────
 const RISK_CONFIG = {
@@ -63,7 +64,6 @@ const DebtTable = ({ debts, loading, onReminder, onToggleAuto, isMasterAutoEnabl
     );
   }
 
-  const totalDebt = debts.reduce((sum, item) => sum + (item.remainingAmount || 0), 0);
 
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
@@ -139,9 +139,7 @@ const DebtTable = ({ debts, loading, onReminder, onToggleAuto, isMasterAutoEnabl
                   </td>
 
                   <td className="px-8 py-5 text-left tabular-nums whitespace-nowrap" data-label="SỐ TIỀN CÒN NỢ">
-                    <span className="text-sm font-black text-acc-primary m-0">
-                      {item.remainingAmount?.toLocaleString('vi-VN')}&nbsp;<small className="text-[10px] opacity-70 font-bold">VND</small>
-                    </span>
+                    <VNDDisplay value={item.remainingAmount || 0} className="text-sm font-black text-acc-primary m-0" />
                   </td>
 
                   <td className="px-8 py-5 text-center" data-label="Lần nhắc cuối">
@@ -278,9 +276,7 @@ const DebtTable = ({ debts, loading, onReminder, onToggleAuto, isMasterAutoEnabl
                 <div className="flex items-end justify-between gap-2">
                   <div>
                     <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Số tiền nợ</p>
-                    <p className="text-sm font-black text-acc-primary tabular-nums">
-                      {item.remainingAmount?.toLocaleString('vi-VN')}&nbsp;<small className="text-[9px] font-bold ml-1 opacity-60">VND</small>
-                    </p>
+                    <VNDDisplay value={item.remainingAmount || 0} className="text-sm font-black text-acc-primary tabular-nums" />
                   </div>
                   {item.isOverdue && (
                     <span className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase shrink-0 ${config.bg} ${config.text}`}>
@@ -321,4 +317,4 @@ const DebtTable = ({ debts, loading, onReminder, onToggleAuto, isMasterAutoEnabl
   );
 };
 
-export default DebtTable;
+export default React.memo(DebtTable);

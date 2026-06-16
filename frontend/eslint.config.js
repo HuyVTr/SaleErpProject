@@ -24,6 +24,13 @@ export default defineConfig([
     },
     rules: {
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      // Các rule thử nghiệm theo hướng React Compiler (plugin react-hooks v7).
+      // Dự án KHÔNG dùng React Compiler nên hạ xuống "warn" để không chặn build,
+      // tránh phải viết lại logic đang chạy ổn định (giảm rủi ro hồi quy).
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/static-components': 'warn',
+      'react-hooks/immutability': 'warn',
+      'react-hooks/preserve-manual-memoization': 'warn',
     },
   },
 ])

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import XLSX from 'xlsx-js-style';
-import warehouseService, { formatCurrency } from '../../services/warehouseService';
+import warehouseService from '../../services/warehouseService';
 import { WarehouseStatCard } from '../../components/WarehouseStatCard';
+import { VNDDisplay, CURRENCY_CLASS_PRIMARY, CURRENCY_CLASS_SECONDARY } from '../../../../utils/formatVND';
 
 const InventoryReport = () => {
   const [products, setProducts] = useState([]);
@@ -383,7 +384,7 @@ const InventoryReport = () => {
         <WarehouseStatCard
           idx={2}
           title="GIÁ TRỊ TỒN KHO"
-          value={formatCurrency(totalValue)}
+          value={<VNDDisplay value={totalValue} className={CURRENCY_CLASS_PRIMARY} />}
           icon="payments"
           color="blue"
           growth={{ percent: 12, isUp: true, prevValue: Math.round(totalValue * 0.88), label: 'So với tháng trước' }}
@@ -732,10 +733,10 @@ const InventoryReport = () => {
                         <span className="font-bold text-slate-400 tabular-nums" style={{ fontSize: 'clamp(10px, 0.9vw, 13px)' }}>{product.minStock}</span>
                       </td>
                       <td className="p-4 sm:p-6 text-right" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
-                        <span className="font-bold text-slate-500 tabular-nums whitespace-nowrap" style={{ fontSize: 'clamp(10px, 0.9vw, 13px)' }}>{formatCurrency(product.unitPrice)}</span>
+                        <VNDDisplay value={product.unitPrice} className={`font-bold tabular-nums whitespace-nowrap ${CURRENCY_CLASS_SECONDARY}`} />
                       </td>
                       <td className="p-4 sm:p-6 text-right" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
-                        <span className="font-black text-slate-900 tabular-nums whitespace-nowrap" style={{ fontSize: 'clamp(10px, 0.9vw, 13px)' }}>{formatCurrency(product.stockQuantity * product.unitPrice)}</span>
+                        <VNDDisplay value={product.stockQuantity * product.unitPrice} className={`font-black tabular-nums whitespace-nowrap ${CURRENCY_CLASS_SECONDARY}`} />
                       </td>
                       <td className="p-4 sm:p-6 text-center" style={{ padding: 'clamp(0.5rem, 1vw, 1.5rem)' }}>
                         {getStockBadge(product)}
@@ -824,11 +825,11 @@ const InventoryReport = () => {
                       </div>
                       <div className="flex justify-between items-center text-xs">
                         <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">Đơn giá</span>
-                        <span className="font-bold text-slate-900 tabular-nums">{formatCurrency(product.unitPrice)}</span>
+                        <VNDDisplay value={product.unitPrice} className={`font-bold tabular-nums ${CURRENCY_CLASS_SECONDARY}`} />
                       </div>
                       <div className="flex justify-between items-center text-xs">
                         <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">Giá trị tồn</span>
-                        <span className="font-black text-[#00288E] tabular-nums">{formatCurrency(product.stockQuantity * product.unitPrice)}</span>
+                        <VNDDisplay value={product.stockQuantity * product.unitPrice} className={`font-black tabular-nums ${CURRENCY_CLASS_SECONDARY}`} />
                       </div>
                       <div className="flex justify-between items-center border-t border-slate-100/60 pt-3">
                         <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px]">Trạng thái</span>

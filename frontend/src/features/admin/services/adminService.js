@@ -8,7 +8,7 @@ const getLocal = (key) => {
 	try {
 		const raw = localStorage.getItem(key);
 		return raw ? JSON.parse(raw) : [];
-	} catch (e) {
+	} catch {
 		return [];
 	}
 };
@@ -16,7 +16,7 @@ const getLocal = (key) => {
 const setLocal = (key, value) => {
 	try {
 		localStorage.setItem(key, JSON.stringify(value));
-	} catch (e) {
+	} catch {
 		// ignore
 	}
 };
@@ -248,17 +248,6 @@ const adminService = {
 			return { success: true };
 		}
 		const response = await api.put(`/users/${staffID}`, data);
-		return response.data;
-	},
-
-	deleteStaff: async (staffID) => {
-		if (USE_MOCK) {
-			const local = getLocal(KEY_STAFFS);
-			const filtered = local.filter(s => String(s.userID) !== String(staffID) && String(s.id) !== String(staffID));
-			setLocal(KEY_STAFFS, filtered);
-			return { success: true };
-		}
-		const response = await api.delete(`/users/${staffID}`);
 		return response.data;
 	},
 

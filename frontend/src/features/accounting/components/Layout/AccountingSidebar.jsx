@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import tokenStorage from '../../../../utils/tokenStorage';
 import { 
   DashboardIcon, InvoiceIcon, RevenueIcon, DebtIcon, 
   ChartIcon, SettingsIcon, LogoutIcon 
@@ -9,9 +10,8 @@ const AccountingSidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // 1. Xóa thông tin phiên đăng nhập
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    // 1. Xóa thông tin phiên đăng nhập bằng tokenStorage
+    tokenStorage.clear();
     sessionStorage.clear();
 
     // 2. Điều hướng về trang Login (Tuyến đường / trong App.jsx)
@@ -26,8 +26,8 @@ const AccountingSidebar = ({ isOpen, onClose }) => {
     { name: 'Báo cáo Tài chính', path: '/accounting/reports', icon: ChartIcon },
   ];
 
-  // Logic: Lấy thông tin người dùng từ Session/LocalStorage
-  const user = JSON.parse(localStorage.getItem('user')) || {
+  // Logic: Lấy thông tin người dùng từ tokenStorage
+  const user = tokenStorage.getUser() || {
     firstName: 'Huy',
     lastName: 'Võ',
     email: 'votruonghuy25@gmail.com',

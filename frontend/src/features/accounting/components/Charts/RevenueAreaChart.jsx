@@ -1,7 +1,8 @@
 import React from 'react';
-import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
+import { VNDDisplay, CURRENCY_CLASS_PRIMARY, CURRENCY_CLASS_SECONDARY } from '../../../../utils/formatVND';
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -38,9 +39,7 @@ const CustomTooltip = ({ active, payload, label }) => {
               </div>
               {renderTrend(data.revenue, data.prevRevenue)}
             </div>
-            <span className="text-sm font-black text-acc-text-main pl-3">
-              {(data.revenue || 0).toLocaleString()} <small className="text-[10px] opacity-50">VND</small>
-            </span>
+            <VNDDisplay value={data.revenue || 0} className="text-sm font-black text-acc-text-main pl-3" />
           </div>
 
           <div className="flex flex-col gap-1">
@@ -51,9 +50,7 @@ const CustomTooltip = ({ active, payload, label }) => {
               </div>
               {renderTrend(data.expense, data.prevExpense)}
             </div>
-            <span className="text-sm font-black text-amber-600 pl-3">
-              {(data.expense || 0).toLocaleString()} <small className="text-[10px] opacity-50">VND</small>
-            </span>
+            <VNDDisplay value={data.expense || 0} className="text-sm font-black text-amber-600 pl-3" />
           </div>
 
           <div className="pt-2 mt-2 border-t border-slate-50 space-y-2">
@@ -63,9 +60,7 @@ const CustomTooltip = ({ active, payload, label }) => {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black text-acc-primary uppercase">Thực thu:</span>
-              <span className="text-sm font-black text-acc-primary">
-                {(data.collected || 0).toLocaleString()} <small className="text-[10px] opacity-50">VND</small>
-              </span>
+              <VNDDisplay value={data.collected || 0} className="text-sm font-black text-acc-primary" />
             </div>
           </div>
         </div>
@@ -75,7 +70,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-const RevenueAreaChart = ({ data, loading, timeframe }) => {
+const RevenueAreaChart = ({ data, loading }) => {
   const containerRef = React.useRef(null);
   const [width, setWidth] = React.useState(0);
 
@@ -185,4 +180,4 @@ const RevenueAreaChart = ({ data, loading, timeframe }) => {
   );
 };
 
-export default RevenueAreaChart;
+export default React.memo(RevenueAreaChart);

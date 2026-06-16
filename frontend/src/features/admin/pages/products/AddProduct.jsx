@@ -166,7 +166,7 @@ const AddProduct = () => {
       const arr = Array.isArray(res) ? res : [];
       const names = arr.map(c => c.categoryName || c.name || c.title).filter(Boolean);
       if (names.length) setCategories(names);
-    }).catch(err => {
+    }).catch(() => {
       // keep defaults
     });
     return () => { mounted = false; };

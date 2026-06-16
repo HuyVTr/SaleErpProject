@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { WarningIcon, SuccessIcon, NotificationIcon } from '../Icons/AccountingIcons';
-import accountingService from '../../services/accountingService';
 
 const RelativeTime = ({ notif }) => {
   const [display, setDisplay] = useState('...');
@@ -26,7 +25,6 @@ const RelativeTime = ({ notif }) => {
       const diffMs = now - date;
       const diffMins = Math.floor(diffMs / (1000 * 60));
       const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
       if (diffHours >= 24) {
         return date.toLocaleDateString('vi-VN', {

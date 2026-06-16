@@ -131,18 +131,6 @@ const getCustomerDetails = (customerID) => {
   };
 };
 
-/**
- * Chuyển Date hoặc chuỗi về YYYY-MM-DD để so sánh chuẩn
- */
-const toISODate = (d) => {
-  if (!d) return null;
-  const dateObj = (d instanceof Date) ? d : parseDateToObj(d);
-  if (!dateObj) return null;
-  const year = dateObj.getFullYear();
-  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-  const day = String(dateObj.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
 
 const parseDateToObj = (s) => {
   if (!s) return null;
@@ -177,14 +165,14 @@ const getLocalInvoices = () => {
       localStorage.setItem('added_invoices', JSON.stringify(cleanList));
     }
     return cleanList;
-  } catch (e) { return []; }
+  } catch { return []; }
 };
 
 const getLocalOrders = () => {
   try {
     const raw = localStorage.getItem('added_orders');
     return raw ? JSON.parse(raw) : [];
-  } catch (e) { return []; }
+  } catch { return []; }
 };
 
 const getLocalPayments = () => {
@@ -197,14 +185,14 @@ const getLocalPayments = () => {
       localStorage.setItem('added_payments', JSON.stringify(cleanList));
     }
     return cleanList;
-  } catch (e) { return []; }
+  } catch { return []; }
 };
 
 const getLocalOrderItems = () => {
   try {
     const raw = localStorage.getItem('added_order_items');
     return raw ? JSON.parse(raw) : [];
-  } catch (e) { return []; }
+  } catch { return []; }
 };
 
 /**
@@ -266,10 +254,6 @@ const buildNotifications = (timeframe = 'monthly', options = {}) => {
   const notifications = [];
 
   const now = new Date();
-  const isDaily = timeframe === 'daily';
-  const selectedDayNum = options.selectedDay ? parseInt(options.selectedDay, 10) : null;
-  const filterY = parseInt((options.filterDate || "").split('-')[0]) || now.getFullYear();
-  const filterM = parseInt((options.filterDate || "").split('-')[1]) || (now.getMonth() + 1);
 
 
 
@@ -638,13 +622,13 @@ const mockInvoices = () => {
     try {
       const raw = localStorage.getItem('added_products');
       return raw ? JSON.parse(raw) : [];
-    } catch (e) { return []; }
+    } catch { return []; }
   })();
   const deletedProductIds = (() => {
     try {
       const raw = localStorage.getItem('deleted_product_ids');
       return raw ? JSON.parse(raw).map(Number) : [];
-    } catch (e) { return []; }
+    } catch { return []; }
   })();
 
   const productMap = new Map();
@@ -744,6 +728,8 @@ const mockInvoices = () => {
         ? formatDisplayCode(inv.orderID, 'ORD')
         : (inv.orderID || 'N/A'),
       ...customer,
+      customerID: inv.customerID || order?.customerID || null,
+      userID: targetUserID || null,
       orderStatus: getStatusLabelVN(effectiveStatus),
       date: inv.invoiceDate ? new Date(inv.invoiceDate).toLocaleDateString('vi-VN') : 'N/A',
       items: finalItems,
@@ -855,7 +841,9 @@ const mockDebtReport = (timeframe = 'monthly', options = {}) => {
       totalAmount: Number(inv.totalAmount) || 0,
       riskLevel: risk,
       autoRemind: remaining > 10000000,
-      lastReminderDate: overdueDays > 7 ? '20/04/2026' : null,
+      lastReminderDate: inv.lastReminderDate 
+        ? new Date(inv.lastReminderDate).toLocaleDateString('vi-VN') 
+        : null,
       nextPaymentDate: !isOverdue ? (inv.dueDate ? new Date(inv.dueDate).toLocaleDateString('vi-VN') : 'N/A') : null
     };
   });
@@ -1124,8 +1112,8 @@ const accountingService = {
     try {
       const ordersRes = await accountingService.getOrders();
       const orders = ordersRes?.data || ordersRes || [];
-      const invoices = []; // fallback do BE thiếu api
-      const payments = []; // fallback do BE thiếu api
+      const invoices = getAllCurrentInvoices(); 
+      const payments = getAllCurrentPayments(); 
       const pStats = calculatePeriodStats(timeframe, options, invoices, payments, orders);
 
       const revenueGrowth = { ...calculateGrowth(pStats.revenue, pStats.prevRevenue), prevValue: pStats.prevRevenue, label: pStats.comparisonLabel };
@@ -1138,8 +1126,8 @@ const accountingService = {
         totalDebt: pStats.debt,
         totalCollected: pStats.collected,
         pendingInvoices: pStats.invoiceCount.toString(),
-        cashBalance: '1.250.000.000',
-        notifications: [],
+        cashBalance: dbData.stats?.totalBalance || '1.250.000.000',
+        notifications: buildNotifications(timeframe, options),
         revenueGrowth,
         collectedGrowth,
         debtGrowth,
@@ -1233,6 +1221,8 @@ const accountingService = {
         ? formatDisplayCode(inv.orderID, 'ORD')
         : (inv.orderID || 'N/A'),
       customerName,
+      customerID: inv.customerID ?? order.customerID ?? customerObj.customerID ?? null,
+      userID: inv.userID ?? inv.user?.userID ?? null,
       companyName: customerObj.companyName || '',
       address: customerObj.address || '',
       phoneNumber: customerObj.phoneNumber || '',
@@ -1475,6 +1465,7 @@ const accountingService = {
     if (USE_MOCK) {
       const local = getLocalInvoices();
       const all = [...local, ...dbData.invoices];
+      const allOrders = [...(dbData.orders || []), ...getLocalOrders()];
       const maxId = all.reduce((max, inv) => Math.max(max, Number(inv.invoiceID) || 0), 0);
       
       // FIX: Parse orderID từ dạng "ORD-101" hoặc số nguyên
@@ -1529,7 +1520,7 @@ const accountingService = {
         date: newInvoice.invoiceDate ? new Date(newInvoice.invoiceDate).toLocaleDateString('vi-VN') : 'N/A',
       };
     }
-    const response = await api.post('/api/invoices', data);
+    const response = await api.post('/invoices', data);
     const invoice = response.data?.success ? response.data.data : response.data;
     return accountingService.mapApiInvoice(invoice);
   },
@@ -1543,7 +1534,7 @@ const accountingService = {
       localStorage.setItem('added_invoices', JSON.stringify(updated));
       return true;
     }
-    const response = await api.put(`/api/invoices/${id}/status`, { status });
+    const response = await api.put(`/invoices/${id}/status`, { status });
     return response.data;
   },
 
@@ -1556,13 +1547,13 @@ const accountingService = {
       localStorage.setItem('added_invoices', JSON.stringify(updated));
       return true;
     }
-    const response = await api.put(`/api/invoices/${id}/costs`, { totalAmount });
+    const response = await api.put(`/invoices/${id}/costs`, { totalAmount });
     return response.data;
   },
 
   getPayments: async () => {
     if (USE_MOCK) return mockPayments();
-    const response = await api.get('/api/payments');
+    const response = await api.get('/payments');
     return response.data;
   },
 
@@ -1612,26 +1603,23 @@ const accountingService = {
       localStorage.setItem('added_payments', JSON.stringify([newPayment, ...localPayments]));
       return true;
     }
-    const response = await api.post('/api/payments', { invoiceID, ...paymentDetails });
+    const response = await api.post('/payments', { invoiceID, ...paymentDetails });
     return response.data;
   },
 
   // ── NOTIFICATION DETAIL (dùng ID dạng string như "notif-pay-1") ────────────
+  // Feed thông báo (NotificationFeed) luôn được dựng từ dữ liệu cục bộ qua
+  // buildNotifications (kể cả khi đã kết nối backend), nên ID có dạng
+  // "notif-pay-{paymentID}" / "notif-rpt-{reportID}" / "notif-overdue"…
+  // Vì vậy phần chi tiết cũng phải tra cứu cục bộ để khớp với feed; nếu gọi
+  // backend, ID dạng string sẽ bị hiểu sai và trả về dữ liệu sai cấu trúc.
   getNotificationDetail: async (id) => {
-    if (USE_MOCK) {
-      const allNotifs = buildNotifications();
-      return allNotifs.find(n => n.id === id) || null;
-    }
-    const response = await api.get(`/api/notifications/${id}`);
-    return response.data;
+    const allNotifs = buildNotifications();
+    return allNotifs.find(n => n.id === id) || null;
   },
 
   getExtendedNotificationDetail: async (id) => {
-    if (USE_MOCK) {
-      return buildExtendedDetail(id);
-    }
-    const response = await api.get(`/api/notifications/${id}/extended`);
-    return response.data;
+    return buildExtendedDetail(id);
   },
 
   getDebtReport: async (timeframe, options = {}) => {
@@ -1731,7 +1719,9 @@ const accountingService = {
         totalAmount: Number(inv.totalAmount) || 0,
         riskLevel: risk,
         autoRemind: remaining > 10000000,
-        lastReminderDate: overdueDays > 7 ? '20/04/2026' : null,
+        lastReminderDate: inv.lastReminderDate 
+          ? new Date(inv.lastReminderDate).toLocaleDateString('vi-VN') 
+          : null,
         nextPaymentDate: !isOverdue ? (inv.dueDate ? new Date(inv.dueDate).toLocaleDateString('vi-VN') : 'N/A') : null
       };
     });
@@ -1762,7 +1752,7 @@ const accountingService = {
       await new Promise(resolve => setTimeout(resolve, 800));
       return { success: true, message: "Mock: Gửi mail thành công" };
     }
-    const response = await api.post('/api/reminders/send', { invoiceID });
+    const response = await api.post('/reminders/send', { invoiceID });
     return response.data;
   },
 
@@ -1771,20 +1761,24 @@ const accountingService = {
       await new Promise(resolve => setTimeout(resolve, 1500));
       return { success: true, count: invoiceIDs.length };
     }
-    const response = await api.post('/api/reminders/batch-send', { invoiceIDs });
+    const response = await api.post('/reminders/batch-send', { invoiceIDs });
     return response.data;
   },
 
   getProducts: async () => {
     if (USE_MOCK) return dbData.products || [];
-    const response = await api.get('/api/products');
-    return response.data;
+    // /products trả về dạng phân trang { success, data, pagination } và mặc định
+    // chỉ 20 bản ghi — lấy limit lớn để phục vụ selector và bóc mảng data ra.
+    const response = await api.get('/products', { params: { limit: 1000 } });
+    const body = response.data;
+    return Array.isArray(body) ? body : (body?.data || []);
   },
 
   getCategories: async () => {
     if (USE_MOCK) return dbData.categories || [];
-    const response = await api.get('/api/categories');
-    return response.data;
+    const response = await api.get('/categories');
+    const body = response.data;
+    return Array.isArray(body) ? body : (body?.data || []);
   },
 
   getRelativeTime,
