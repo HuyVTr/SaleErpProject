@@ -11,9 +11,16 @@ export default defineConfig({
   resolve: {
     alias: {
       stream: path.resolve(__dirname, 'src/shims/stream.js'),
+      fs: path.resolve(__dirname, 'src/shims/fs.js'),
     },
   },
   optimizeDeps: {
     include: ['xlsx', 'xlsx-js-style'],
+  },
+  ssr: {
+    noExternal: ['xlsx', 'xlsx-js-style'],
+  },
+  define: {
+    'process.env.NODE_ENV': JSON.stringify('production'),
   },
 })

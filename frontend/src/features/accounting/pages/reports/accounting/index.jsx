@@ -3,6 +3,9 @@ import { createPortal } from 'react-dom';
 import accountingService from '../../../services/accountingService';
 import { exportToExcel } from '../../../utils/exportUtils';
 import { useToast } from '../../../components/Common/AccountingToast';
+import { getCurrentUser } from '../../../services/userService';
+import { prepareReportMetadata } from '../../../utils/excelDateUtils';
+import { getCompanyInfo } from '../../../constants/companyInfo';
 import RevenueAreaChart from '../../../components/Charts/RevenueAreaChart';
 import CategoryShareChart from '../../../components/Charts/CategoryShareChart';
 import SalesPerformanceTable from '../../../components/Tables/SalesPerformanceTable';
@@ -173,13 +176,66 @@ const AccountingReport = () => {
 
   const handleExportExcel = () => {
     try {
+      setIsExporting(true);
+
       const periodLabel = getTimeframeText();
-      
+
+      // Safely get user info - handle 401 error
+      let userInfo = {
+        fullName: 'Unknown User',
+        email: 'unknown@hizo.com.vn',
+        department: 'Sales',
+        phone: ''
+      };
+
+      try {
+        const currentUser = getCurrentUser();
+        if (currentUser && currentUser.fullName) {
+          userInfo = currentUser;
+        }
+      } catch (authError) {
+        console.warn('Warning: Could not fetch user info:', authError);
+        if (authError.response?.status === 401) {
+          showToast('⚠️ Phiên làm việc hết hạn, vui lòng đăng nhập lại', 'warning');
+        }
+        // Continue with fallback user info
+      }
+
+      // Safely get company info
+      let companyInfo = {
+        name: 'Hizo Groups',
+        address: 'TP. Hồ Chí Minh',
+        phone: '(028) 1234-5678',
+        email: 'contact@hizo.com.vn'
+      };
+
+      try {
+        const company = getCompanyInfo();
+        if (company) {
+          companyInfo = company;
+        }
+      } catch (error) {
+        console.warn('Warning: Could not fetch company info:', error);
+        // Use default company info
+      }
+
+      const reportMetadata = prepareReportMetadata({
+        timeframe,
+        filterDate,
+        filterWeek,
+        filterYear,
+        selectedDay,
+        filterYearsCount,
+        revenueData,
+        categoryData,
+        performanceData
+      });
+
       // 1. Prepare Summary Data
       const totalRevenue = revenueData.reduce((sum, item) => sum + (item.revenue || 0), 0);
       const totalOrders = revenueData.reduce((sum, item) => sum + (item.invoiceCount || 0), 0);
       const topSales = performanceData.length > 0 ? [...performanceData].sort((a, b) => b.revenue - a.revenue)[0].name : 'N/A';
-      
+
       const summaryData = [
         { 'Chỉ số': 'TỔNG DOANH THU', 'Giá trị': formatVND(totalRevenue) },
         { 'Chỉ số': 'SỐ ĐƠN HÀNG', 'Giá trị': totalOrders },
@@ -212,7 +268,7 @@ const AccountingReport = () => {
         'Hoàn thành (%)': p.achievement.toFixed(1) + '%',
         'Hoa hồng dự kiến (VND)': p.commission
       }));
-      
+
       exportToExcel({
         sheets: [
           { name: 'Tổng quan', data: summaryData, title: 'TÓM TẮT CHỈ SỐ TÀI CHÍNH' },
@@ -220,13 +276,18 @@ const AccountingReport = () => {
           { name: 'Danh mục', data: categoryExcelData, title: 'PHÂN TÍCH THEO DANH MỤC' },
           { name: 'Nhân viên', data: performanceExcelData, title: 'HIỆU SUẤT NHÂN VIÊN KINH DOANH' }
         ],
-        filename: `Bao_cao_Tai_chinh_Hizo_${periodLabel.replace(/[/\s]/g, '_')}.xlsx`,
+        filename: `Bao_cao_Tai_chinh_Hizo_${reportMetadata.dateRange.label.replace(/[/\s]/g, '_')}.xlsx`,
+        reportMetadata,
+        userInfo,
+        companyInfo
       });
 
-      showToast("Xuất Excel thành công!", "success");
+      showToast("✅ Xuất Excel thành công!", "success");
     } catch (err) {
       console.error("Excel Export Error:", err);
-      showToast("Lỗi khi xuất Excel", "error");
+      showToast(`❌ Lỗi khi xuất Excel: ${err.message}`, "error");
+    } finally {
+      setIsExporting(false);
     }
   };
 
